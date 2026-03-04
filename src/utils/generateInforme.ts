@@ -2,26 +2,26 @@
  * REPLACEMENTS REQUIRED IN THE TEMPLATE FILE:
  * Path: public/templates/Informe_de_necessitats_AD.docx
  * 
- * The template uses «guillemets» as delimiters. 
- * Use the EXACT names below (case sensitive, no spaces unless indicated):
+ * The template uses standard {{double_braces}} as delimiters. 
+ * Use the EXACT names below (case sensitive, no spaces or parentheses):
  * 
- * - «record.organ_contractacio»
- * - «record.responsable_contracte»
- * - «record.nom»
- * - «record.email»
- * - «record.objecte_contracte»
- * - «record.justificacio»
- * - «record.caracteristiques_tecniques»
- * - «record.tipus_contracte»
- * - «record.codi_cpv»
- * - «record.base_imposable»
- * - «record.quota_iva»
- * - «record.partida_organica»
- * - «record.partida_programa»
- * - «record.partida_economica»
+ * - {{record.organ_contractacio}}
+ * - {{record.responsable_contracte}}
+ * - {{record.nom}}
+ * - {{record.email}}
+ * - {{record.objecte_contracte}}
+ * - {{record.justificacio}}
+ * - {{record.caracteristiques_tecniques}}
+ * - {{record.tipus_contracte}}
+ * - {{record.codi_cpv}}
+ * - {{record.base_imposable}}
+ * - {{record.quota_iva}}
+ * - {{record.partida_organica}}
+ * - {{record.partida_programa}}
+ * - {{record.partida_economica}}
  * 
  * Custom formatted fields:
- * - «Import_total_» (Example: 121.00 €)
+ * - {{Import_total_}} (Example: 121.00 €)
  */
 
 import { createReport } from 'docx-templates';
@@ -39,9 +39,8 @@ export async function generateInforme(record: any): Promise<void> {
         const data = {
             record: record, // Allows «record.field»
 
-            // Literal aliases to prevent errors if user copied descriptive text
-            "total (base + iva)": `${(record.base_imposable + record.quota_iva).toFixed(2)} €`,
-            "total": `${(record.base_imposable + record.quota_iva).toFixed(2)} €`,
+            // Clean aliases (no spaces or parentheses allowed in template tags)
+            total: `${(record.base_imposable + record.quota_iva).toFixed(2)} €`,
 
             // Flat aliases for simpler tags
             Organ_de_contractacio: record.organ_contractacio,
@@ -66,7 +65,7 @@ export async function generateInforme(record: any): Promise<void> {
         const report = await createReport({
             template: new Uint8Array(template),
             data: data,
-            cmdDelimiter: ['«', '»'],
+            cmdDelimiter: ['{{', '}}'],
         });
 
         // 4. Trigger browser file download
