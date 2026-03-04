@@ -522,7 +522,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
                             <div className="flex items-center justify-center gap-2">
-                              {record.sistema_tramitacio && record.sistema_tramitacio !== 'Sense assignar' && (
+                              {['AD', 'ADO', 'OFI'].includes(record.sistema_tramitacio) && (
                                 <button
                                   onClick={async () => {
                                     try {
