@@ -1,147 +1,107 @@
-# UGE - Sol·licitud de necessitats
+# UGE - Sol·licituds (UGE Manager)
 
-Aplicació web de gestió interna per a la **Unitat de Gestió Econòmica (UGE)** de l'IMAS (Institut Mallorquí d'Afers Socials). Aquesta eina permet gestionar, tramitar i fer seguiment de les sol·licituds de despesa i necessitats de contractació de les diferents residències i centres.
+Aplicació web de gestió interna per a la **Unitat de Gestió Econòmica (UGE)** de l'IMAS. Aquesta eina centralitza la gestió, tramitació i seguiment de les sol·licituds de despesa de les residències i centres.
 
-## 📋 Descripció del Projecte
+## 🚀 Arquitectura i Stack Tecnològic
 
-El sistema substitueix l'anterior flux de treball basat en formularis de Microsoft Forms i Excels manuals, centralitzant tota la informació en una base de dades segura i accessible mitjançant una interfície web moderna i intuïtiva.
+L'aplicació ha estat migrada a una arquitectura **Serverless** pura, eliminant la dependència de servidors locals.
 
-### Funcionalitats Principals
+*   **Frontend**: React 19 + Vite + Tailwind CSS.
+*   **Backend**: Supabase (Backend-as-a-Service).
+    *   **Auth**: Gestió d'usuaris i sessions.
+    *   **PostgreSQL**: Base de dades relacional amb seguretat a nivell de fila (RLS).
+    *   **Realtime**: Notificacions instantànies mitjançant subscripcions a canvis de taula.
+    *   **Storage**: Emmagatzematge de pressupostos en format PDF.
+*   **Deployment**: Compatible amb Vercel.
 
-*   **Gestió de Sol·licituds (Peticions):**
-    *   Creació de noves sol·licituds amb formulari validat.
-    *   Camps detallats: Organ de contractació, Responsable, Justificació, Característiques tècniques, Partides pressupostàries, etc.
-    *   Pujada d'arxius adjunts (PDFs de pressupostos).
-*   **Tauler de Control (Dashboard):**
-    *   Visualització tabular de totes les peticions.
-    *   Filtratge avançat per estat, data, responsable, etc.
-    *   Ordenació de columnes.
-    *   Edició i eliminació de registres (segons permisos).
-*   **Gestió d'Usuaris:**
-    *   Control d'accés basat en rols (RBAC).
-    *   **Assignació automàtica**: El primer usuari registrat rep el rol de `Administrador`; els següents el de `Lectura`.
-    *   Panell d'administració per gestionar rols i usuaris de forma centralitzada.
-*   **Notificacions:**
-    *   Sistema d'alertes en temps real per a noves peticions o canvis en l'estat de les existents.
-*   **Manteniment i Scripts:**
-    *   Eines per a la migració, correcció de rols i reinici d'usuaris.
+---
 
-## 🛠️ Stack Tecnològic
+## 🔐 Model de Seguretat (RBAC & RLS)
 
-El projecte utilitza una arquitectura moderna **Full-Stack** amb TypeScript:
+L'accés a les dades està protegit mitjançant **Row Level Security (RLS)** de PostgreSQL, basat en el rol de l'usuari guardat a la taula `profiles`.
 
-### Frontend
-*   **React 19**: Llibreria principal per a la interfície d'usuari.
-*   **Tailwind CSS**: Framework d'estils "utility-first".
-*   **Vite**: Eina de construcció i servidor de desenvolupament ràpid.
-*   **Lucide React**: Iconografia.
-*   **Framer Motion**: Animacions i transicions suaus.
+### Rols de l'Usuari
+- **Lectura**: Accés bàsic per veure el dashboard. No pot crear ni editar.
+- **Peticions**: Pot crear noves sol·licituds i rebre notificacions quan algú les actualitza.
+- **Gestió**: Pot editar tots els registres (assignar SEGEX, sistema de tramitació, etc.) i rep notificacions de noves peticions.
+- **Administrador**: Control total. Gestió d'usuaris i visibilitat de totes les notificacions.
 
-### Backend
-*   **Node.js & Express**: Servidor API RESTful.
-*   **Better-SQLite3**: Base de dades SQL lleugera i d'alt rendiment (emmagatzemada en fitxer local `imas.db`).
-*   **Multer**: Gestió de pujada de fitxers (multipart/form-data).
-*   **JWT (JSON Web Tokens)**: Autenticació segura sense estat.
-*   **Bcryptjs**: Hashing de contrasenyes.
+### Polítiques RLS Clau
+- `records`: Tots els usuaris autenticats poden consultar. Només `Gestió` i `Admin` poden actualitzar qualsevol registre.
+- `notifications`: Els usuaris només veuen notificacions on són destinataris o que corresponen al seu rol de gestió.
+- `profiles`: L'usuari pot actualitzar el seu propi perfil. Els perfils són visibles per a tots els usuaris autenticats.
 
-## 📂 Estructura del Projecte
-
-```
-/
-├── .env.example        # Plantilla de variables d'entorn
-├── imas.db             # Base de dades SQLite (creada automàticament)
-├── import.sql          # Fitxer SQL per a importació de dades (opcional)
-├── metadata.json       # Metadades de l'aplicació
-├── package.json        # Dependències i scripts
-├── server.ts           # Punt d'entrada del Backend (Express)
-├── vite.config.ts      # Configuració de Vite
-├── scripts/            # Scripts d'utilitat
-│   ├── import_data.ts     # Importació de dades històriques
-│   ├── fix_roles.ts       # Correcció massiva de rols (Admin al primer usuari)
-│   └── reset_users.ts     # Neteja de la taula d'usuaris per a proves
-├── src/                # Codi font del Frontend
-│   ├── components/     # Components UI reutilitzables
-│   ├── views/          # Vistes principals (Pàgines)
-│   │   ├── AuthView.tsx           # Login/Registre
-│   │   ├── DashboardView.tsx      # Taula de gestió
-│   │   ├── FormView.tsx           # Formulari de sol·licitud
-│   │   ├── UserManagementView.tsx # Admin usuaris
-│   │   └── NotificationsView.tsx  # Centre de notificacions
-│   ├── types.ts        # Definicions de tipus TypeScript i constants
-│   ├── App.tsx         # Component arrel i enrutament
-│   └── main.tsx        # Punt d'entrada React
-└── uploads/            # Directori per a fitxers pujats (PDFs)
-```
-
-## 🔐 Rols i Permisos
-
-El sistema defineix 4 nivells d'accés:
-
-1.  **Lectura**: Pot veure el llistat de peticions (Dashboard) sense opcions d'edició. Rol assignat per defecte als nous usuaris.
-2.  **Peticions**: Pot crear noves sol·licituds i veure les pròpies.
-3.  **Gestió**: Pot veure, editar i gestionar totes les sol·licituds (SEGEX, estat, etc.).
-4.  **Administrador**: Accés total. Gestió d'usuaris, auditoria i canvi de rols. **El primer usuari que es registra al sistema rep aquest rol automàticament.**
-
-## 🚀 Instal·lació i Execució
-
-### Requisits Previs
-*   Node.js (versió LTS recomanada)
-*   NPM
-
-### Passos
-
-1.  **Instal·lar dependències:**
-    ```bash
-    npm install
-    ```
-
-2.  **Configurar entorn:**
-    Revisar `.env.example`. Per defecte, l'aplicació funciona sense configuració addicional, utilitzant valors per defecte segurs per a desenvolupament.
-
-3.  **Iniciar en mode desenvolupament:**
-    ```bash
-    npm run dev
-    ```
-    Això iniciarà el servidor Express amb el middleware de Vite a `http://localhost:3000`.
-
-4.  **Construir per a producció:**
-    ```bash
-    npm run build
-    ```
-
-5.  **Iniciar en mode producció:**
-    ```bash
-    npm start
-    ```
-
-### Importació de Dades (Opcional)
-
-Si disposeu d'un fitxer SQL amb dades històriques (ex: exportació de Forms):
-
-1.  Enganxeu les sentències `INSERT` al fitxer `import.sql` a l'arrel.
-2.  Executeu l'script d'importació:
-    ```bash
-    npm run import-data
-    ```
-    *Nota: L'script gestiona automàticament les transaccions i corregeix referències d'usuari nul·les.*
+---
 
 ## 🗄️ Esquema de Base de Dades
 
-### `users`
-Taula d'usuaris del sistema.
-*   `id`, `full_name`, `email`, `password_hash`, `role`, `created_at`.
+### Taula `profiles`
+Estén la funcionalitat d'`auth.users`.
+- `id` (uuid, PK): FK a `auth.users`.
+- `full_name` (text): Nom real de l'usuari.
+- `role` (text): Un de `Lectura`, `Peticions`, `Gestió`, `Administrador`.
 
-### `records` (Peticions)
-Taula principal que emmagatzema les sol·licituds.
-*   Camps clau: `organ_contractacio`, `responsable_contracte`, `objecte_contracte`, `import`, `estat` (`finalitzat`, `publicat`), etc.
-*   Relacions: `created_by` (FK -> users.id).
+### Taula `records`
+Emmagatzema les sol·licituds de despesa.
+- `id` (bigint, PK): Identificador autoincremental.
+- `objecte_contracte` (text): Descripció de la necessitat.
+- `fitxers_pressupost` (jsonb): Array de metadades d'archius (`{name, path, size}`).
+- `segex`, `sistema_tramitacio`: Camps de gestió administrativa.
+- `created_by` (uuid): FK a l'usuari que va crear la petició.
 
-### `notifications`
-Registre d'esdeveniments per a alertes d'usuari.
-*   Tipus: `new_request`, `record_updated`.
+### Taula `notifications`
+Generades automàticament per triggers de base de dades.
+- `type`: `new_request` o `record_updated`.
+- `recipient_user_id`: Usuari que ha de rebre l'alerta (si és NULL, és una alerta per a Gestió/Admin).
+- `is_read` (boolean): Estat de lectura.
 
-## 📝 Notes Addicionals
+---
 
-*   **Seguretat**: Les contrasenyes s'emmagatzemen hashades amb bcrypt. Les rutes de l'API estan protegides amb middleware de verificació de token JWT.
-*   **Validació**: El formulari inclou validacions específiques per a formats de codi CPV (8 dígits) i partides pressupostàries (5 dígits).
-*   **Fitxers**: Els fitxers PDF es guarden localment a la carpeta `/uploads` i es serveixen de forma estàtica protegida.
+## ⚙️ Lògica de Negoci Automàtica (Triggers)
+
+El sistema utilitza un Trigger SQL (`on_record_change`) que executa la funció `handle_record_notification()` després de qualsevol canvi a `records`:
+
+1.  **INSERT**: Si un usuari amb rol `Peticions` crea un registre, es genera una notificació tipus `new_request` per als rols de supervisió.
+2.  **UPDATE**: Si un gestor modifica un registre, es notifica automàticament al creador original (`record_updated`).
+
+---
+
+## 📁 Gestió d'Arxius (Storage)
+
+- **Bucket**: `peticions_pressupostos` (Públic).
+- **Format**: PDF.
+- **Ruta**: `peticions/{peticio_id}/{filename}`.
+- **Seguretat**: Només usuaris autenticats poden pujar archius.
+
+---
+
+## 🛠️ Configuració de Desenvolupament
+
+### Variables d'Entorn (.env)
+```env
+VITE_SUPABASE_URL=URL_DEL_PROJECTE
+VITE_SUPABASE_ANON_KEY=CLAU_ANONIMA_PUBLICA
+```
+
+### Comandaments
+- `npm install`: Instal·la les dependències.
+- `npm run dev`: Inicia el servidor de desenvolupament (Vite).
+- `npm run build`: Genera el paquet per a producció al directori `/dist`.
+- `npm run lint`: Verifica els tipus de TypeScript.
+
+---
+
+## 🚢 Deploy a Vercel
+
+1. Connectar el repositori a Vercel.
+2. Configurar les variables d'entorn `VITE_SUPABASE_URL` i `VITE_SUPABASE_ANON_KEY`.
+3. El Project Preset ha de ser **Vite**.
+4. (Opcional) Afegir un `vercel.json` per a rutes SPA si es fa servir React Router.
+
+---
+
+## 👨‍💻 Notes per a Programadors / IA
+
+- **Tipus**: Utilitza `src/types/supabase.ts` (generat per Supabase CLI) per mantenir la integritat de les dades.
+- **Realtime**: La subscripció a notificacions es gestiona a `App.tsx` i s'actualitza de manera optimista o per polling de seguretat cada 60s.
+- **Sorting**: L'ordenació de la taula al Dashboard és purament frontend per a una major velocitat, calculant el camp "Total" en temps real.
