@@ -28,10 +28,24 @@ import { createReport } from 'docx-templates';
 
 export async function generateInforme(record: any): Promise<void> {
     try {
-        // 1. Fetch the template from /templates/Informe_de_necessitats_AD.docx as an ArrayBuffer
-        const response = await fetch('/templates/Informe_de_necessitats_AD.docx');
+        // 1. Determine template path based on sistema_tramitacio
+        let templatePath = '';
+        const sistema = record.sistema_tramitacio;
+
+        if (sistema === 'AD') {
+            templatePath = '/templates/Informe_de_necessitats_AD.docx';
+        } else if (sistema === 'ADO') {
+            templatePath = '/templates/Informe_de_necessitats_ADO.docx';
+        } else if (sistema === 'OFI') {
+            templatePath = '/templates/Informe_de_necessitats_OFI.docx';
+        } else {
+            throw new Error(`Sistema no suportat per a informes: ${sistema}`);
+        }
+
+        // 2. Fetch the template from the calculated path as an ArrayBuffer
+        const response = await fetch(templatePath);
         if (!response.ok) {
-            throw new Error(`No s'ha pogut carregar la plantilla: ${response.statusText}`);
+            throw new Error(`No s'ha pogut carregar la plantilla (${templatePath}): ${response.statusText}`);
         }
         const template = await response.arrayBuffer();
 

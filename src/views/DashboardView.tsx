@@ -522,20 +522,22 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
                             <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    const { generateInforme } = await import('../utils/generateInforme');
-                                    await generateInforme(record);
-                                  } catch (err: any) {
-                                    alert(err.message);
-                                  }
-                                }}
-                                className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
-                                title="Descarregar informe"
-                              >
-                                <FileDown size={18} />
-                              </button>
+                              {record.sistema_tramitacio && record.sistema_tramitacio !== 'Sense assignar' && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const { generateInforme } = await import('../utils/generateInforme');
+                                      await generateInforme(record);
+                                    } catch (err: any) {
+                                      alert(err.message);
+                                    }
+                                  }}
+                                  className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
+                                  title="Descarregar informe"
+                                >
+                                  <FileDown size={18} />
+                                </button>
+                              )}
 
                               <button
                                 onClick={() => { setSelectedRecord(record); setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); }}
