@@ -19,11 +19,12 @@ El sistema substitueix l'anterior flux de treball basat en formularis de Microso
     *   Edició i eliminació de registres (segons permisos).
 *   **Gestió d'Usuaris:**
     *   Control d'accés basat en rols (RBAC).
-    *   Panell d'administració per gestionar rols d'usuaris.
+    *   **Assignació automàtica**: El primer usuari registrat rep el rol de `Administrador`; els següents el de `Lectura`.
+    *   Panell d'administració per gestionar rols i usuaris de forma centralitzada.
 *   **Notificacions:**
-    *   Sistema d'alertes per a noves peticions o canvis d'estat.
-*   **Importació de Dades:**
-    *   Eines per a la migració de dades històriques.
+    *   Sistema d'alertes en temps real per a noves peticions o canvis en l'estat de les existents.
+*   **Manteniment i Scripts:**
+    *   Eines per a la migració, correcció de rols i reinici d'usuaris.
 
 ## 🛠️ Stack Tecnològic
 
@@ -54,7 +55,10 @@ El projecte utilitza una arquitectura moderna **Full-Stack** amb TypeScript:
 ├── package.json        # Dependències i scripts
 ├── server.ts           # Punt d'entrada del Backend (Express)
 ├── vite.config.ts      # Configuració de Vite
-├── scripts/            # Scripts d'utilitat (ex: importació de dades)
+├── scripts/            # Scripts d'utilitat
+│   ├── import_data.ts     # Importació de dades històriques
+│   ├── fix_roles.ts       # Correcció massiva de rols (Admin al primer usuari)
+│   └── reset_users.ts     # Neteja de la taula d'usuaris per a proves
 ├── src/                # Codi font del Frontend
 │   ├── components/     # Components UI reutilitzables
 │   ├── views/          # Vistes principals (Pàgines)
@@ -73,10 +77,10 @@ El projecte utilitza una arquitectura moderna **Full-Stack** amb TypeScript:
 
 El sistema defineix 4 nivells d'accés:
 
-1.  **Lectura**: Només pot veure el llistat de peticions (Dashboard) sense opcions d'edició.
+1.  **Lectura**: Pot veure el llistat de peticions (Dashboard) sense opcions d'edició. Rol assignat per defecte als nous usuaris.
 2.  **Peticions**: Pot crear noves sol·licituds i veure les pròpies.
-3.  **Gestió**: Pot veure, editar i gestionar totes les sol·licituds.
-4.  **Administrador**: Accés total, incloent la gestió d'usuaris i canvi de rols.
+3.  **Gestió**: Pot veure, editar i gestionar totes les sol·licituds (SEGEX, estat, etc.).
+4.  **Administrador**: Accés total. Gestió d'usuaris, auditoria i canvi de rols. **El primer usuari que es registra al sistema rep aquest rol automàticament.**
 
 ## 🚀 Instal·lació i Execució
 
