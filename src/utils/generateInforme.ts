@@ -2,25 +2,26 @@
  * REPLACEMENTS REQUIRED IN THE TEMPLATE FILE:
  * Path: public/templates/Informe_de_necessitats_AD.docx
  * 
- * Please manually open the .docx file and replace each «placeholder» with {{placeholder}}
- * using the exact variable names below:
+ * The template uses «guillemets» as delimiters. 
+ * Ensure the text inside the guillemets matches the variables below 
+ * (replace spaces with underscores, e.g., «Organ_de_contractacio»):
  * 
- * - «Òrgan_de_contractació»           ->  {{Organ_de_contractacio}}
- * - «Responsable_del_contracte»        ->  {{Responsable_del_contracte}}
- * - «Nombre»                           ->  {{Nombre}}
- * - «Correo_electrónico»               ->  {{Correo_electronico}}
- * - «Objecte_del_contrate_descripció_del_que» -> {{Objecte_del_contrate_descripcio_del_que}}
- * - «Descripció_de_la_necessitat_a_satisfer_» -> {{Descripcio_de_la_necessitat_a_satisfer_}}
- * - «Característiques_tècniques_especificaci» -> {{Caracteristiques_tecniques_especificaci}}
- * - «Tipus_de_contracte»               ->  {{Tipus_de_contracte}}
- * - «Códi_dobjecte_contractual_CPV»    ->  {{Codi_dobjecte_contractual_CPV}}
- * - «Base_imposable_»                  ->  {{Base_imposable_}}
- * - «Quota_dIVA_»                      ->  {{Quota_dIVA_}}
- * - «Import_total_»                    ->  {{Import_total_}}
- * - «Termini_dexecució_o_durada_previstaen» -> {{Termini_dexecucio_o_durada_previstaen}}
- * - «Partida orgànica»                 ->  {{Partida_organica}}
- * - «Partida programa»                 ->  {{Partida_programa}}
- * - «Partida econòmica»                ->  {{Partida_economica}}
+ * - «Organ_de_contractacio»           -> record.organ_contractacio
+ * - «Responsable_del_contracte»        -> record.responsable_contracte
+ * - «Nombre»                           -> record.nom
+ * - «Correo_electronico»               -> record.email
+ * - «Objecte_del_contrate_descripcio_del_que» -> record.objecte_contracte
+ * - «Descripcio_de_la_necessitat_a_satisfer_» -> record.justificacio
+ * - «Caracteristiques_tecniques_especificaci» -> record.caracteristiques_tecniques
+ * - «Tipus_de_contracte»               -> record.tipus_contracte
+ * - «Codi_dobjecte_contractual_CPV»    -> record.codi_cpv
+ * - «Base_imposable_»                  -> record.base_imposable
+ * - «Quota_dIVA_»                      -> record.quota_iva
+ * - «Import_total_»                    -> total (base + iva)
+ * - «Termini_dexecucio_o_durada_previstaen» -> record.termini_execucio
+ * - «Partida_organica»                 -> record.partida_organica
+ * - «Partida_programa»                 -> record.partida_programa
+ * - «Partida_economica»                -> record.partida_economica
  */
 
 import { createReport } from 'docx-templates';
@@ -58,7 +59,7 @@ export async function generateInforme(record: any): Promise<void> {
         const report = await createReport({
             template: new Uint8Array(template),
             data: data,
-            cmdDelimiter: ['{{', '}}'],
+            cmdDelimiter: ['«', '»'],
         });
 
         // 4. Trigger browser file download
