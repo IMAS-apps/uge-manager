@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { Users, CheckCircle2, AlertCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export function UserManagementView() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [toast, setToast] = useState<{msg: string, type: 'success'|'error'} | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{user: User, newRole: string} | null>(null);
+  const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ user: User, newRole: string } | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error("Error en carregar els usuaris");
-      const data = await res.json();
-      setUsers(data);
+      const { data, error: sbError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (sbError) throw sbError;
+
+      setUsers(data as User[]);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -45,20 +46,15 @@ export function UserManagementView() {
   const confirmRoleChange = async () => {
     if (!confirmDialog) return;
     const { user, newRole } = confirmDialog;
-    
+
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/${user.id}/role`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ role: newRole })
-      });
-      
-      if (!res.ok) throw new Error("Error en actualitzar el rol");
-      
+      const { error: sbError } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', user.id);
+
+      if (sbError) throw sbError;
+
       setToast({ msg: 'Rol actualitzat correctament', type: 'success' });
       fetchUsers();
     } catch (err: any) {
@@ -94,13 +90,13 @@ export function UserManagementView() {
               Estàs segur que vols canviar el rol de <strong>{confirmDialog.user.full_name}</strong> a <strong>{confirmDialog.newRole}</strong>?
             </p>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setConfirmDialog(null)}
                 className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
               >
                 Cancel·lar
               </button>
-              <button 
+              <button
                 onClick={confirmRoleChange}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 transition-colors shadow-sm"
               >

@@ -6,6 +6,9 @@ import { UserManagementView } from './views/UserManagementView';
 import { NotificationsView } from './views/NotificationsView';
 import { User } from './types';
 import { LogOut, FileText, LayoutDashboard, Users, AlertCircle, Bell } from 'lucide-react';
+import { supabase } from './lib/supabase';
+
+
 
 export function ImasLogo({ className = '' }: { className?: string }) {
   return (
@@ -34,29 +37,91 @@ export default function App() {
   }, [toast]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.user) {
-            setUser(data.user);
-            if (data.user.role === 'Lectura') {
-              setCurrentView('dashboard');
-            } else {
-              setCurrentView('form');
-            }
-          } else {
-            localStorage.removeItem('token');
+    // Initial check for session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await handleUserSession(session);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error checking session:', err);
+        setLoading(false);
+      }
+    };
+
+    const handleUserSession = async (session: any) => {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (profile) {
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email!,
+            full_name: profile.full_name,
+            role: profile.role,
+          };
+          setUser(userData);
+          if (userData.role === 'Lectura') {
+            setCurrentView('dashboard');
           }
-        })
-        .catch(() => localStorage.removeItem('token'))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+        } else {
+          // Fallback logic
+          const { count } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+
+          const fallbackRole = (count === 0) ? 'Administrador' : 'Lectura';
+          const displayName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuari';
+
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              email: session.user.email!,
+              full_name: displayName,
+              role: fallbackRole,
+            })
+            .select()
+            .single();
+
+          if (!insertError && newProfile) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              full_name: newProfile.full_name,
+              role: newProfile.role,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error handling session:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        handleUserSession(session);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -74,19 +139,26 @@ export default function App() {
     }
   }, [currentView, user]);
 
-  // Poll unread notifications
+  // Subscribe to real-time notifications and poll for unread count
   useEffect(() => {
     if (!user || user.role === 'Lectura') return;
 
     const fetchUnreadCount = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/notifications/unread-count', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadCount(data.count);
+        let query = supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_read', false);
+
+        if (user.role === 'Gestió') {
+          query = query.or('recipient_user_id.is.null,type.eq.new_request');
+        } else if (user.role === 'Peticions') {
+          query = query.eq('recipient_user_id', user.id);
+        }
+
+        const { count, error } = await query;
+        if (!error && count !== null) {
+          setUnreadCount(count);
         }
       } catch (err) {
         console.error('Error fetching unread count:', err);
@@ -94,12 +166,34 @@ export default function App() {
     };
 
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE
+          schema: 'public',
+          table: 'notifications'
+        },
+        () => {
+          // Re-fetch count when any notification changes
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    const interval = setInterval(fetchUnreadCount, 60000); // Poll as fallback every minute
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [user]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     setUnreadCount(0);
   };
@@ -142,13 +236,12 @@ export default function App() {
   }
 
   if (!user) {
-    return <AuthView onLogin={(user, token) => {
-      localStorage.setItem('token', token);
+    return <AuthView onLogin={(user) => {
       setUser(user);
       if (user.role === 'Lectura') {
         setCurrentView('dashboard');
       } else {
-        setCurrentView('form');
+        setCurrentView('dashboard');
       }
     }} />;
   }
@@ -188,15 +281,18 @@ export default function App() {
                     onClick={() => handleNavigate('notifications')}
                     className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${currentView === 'notifications' ? 'bg-primary-dark text-white' : 'text-primary-light hover:bg-primary-dark hover:text-white'}`}
                   >
-                    <div className="relative flex items-center gap-2">
+                    <div className="relative">
                       <Bell size={18} />
-                      Notificacions
                       {unreadCount > 0 && (
-                        <span style={{ background: '#C62828', color: 'white', borderRadius: '999px', padding: '1px 6px', fontSize: '11px', marginLeft: '4px' }}>
-                          {unreadCount}
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 text-white text-[10px] items-center justify-center font-bold">
+                            {unreadCount}
+                          </span>
                         </span>
                       )}
                     </div>
+                    Notificacions
                   </button>
                 )}
                 {user.role === 'Administrador' && (

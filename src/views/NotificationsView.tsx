@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { FilePlus, PenSquare, CheckCircle2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface NotificationsViewProps {
   user: User;
@@ -11,8 +12,8 @@ interface Notification {
   id: number;
   created_at: string;
   type: 'new_request' | 'record_updated';
-  recipient_user_id: number | null;
-  triggered_by_user_id: number;
+  recipient_user_id: string | null;
+  triggered_by_user_id: string;
   triggered_by_name: string;
   peticio_id: number;
   peticio_objecte: string;
@@ -31,20 +32,26 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      let query = supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (!res.ok) throw new Error('Error en carregar les notificacions');
+      if (user.role === 'Gestió') {
+        query = query.or('recipient_user_id.is.null,type.eq.new_request');
+      } else if (user.role === 'Peticions') {
+        query = query.eq('recipient_user_id', user.id);
+      }
+      // Admin continues to see everything (no filter)
 
-      const data = await res.json();
-      setNotifications(data);
-      
+      const { data, error: sbError } = await query;
+
+      if (sbError) throw sbError;
+
+      setNotifications(data as unknown as Notification[]);
+
       // Mark all as read
-      const unreadIds = data.filter((n: Notification) => !n.is_read).map((n: Notification) => n.id);
+      const unreadIds = data.filter(n => !n.is_read).map(n => n.id);
       if (unreadIds.length > 0) {
         markAsRead(unreadIds);
       }
@@ -57,18 +64,15 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
 
   const markAsRead = async (ids: number[]) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch('/api/notifications/mark-read', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ notification_ids: ids })
-      });
-      
+      const { error: sbError } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .in('id', ids);
+
+      if (sbError) throw sbError;
+
       // Update local state to reflect read status
-      setNotifications(prev => prev.map(n => 
+      setNotifications(prev => prev.map(n =>
         ids.includes(n.id) ? { ...n, is_read: true } : n
       ));
     } catch (err) {
@@ -122,11 +126,10 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
         <button
           onClick={handleMarkAllRead}
           disabled={allRead}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            allRead 
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-              : 'bg-white border border-border-light text-primary hover:bg-slate-50 shadow-sm'
-          }`}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${allRead
+            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            : 'bg-white border border-border-light text-primary hover:bg-slate-50 shadow-sm'
+            }`}
         >
           <div className="flex items-center gap-2">
             <CheckCircle2 size={16} />
@@ -145,18 +148,17 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
           </div>
         ) : (
           notifications.map(notification => (
-            <div 
+            <div
               key={notification.id}
-              className={`relative p-5 rounded-lg border transition-all ${
-                notification.is_read 
-                  ? 'bg-[#F4F8FC] border-transparent' 
-                  : 'bg-white border-border-light shadow-sm'
-              }`}
+              className={`relative p-5 rounded-lg border transition-all ${notification.is_read
+                ? 'bg-[#F4F8FC] border-transparent'
+                : 'bg-white border-border-light shadow-sm'
+                }`}
             >
               {!notification.is_read && (
                 <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary rounded-l-lg"></div>
               )}
-              
+
               <div className="flex gap-4">
                 <div className="flex-shrink-0 mt-1">
                   {notification.type === 'new_request' ? (
@@ -169,16 +171,16 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-grow">
                   <h3 className="font-semibold text-text-primary mb-1">
                     {notification.type === 'new_request' ? 'Nova sol·licitud enviada' : 'Registre actualitzat'}
                   </h3>
-                  
+
                   <p className="text-text-secondary text-sm mb-2">
                     En <span className="font-medium text-text-primary">{notification.triggered_by_name}</span> {notification.type === 'new_request' ? 'ha enviat una nova sol·licitud:' : 'ha modificat la teva sol·licitud:'} <span className="font-medium text-text-primary">"{notification.peticio_objecte}"</span>
                   </p>
-                  
+
                   {notification.type === 'record_updated' && notification.changed_fields && notification.changed_fields.length > 0 && (
                     <div className="mb-3 pt-2 border-t border-border-light/50">
                       <p className="text-xs text-text-secondary">
@@ -186,12 +188,12 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-border-light/50">
                     <span className="text-xs text-text-muted">
                       {formatDate(notification.created_at)}
                     </span>
-                    
+
                     <button
                       onClick={() => onNavigateToRecord(notification.peticio_id)}
                       className="text-xs font-medium text-primary hover:text-primary-dark hover:underline flex items-center gap-1"

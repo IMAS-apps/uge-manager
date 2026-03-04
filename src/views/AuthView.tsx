@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { User } from '../types';
 import { LogIn, UserPlus } from 'lucide-react';
 import { ImasLogo } from '../App';
+import { supabase } from '../lib/supabase';
 
 interface AuthViewProps {
-  onLogin: (user: User, token: string) => void;
+  onLogin: (user: User) => void;
 }
 
 export function AuthView({ onLogin }: AuthViewProps) {
@@ -23,25 +24,68 @@ export function AuthView({ onLogin }: AuthViewProps) {
     setLoading(true);
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const body = isLogin ? { email, password } : { email, password, full_name: fullName };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "S'ha produït un error");
-      }
-
       if (isLogin) {
-        onLogin(data.user, data.token);
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+        if (!data.user) throw new Error("No s'ha pogut iniciar sessió");
+
+        // Fetch profile
+        let { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (profileError) throw profileError;
+
+        // Fallback: If profile doesn't exist (e.g. failed during registration due to RLS)
+        if (!profile) {
+          const { count } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+
+          const fallbackRole = (count === 0) ? 'Administrador' : 'Lectura';
+
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email!,
+              full_name: fullName || data.user.email!.split('@')[0], // Fallback name
+              role: fallbackRole,
+            })
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          profile = newProfile;
+        }
+
+        onLogin({
+          id: data.user.id,
+          email: data.user.email!,
+          full_name: profile.full_name,
+          role: profile.role,
+        });
       } else {
-        onLogin(data.user, data.token);
+        const { error: registerError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName
+            }
+          }
+        });
+
+        if (registerError) throw registerError;
+
+        setSuccessMsg("Registre correcte! Confirma el teu correu electrònic per activar el compte i inicia sessió.");
+        setIsLogin(true);
       }
     } catch (err: any) {
       setError(err.message);

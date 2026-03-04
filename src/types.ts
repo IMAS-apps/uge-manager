@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  id: string;
   full_name: string;
   email: string;
   role: string;
@@ -24,7 +24,7 @@ export interface Record {
   partida_economica: string;
   base_imposable: number;
   quota_iva: number;
-  fitxers_pressupost: string; // JSON string of array of { name: string, path: string, size: number }
+  fitxers_pressupost: { name: string, path: string, size: number }[];
   detalls_addicionals: string;
   motivacio_no_contractacio?: string;
   sistema_tramitacio: string;
@@ -34,7 +34,7 @@ export interface Record {
   relacio_o: string;
   finalitzat: boolean;
   publicat: boolean;
-  created_by: number;
+  created_by: string;
   updated_at: string;
 }
 

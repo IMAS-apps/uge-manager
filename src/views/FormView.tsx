@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
 import { Save, AlertCircle, CheckCircle2, UploadCloud, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface FormViewProps {
   user: User;
@@ -52,11 +53,11 @@ export function FormView({ user, onSuccess }: FormViewProps) {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files) as File[];
       const validFiles = selectedFiles.filter(f => f.type === 'application/pdf');
-      
+
       if (validFiles.length !== selectedFiles.length) {
         setError("Només s'accepten fitxers PDF.");
       }
-      
+
       setFiles(prev => {
         const newFiles = [...prev, ...validFiles];
         if (newFiles.length > 3) {
@@ -100,31 +101,59 @@ export function FormView({ user, onSuccess }: FormViewProps) {
     setLoading(true);
 
     try {
-      const submitData = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        submitData.append(key, value as string);
-      });
-      
-      files.forEach(file => {
-        submitData.append('fitxers_pressupost', file);
-      });
+      // 1. Upload files to Supabase Storage
+      const uploadedFilesMetadata = [];
+      const timestamp = Date.now();
 
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/peticions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: submitData
-      });
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${timestamp}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
 
-      const data = await res.json();
+        const { error: uploadError, data } = await supabase.storage
+          .from('peticions_pressupostos')
+          .upload(filePath, file);
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Error en desar la petició');
+        if (uploadError) throw uploadError;
+
+        uploadedFilesMetadata.push({
+          name: file.name,
+          path: data.path,
+          size: file.size
+        });
       }
 
-      setSuccess(`Petició #${data.id} creada correctament.`);
+      // 2. Insert record into database
+      const { data: record, error: dbError } = await supabase
+        .from('records')
+        .insert({
+          responsable_contracte: formData.responsable_contracte,
+          organ_contractacio: formData.organ_contractacio,
+          justificacio: formData.justificacio,
+          objecte_contracte: formData.objecte_contracte,
+          caracteristiques_tecniques: formData.caracteristiques_tecniques,
+          tipus_contracte: formData.tipus_contracte,
+          tipus_despesa: formData.tipus_despesa,
+          termini_execucio: parseInt(formData.termini_execucio),
+          codi_cpv: formData.codi_cpv,
+          partida_organica: formData.partida_organica,
+          partida_programa: formData.partida_programa,
+          partida_economica: formData.partida_economica,
+          base_imposable: parseFloat(formData.base_imposable),
+          quota_iva: parseFloat(formData.quota_iva),
+          detalls_addicionals: formData.detalls_addicionals || null,
+          email: user.email,
+          nom: user.full_name,
+          hora: new Date().toISOString(),
+          created_by: user.id,
+          fitxers_pressupost: uploadedFilesMetadata
+        })
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      setSuccess(`Petició #${record.id} creada correctament.`);
       setFormData({
         responsable_contracte: '', organ_contractacio: '', justificacio: '', objecte_contracte: '',
         caracteristiques_tecniques: '', tipus_contracte: '', tipus_despesa: '', termini_execucio: '',
@@ -132,7 +161,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
         base_imposable: '', quota_iva: '', detalls_addicionals: ''
       });
       setFiles([]);
-      
+
       setTimeout(() => {
         onSuccess();
       }, 2000);
@@ -321,7 +350,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
                 <input type="file" className="hidden" accept="application/pdf" multiple onChange={handleFileChange} disabled={files.length >= 3} />
               </label>
             </div>
-            
+
             {files.length > 0 && (
               <ul className="mt-4 space-y-2">
                 {files.map((file, index) => (

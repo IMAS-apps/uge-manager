@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../types';
-import { Filter, X, Eye, CheckCircle2, AlertCircle, Globe, Search, ExternalLink, FileText } from 'lucide-react';
+import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
+import { supabase } from '../lib/supabase';
 
 interface DashboardViewProps {
   user: User;
@@ -13,7 +14,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Filters
   const [filterSearch, setFilterSearch] = useState('');
   const [filterTipusContracte, setFilterTipusContracte] = useState<string[]>([]);
@@ -26,20 +27,25 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [modalMode, setModalMode] = useState<'view' | 'edit'>('view');
   const [deleteConfirmRecord, setDeleteConfirmRecord] = useState<Record | null>(null);
-  
+
+  // Sorting State
+  const [sortField, setSortField] = useState<string>('hora');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
   // Toast
-  const [toast, setToast] = useState<{msg: string, type: 'success'|'error'} | null>(null);
+  const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
 
   const fetchRecords = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/peticions', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Error en carregar les peticions');
-      const data = await res.json();
-      setRecords(data);
+      const { data, error: sbError } = await supabase
+        .from('records')
+        .select('*')
+        .order('hora', { ascending: false });
+
+      if (sbError) throw sbError;
+
+      setRecords(data as unknown as Record[]);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -82,14 +88,14 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
   const filteredRecords = records.filter(r => {
     if (filterSearch) {
       const searchLower = filterSearch.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         (r.responsable_contracte?.toLowerCase() || '').includes(searchLower) ||
         (r.objecte_contracte?.toLowerCase() || '').includes(searchLower) ||
         (r.nom?.toLowerCase() || '').includes(searchLower) ||
         (r.email?.toLowerCase() || '').includes(searchLower);
       if (!matchesSearch) return false;
     }
-    
+
     if (filterTipusContracte.length > 0 && !filterTipusContracte.includes(r.tipus_contracte)) return false;
     if (filterResponsable && r.responsable_contracte !== filterResponsable) return false;
     if (filterOrgan && r.organ_contractacio !== filterOrgan) return false;
@@ -103,21 +109,53 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
     return true;
   });
 
+  const sortedRecords = [...filteredRecords].sort((a, b) => {
+    let valA: any = a[sortField as keyof Record];
+    let valB: any = b[sortField as keyof Record];
+
+    // Special case for computed total
+    if (sortField === 'total') {
+      valA = (a.base_imposable || 0) + (a.quota_iva || 0);
+      valB = (b.base_imposable || 0) + (b.quota_iva || 0);
+    }
+
+    if (valA === valB) return 0;
+    if (valA === null || valA === undefined) return 1;
+    if (valB === null || valB === undefined) return -1;
+
+    const modifier = sortDirection === 'asc' ? 1 : -1;
+
+    if (typeof valA === 'string') {
+      return valA.localeCompare(valB) * modifier;
+    }
+
+    return (valA < valB ? -1 : 1) * modifier;
+  });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const SortIndicator = ({ field }: { field: string }) => {
+    if (sortField !== field) return <div className="w-4" />;
+    return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
+  };
+
   const handleSaveEdit = async (updatedData: Partial<Record>) => {
     if (!selectedRecord) return;
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/peticions/${selectedRecord.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedData)
-      });
-      
-      if (!res.ok) throw new Error('Error en actualitzar la petició');
-      
+      const { error: sbError } = await supabase
+        .from('records')
+        .update(updatedData)
+        .eq('id', selectedRecord.id);
+
+      if (sbError) throw sbError;
+
       setToast({ msg: 'Petició actualitzada correctament', type: 'success' });
       setSelectedRecord(null);
       fetchRecords();
@@ -129,19 +167,13 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
   const handleDelete = async () => {
     if (!deleteConfirmRecord) return;
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/peticions/${deleteConfirmRecord.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error en eliminar la petició');
-      }
-      
+      const { error: sbError } = await supabase
+        .from('records')
+        .delete()
+        .eq('id', deleteConfirmRecord.id);
+
+      if (sbError) throw sbError;
+
       setToast({ msg: `La petició #${deleteConfirmRecord.id} ha estat eliminada correctament.`, type: 'success' });
       setDeleteConfirmRecord(null);
       setRecords(records.filter(r => r.id !== deleteConfirmRecord.id));
@@ -152,7 +184,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
 
   const getSistemaBadge = (record: Record) => {
     const sistema = record.sistema_tramitacio;
-    
+
     let badge;
     if (!sistema) {
       badge = <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold border border-slate-200">Sense assignar</span>;
@@ -217,7 +249,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
               Estàs segur que vols eliminar la petició #{deleteConfirmRecord.id}? Aquesta acció no es pot desfer.
             </p>
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => {
                   const rec = deleteConfirmRecord;
                   setDeleteConfirmRecord(null);
@@ -228,7 +260,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
               >
                 Cancel·lar
               </button>
-              <button 
+              <button
                 onClick={handleDelete}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 transition-colors shadow-sm"
               >
@@ -240,7 +272,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
       )}
 
       {/* Mobile Sidebar Toggle */}
-      <button 
+      <button
         className="md:hidden absolute bottom-4 right-4 z-30 bg-blue-900 text-white p-3 rounded-full shadow-lg"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
       >
@@ -261,7 +293,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="p-4 overflow-y-auto flex-1 space-y-6">
           {/* Global Search */}
           <div>
@@ -286,12 +318,12 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
               {['Subministrament', 'Servei', 'Obra'].map(tipus => {
                 const isChecked = filterTipusContracte.includes(tipus);
                 return (
-                  <label 
-                    key={tipus} 
+                  <label
+                    key={tipus}
                     className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors border-l-2 ${isChecked ? 'bg-primary-light border-primary' : 'border-transparent hover:bg-slate-100'}`}
                   >
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       className="rounded border-border-light text-primary focus:ring-primary"
                       checked={isChecked}
                       onChange={(e) => {
@@ -311,8 +343,8 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
 
           <div>
             <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Responsable del contracte</label>
-            <select 
-              value={filterResponsable} 
+            <select
+              value={filterResponsable}
               onChange={(e) => setFilterResponsable(e.target.value)}
               className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-1 focus:ring-primary outline-none"
             >
@@ -323,8 +355,8 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
 
           <div>
             <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Òrgan de contractació</label>
-            <select 
-              value={filterOrgan} 
+            <select
+              value={filterOrgan}
               onChange={(e) => setFilterOrgan(e.target.value)}
               className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-1 focus:ring-primary outline-none"
             >
@@ -335,8 +367,8 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
 
           <div>
             <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Sistema de tramitació</label>
-            <select 
-              value={filterSistema} 
+            <select
+              value={filterSistema}
               onChange={(e) => setFilterSistema(e.target.value)}
               className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-1 focus:ring-primary outline-none"
             >
@@ -348,7 +380,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
         </div>
 
         <div className="p-4 border-t border-border-light bg-bg-light">
-          <button 
+          <button
             onClick={handleClearFilters}
             className="w-full py-2 px-4 bg-white border border-border-light text-text-primary rounded-md text-sm font-medium hover:bg-slate-50 transition-colors"
           >
@@ -362,7 +394,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
         <div className="p-4 md:p-6 border-b border-border-light bg-white flex justify-between items-center">
           <h1 className="text-xl font-bold text-text-primary">Control de sol·licituds</h1>
           <span className="bg-primary-light text-primary-dark text-xs font-semibold px-2.5 py-0.5 rounded-full">
-            Total: {filteredRecords.length} registres
+            Total: {sortedRecords.length} registres
           </span>
         </div>
 
@@ -376,7 +408,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
               <AlertCircle className="mx-auto mb-2" size={32} />
               <p>{error}</p>
             </div>
-          ) : filteredRecords.length === 0 ? (
+          ) : sortedRecords.length === 0 ? (
             <div className="text-center text-text-secondary p-12 bg-white rounded-lg shadow-sm border border-border-light flex flex-col items-center">
               <FileText size={48} className="text-slate-300 mb-4" />
               <p className="text-lg font-medium text-text-primary">No s'han trobat peticions</p>
@@ -388,22 +420,62 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                 <table className="min-w-full divide-y divide-border-light">
                   <thead className="bg-primary sticky top-0 z-10">
                     <tr>
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">DATA</th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        onClick={() => handleSort('hora')}
+                      >
+                        <div className="flex items-center gap-1">
+                          DATA <SortIndicator field="hora" />
+                        </div>
+                      </th>
                       {showResponsableColumn && (
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Responsable</th>
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                          onClick={() => handleSort('responsable_contracte')}
+                        >
+                          <div className="flex items-center gap-1">
+                            Responsable <SortIndicator field="responsable_contracte" />
+                          </div>
+                        </th>
                       )}
-                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Objecte del contracte</th>
-                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Total (amb IVA)</th>
-                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Sistema</th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        onClick={() => handleSort('objecte_contracte')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Objecte del contracte <SortIndicator field="objecte_contracte" />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-right text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        onClick={() => handleSort('total')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Total (amb IVA) <SortIndicator field="total" />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        onClick={() => handleSort('sistema_tramitacio')}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Sistema <SortIndicator field="sistema_tramitacio" />
+                        </div>
+                      </th>
                       <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Estat</th>
                       <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Accions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-border-light">
-                    {filteredRecords.map((record) => {
-                      const isPublicat = record.estat === 'Publicat';
-                      const isFinalitzat = record.finalitzat === 1 || record.finalitzat === true;
-                      
+                    {sortedRecords.map((record) => {
+                      const isPublicat = record.publicat === true;
+                      const isFinalitzat = record.finalitzat === true;
+
                       return (
                         <tr key={record.id} className="hover:bg-primary-light transition-colors">
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">{formatDate(record.hora)}</td>
@@ -449,16 +521,16 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
                             <div className="flex items-center justify-center gap-2">
-                              <button 
+                              <button
                                 onClick={() => { setSelectedRecord(record); setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); }}
                                 className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
                                 title="Veure detalls"
                               >
                                 <Eye size={18} />
                               </button>
-                              
+
                               {record.segex && (
-                                <a 
+                                <a
                                   href={`https://imas.secimallorca.net/segex/expediente.aspx?id=${record.segex.replace(/\D/g, '')}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -484,12 +556,12 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
 
       {/* Modal */}
       {selectedRecord && (
-        <EditModal 
-          record={selectedRecord} 
-          mode={modalMode} 
+        <EditModal
+          record={selectedRecord}
+          mode={modalMode}
           user={user}
-          onClose={() => setSelectedRecord(null)} 
-          onSave={handleSaveEdit} 
+          onClose={() => setSelectedRecord(null)}
+          onSave={handleSaveEdit}
           onDeleteRequest={() => {
             setDeleteConfirmRecord(selectedRecord);
             setSelectedRecord(null);
