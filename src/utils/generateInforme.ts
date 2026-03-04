@@ -35,8 +35,11 @@ export async function generateInforme(record: any): Promise<void> {
         }
         const template = await response.arrayBuffer();
 
-        // 2. Map record fields to template variables
+        // 2. Map record fields to template variables (both flat and nested for flexibility)
         const data = {
+            record: record, // Allows «record.field»
+            
+            // Flat aliases for simpler tags
             Organ_de_contractacio: record.organ_contractacio,
             Responsable_del_contracte: record.responsable_contracte,
             Nombre: record.nom,
