@@ -3,7 +3,7 @@ import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../type
 import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
 import { supabase } from '../lib/supabase';
-import { generateInforme } from '../utils/generateInforme';
+// import { generateInforme } from '../utils/generateInforme'; // Switched to dynamic import below
 
 interface DashboardViewProps {
   user: User;
@@ -525,6 +525,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                               <button
                                 onClick={async () => {
                                   try {
+                                    const { generateInforme } = await import('../utils/generateInforme');
                                     await generateInforme(record);
                                   } catch (err: any) {
                                     alert(err.message);

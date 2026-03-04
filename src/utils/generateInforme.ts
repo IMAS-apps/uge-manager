@@ -56,7 +56,7 @@ export async function generateInforme(record: any): Promise<void> {
 
         // 3. Use docx-templates to substitute variables
         const report = await createReport({
-            template: Buffer.from(template),
+            template: new Uint8Array(template),
             data: data,
             cmdDelimiter: ['{{', '}}'],
         });
