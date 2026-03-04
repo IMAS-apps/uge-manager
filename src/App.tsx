@@ -7,6 +7,17 @@ import { NotificationsView } from './views/NotificationsView';
 import { User } from './types';
 import { LogOut, FileText, LayoutDashboard, Users, AlertCircle, Bell } from 'lucide-react';
 
+export function ImasLogo({ className = '' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="16" fill="#1E3A5F" />
+      <text x="50" y="42" textAnchor="middle" fill="white" fontSize="22" fontWeight="bold" fontFamily="Arial, sans-serif">IMAS</text>
+      <line x1="25" y1="52" x2="75" y2="52" stroke="#D4A843" strokeWidth="2" />
+      <text x="50" y="70" textAnchor="middle" fill="#D4A843" fontSize="10" fontWeight="500" fontFamily="Arial, sans-serif">UGE</text>
+    </svg>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<'form' | 'dashboard' | 'users' | 'notifications'>('dashboard');
@@ -28,21 +39,21 @@ export default function App() {
       fetch('/api/auth/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setUser(data.user);
-          if (data.user.role === 'Lectura') {
-            setCurrentView('dashboard');
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setUser(data.user);
+            if (data.user.role === 'Lectura') {
+              setCurrentView('dashboard');
+            } else {
+              setCurrentView('form');
+            }
           } else {
-            setCurrentView('form');
+            localStorage.removeItem('token');
           }
-        } else {
-          localStorage.removeItem('token');
-        }
-      })
-      .catch(() => localStorage.removeItem('token'))
-      .finally(() => setLoading(false));
+        })
+        .catch(() => localStorage.removeItem('token'))
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -181,7 +192,7 @@ export default function App() {
                       <Bell size={18} />
                       Notificacions
                       {unreadCount > 0 && (
-                        <span style={{background:'#C62828', color:'white', borderRadius:'999px', padding:'1px 6px', fontSize:'11px', marginLeft:'4px'}}>
+                        <span style={{ background: '#C62828', color: 'white', borderRadius: '999px', padding: '1px 6px', fontSize: '11px', marginLeft: '4px' }}>
                           {unreadCount}
                         </span>
                       )}
@@ -263,17 +274,17 @@ export default function App() {
       <main className="flex-1 flex flex-col">
         {currentView === 'form' && <FormView user={user} onSuccess={() => handleNavigate('dashboard')} />}
         {currentView === 'dashboard' && (
-          <DashboardView 
-            user={user} 
-            pendingOpenPeticioId={pendingOpenPeticioId} 
-            onPendingOpenHandled={() => setPendingOpenPeticioId(null)} 
+          <DashboardView
+            user={user}
+            pendingOpenPeticioId={pendingOpenPeticioId}
+            onPendingOpenHandled={() => setPendingOpenPeticioId(null)}
           />
         )}
         {currentView === 'users' && <UserManagementView />}
         {currentView === 'notifications' && (
-          <NotificationsView 
-            user={user} 
-            onNavigateToRecord={handleNavigateToRecord} 
+          <NotificationsView
+            user={user}
+            onNavigateToRecord={handleNavigateToRecord}
           />
         )}
       </main>

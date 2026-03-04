@@ -151,7 +151,7 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname);
   }
 });
-const upload = multer({ 
+const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
@@ -195,17 +195,22 @@ app.post('/api/auth/register', (req, res) => {
   }
 
   try {
+    // Check if this is the first user
+    const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
+    const role = userCount.count === 0 ? 'Administrador' : 'Lectura';
+
     const hash = bcrypt.hashSync(password, 10);
-    const stmt = db.prepare('INSERT INTO users (full_name, email, password_hash) VALUES (?, ?, ?)');
-    const info = stmt.run(full_name, email, hash);
+    const stmt = db.prepare('INSERT INTO users (full_name, email, password_hash, role) VALUES (?, ?, ?, ?)');
+    const info = stmt.run(full_name, email, hash, role);
     const newUserId = info.lastInsertRowid;
-    
-    const token = jwt.sign({ id: newUserId, email, full_name, role: 'Lectura' }, JWT_SECRET, { expiresIn: '24h' });
-    res.status(201).json({ message: 'Usuari registrat correctament.', token, user: { id: newUserId, email, full_name, role: 'Lectura' } });
+
+    const token = jwt.sign({ id: newUserId, email, full_name, role }, JWT_SECRET, { expiresIn: '24h' });
+    res.status(201).json({ message: 'Usuari registrat correctament.', token, user: { id: newUserId, email, full_name, role } });
   } catch (error: any) {
     if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       res.status(400).json({ error: 'Aquest correu electrònic ja està registrat.' });
     } else {
+      console.error('Registration error:', error);
       res.status(500).json({ error: 'Error intern del servidor.' });
     }
   }
@@ -272,9 +277,9 @@ app.post('/api/peticions', authenticateToken, requireRole('Peticions', 'Gestió'
         peticio_id, peticio_objecte, changed_fields, read_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     notifStmt.run(
-      'new_request', null, req.user.id, req.user.full_name, 
+      'new_request', null, req.user.id, req.user.full_name,
       info.lastInsertRowid, data.objecte_contracte, null, '[]'
     );
 
@@ -344,9 +349,9 @@ app.patch('/api/peticions/:id', authenticateToken, requireRole('Gestió', 'Admin
           peticio_id, peticio_objecte, changed_fields, read_by
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
-      
+
       notifStmt.run(
-        'record_updated', oldRecord.created_by, req.user.id, req.user.full_name, 
+        'record_updated', oldRecord.created_by, req.user.id, req.user.full_name,
         id, oldRecord.objecte_contracte, JSON.stringify(changedFields), '[]'
       );
     }
@@ -462,7 +467,7 @@ app.get('/api/notifications', authenticateToken, (req: any, res) => {
 // Notifications: Mark Read
 app.post('/api/notifications/mark-read', authenticateToken, (req: any, res) => {
   if (req.user.role === 'Lectura') return res.status(403).json({ error: 'Accés denegat.' });
-  
+
   const { notification_ids } = req.body;
   if (!Array.isArray(notification_ids)) return res.status(400).json({ error: 'Format invàlid.' });
 
@@ -544,7 +549,7 @@ app.get('/api/users', authenticateToken, requireRole('Administrador'), (req: any
 app.patch('/api/users/:id/role', authenticateToken, requireRole('Administrador'), (req: any, res) => {
   const { id } = req.params;
   const { role } = req.body;
-  
+
   if (!['Lectura', 'Peticions', 'Gestió', 'Administrador'].includes(role)) {
     return res.status(400).json({ error: 'Rol invàlid.' });
   }
@@ -552,11 +557,11 @@ app.patch('/api/users/:id/role', authenticateToken, requireRole('Administrador')
   try {
     const updateStmt = db.prepare('UPDATE users SET role = ? WHERE id = ?');
     const info = updateStmt.run(role, id);
-    
+
     if (info.changes === 0) {
       return res.status(404).json({ error: 'Usuari no trobat.' });
     }
-    
+
     const getStmt = db.prepare('SELECT id, full_name, email, role FROM users WHERE id = ?');
     const updatedUser = getStmt.get(id);
     res.json(updatedUser);

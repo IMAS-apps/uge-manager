@@ -41,9 +41,7 @@ export function AuthView({ onLogin }: AuthViewProps) {
       if (isLogin) {
         onLogin(data.user, data.token);
       } else {
-        setSuccessMsg('Usuari registrat correctament. Ara pots iniciar sessió.');
-        setIsLogin(true);
-        setPassword('');
+        onLogin(data.user, data.token);
       }
     } catch (err: any) {
       setError(err.message);
@@ -88,7 +86,7 @@ export function AuthView({ onLogin }: AuthViewProps) {
               />
             </div>
           )}
-          
+
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Correu electrònic</label>
             <input
