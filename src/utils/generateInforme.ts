@@ -3,25 +3,25 @@
  * Path: public/templates/Informe_de_necessitats_AD.docx
  * 
  * The template uses «guillemets» as delimiters. 
- * Ensure the text inside the guillemets matches the variables below 
- * (replace spaces with underscores, e.g., «Organ_de_contractacio»):
+ * Use the EXACT names below (case sensitive, no spaces unless indicated):
  * 
- * - «Organ_de_contractacio»           -> record.organ_contractacio
- * - «Responsable_del_contracte»        -> record.responsable_contracte
- * - «Nombre»                           -> record.nom
- * - «Correo_electronico»               -> record.email
- * - «Objecte_del_contrate_descripcio_del_que» -> record.objecte_contracte
- * - «Descripcio_de_la_necessitat_a_satisfer_» -> record.justificacio
- * - «Caracteristiques_tecniques_especificaci» -> record.caracteristiques_tecniques
- * - «Tipus_de_contracte»               -> record.tipus_contracte
- * - «Codi_dobjecte_contractual_CPV»    -> record.codi_cpv
- * - «Base_imposable_»                  -> record.base_imposable
- * - «Quota_dIVA_»                      -> record.quota_iva
- * - «Import_total_»                    -> total (base + iva)
- * - «Termini_dexecucio_o_durada_previstaen» -> record.termini_execucio
- * - «Partida_organica»                 -> record.partida_organica
- * - «Partida_programa»                 -> record.partida_programa
- * - «Partida_economica»                -> record.partida_economica
+ * - «record.organ_contractacio»
+ * - «record.responsable_contracte»
+ * - «record.nom»
+ * - «record.email»
+ * - «record.objecte_contracte»
+ * - «record.justificacio»
+ * - «record.caracteristiques_tecniques»
+ * - «record.tipus_contracte»
+ * - «record.codi_cpv»
+ * - «record.base_imposable»
+ * - «record.quota_iva»
+ * - «record.partida_organica»
+ * - «record.partida_programa»
+ * - «record.partida_economica»
+ * 
+ * Custom formatted fields:
+ * - «Import_total_» (Example: 121.00 €)
  */
 
 import { createReport } from 'docx-templates';
@@ -38,7 +38,11 @@ export async function generateInforme(record: any): Promise<void> {
         // 2. Map record fields to template variables (both flat and nested for flexibility)
         const data = {
             record: record, // Allows «record.field»
-            
+
+            // Literal aliases to prevent errors if user copied descriptive text
+            "total (base + iva)": `${(record.base_imposable + record.quota_iva).toFixed(2)} €`,
+            "total": `${(record.base_imposable + record.quota_iva).toFixed(2)} €`,
+
             // Flat aliases for simpler tags
             Organ_de_contractacio: record.organ_contractacio,
             Responsable_del_contracte: record.responsable_contracte,
