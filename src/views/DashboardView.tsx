@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../types';
-import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown } from 'lucide-react';
+import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
 import { supabase } from '../lib/supabase';
+import { generateInforme } from '../utils/generateInforme';
 
 interface DashboardViewProps {
   user: User;
@@ -521,6 +522,20 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
                             <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await generateInforme(record);
+                                  } catch (err: any) {
+                                    alert(err.message);
+                                  }
+                                }}
+                                className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
+                                title="Descarregar informe"
+                              >
+                                <FileDown size={18} />
+                              </button>
+
                               <button
                                 onClick={() => { setSelectedRecord(record); setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); }}
                                 className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
