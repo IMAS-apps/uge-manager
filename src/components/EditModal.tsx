@@ -74,6 +74,11 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
   const files = record.fitxers_pressupost || [];
 
   const getFileUrl = (path: string) => {
+    // If the path is already a full URL (e.g. a SharePoint link loaded manually),
+    // return it directly instead of treating it as a Supabase Storage key.
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
     const { data } = supabase.storage
       .from('peticions_pressupostos')
       .getPublicUrl(path);
