@@ -39,7 +39,8 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     relacio_o: record.relacio_o || '',
     finalitzat: record.finalitzat,
     publicat: record.publicat,
-    motivacio_no_contractacio: record.motivacio_no_contractacio || ''
+    motivacio_no_contractacio: record.motivacio_no_contractacio || '',
+    detalls_addicionals: record.detalls_addicionals || ''
   });
 
   const modalRef = useRef<HTMLDivElement>(null);
@@ -52,7 +53,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
@@ -184,7 +185,22 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               </SectionCard>
 
               <SectionCard title="Notes">
-                <Field label="Detalls addicionals" value={record.detalls_addicionals} fullWidth />
+                {user.role === 'Administrador' ? (
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Detalls addicionals</label>
+                    <textarea
+                      name="detalls_addicionals"
+                      value={formData.detalls_addicionals}
+                      onChange={handleChange}
+                      form="edit-form"
+                      rows={5}
+                      className="w-full px-4 py-3 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm resize-y"
+                      placeholder="Escriu les notes i detalls addicionals aquí..."
+                    />
+                  </div>
+                ) : (
+                  <Field label="Detalls addicionals" value={record.detalls_addicionals} fullWidth />
+                )}
               </SectionCard>
             </div>
 

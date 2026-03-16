@@ -65,7 +65,7 @@ export const ORGANS = [
 ];
 
 export const SISTEMES_TRAMITACIO = [
-  "D", "AD", "ADO", "OFI", "REC", "CF", "R. Patrimonial"
+  "D", "AD", "ADO", "OFI", "REC", "CF", "R. Patrimonial", "REBUTJAT (veure notes)"
 ];
 
 export const PARTIDES_ORGANIQUES = ["00", "10", "20", "30", "40", "50", "60"];
