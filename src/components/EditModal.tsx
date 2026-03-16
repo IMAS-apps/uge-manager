@@ -192,29 +192,10 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
             <div className="lg:col-span-1">
               <div className="sticky top-0">
                 <SectionCard title="Gestió Interna">
-                  {mode === 'view' ? (
-                    <div className="grid grid-cols-1 gap-y-4">
-                      <Field label="Sistema de tramitació" value={record.sistema_tramitacio} />
-                      <Field label="SEGEX" value={record.segex} />
-                      <Field label="Motivació de no contractació" value={record.motivacio_no_contractacio} />
-                      <Field label="Reg. Factura" value={record.reg_factura} />
-                      <Field label="Relació Q" value={record.relacio_q} />
-                      <Field label="Relació O" value={record.relacio_o} />
-                      <div>
-                        <span className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Finalitzat</span>
-                        <div className="text-sm">
-                          {record.finalitzat ? <span className="text-success font-medium flex items-center gap-1"><CheckCircle2 size={16} /> Sí</span> : <span className="text-text-secondary">No</span>}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Publicat</span>
-                        <div className="text-sm">
-                          {record.publicat ? <span className="text-success font-medium flex items-center gap-1"><CheckCircle2 size={16} /> Sí</span> : <span className="text-text-secondary">No</span>}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <form id="edit-form" onSubmit={handleSubmit} className="space-y-4">
+                  <form id="edit-form" onSubmit={handleSubmit} className="space-y-4">
+
+                    {/* Sistema de tramitació — only editable for Gestió/Admin */}
+                    {mode === 'edit' ? (
                       <div>
                         <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Sistema de tramitació</label>
                         <select
@@ -227,11 +208,14 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                           {SISTEMES_TRAMITACIO.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
+                    ) : (
+                      <Field label="Sistema de tramitació" value={record.sistema_tramitacio} />
+                    )}
 
+                    {/* SEGEX — only editable for Gestió/Admin */}
+                    {mode === 'edit' ? (
                       <div>
-                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">
-                          SEGEX
-                        </label>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">SEGEX</label>
                         <input
                           type="text"
                           name="segex"
@@ -240,78 +224,81 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                           className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
                         />
                       </div>
+                    ) : (
+                      <Field label="SEGEX" value={record.segex} />
+                    )}
 
-                      <div>
-                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Motivació de no contractació</label>
-                        <select
-                          name="motivacio_no_contractacio"
-                          value={formData.motivacio_no_contractacio}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                        >
-                          <option value="">Sense motivació</option>
-                          {MOTIVACIO_OPTIONS.slice(1).map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                        </select>
-                      </div>
+                    {/* The following 6 fields are editable for ALL roles */}
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Motivació de no contractació</label>
+                      <select
+                        name="motivacio_no_contractacio"
+                        value={formData.motivacio_no_contractacio}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                      >
+                        <option value="">Sense motivació</option>
+                        {MOTIVACIO_OPTIONS.slice(1).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </div>
 
-                      <div>
-                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Reg. Factura</label>
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Reg. Factura</label>
+                      <input
+                        type="text"
+                        name="reg_factura"
+                        value={formData.reg_factura}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació Q</label>
+                      <input
+                        type="text"
+                        name="relacio_q"
+                        value={formData.relacio_q}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació O</label>
+                      <input
+                        type="text"
+                        name="relacio_o"
+                        value={formData.relacio_o}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                      />
+                    </div>
+
+                    <div className="pt-4 border-t border-border-light space-y-3">
+                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.finalitzat ? 'bg-success/5 border-success/20' : 'bg-white border-border-light'}`}>
                         <input
-                          type="text"
-                          name="reg_factura"
-                          value={formData.reg_factura}
+                          type="checkbox"
+                          name="finalitzat"
+                          checked={formData.finalitzat}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                          className="w-5 h-5 text-success rounded border-border-light focus:ring-success"
                         />
-                      </div>
+                        <span className="text-sm font-medium text-text-primary">Finalitzat</span>
+                      </label>
 
-                      <div>
-                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació Q</label>
+                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.publicat ? 'bg-primary/5 border-primary/20' : 'bg-white border-border-light'}`}>
                         <input
-                          type="text"
-                          name="relacio_q"
-                          value={formData.relacio_q}
+                          type="checkbox"
+                          name="publicat"
+                          checked={formData.publicat}
                           onChange={handleChange}
-                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                          className="w-5 h-5 text-primary rounded border-border-light focus:ring-primary"
                         />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació O</label>
-                        <input
-                          type="text"
-                          name="relacio_o"
-                          value={formData.relacio_o}
-                          onChange={handleChange}
-                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                        />
-                      </div>
-
-                      <div className="pt-4 border-t border-border-light space-y-3">
-                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.finalitzat ? 'bg-success/5 border-success/20' : 'bg-white border-border-light'}`}>
-                          <input
-                            type="checkbox"
-                            name="finalitzat"
-                            checked={formData.finalitzat}
-                            onChange={handleChange}
-                            className="w-5 h-5 text-success rounded border-border-light focus:ring-success"
-                          />
-                          <span className="text-sm font-medium text-text-primary">Finalitzat</span>
-                        </label>
-
-                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.publicat ? 'bg-primary/5 border-primary/20' : 'bg-white border-border-light'}`}>
-                          <input
-                            type="checkbox"
-                            name="publicat"
-                            checked={formData.publicat}
-                            onChange={handleChange}
-                            className="w-5 h-5 text-primary rounded border-border-light focus:ring-primary"
-                          />
-                          <span className="text-sm font-medium text-text-primary">Publicat</span>
-                        </label>
-                      </div>
-                    </form>
-                  )}
+                        <span className="text-sm font-medium text-text-primary">Publicat</span>
+                      </label>
+                    </div>
+                  </form>
                 </SectionCard>
               </div>
             </div>
@@ -339,15 +326,13 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
             >
               Cancel·lar
             </button>
-            {mode === 'edit' && (
-              <button
-                type="submit"
-                form="edit-form"
-                className="px-4 py-2 text-sm font-medium text-white bg-accent border border-transparent rounded-md hover:bg-accent-dark transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <Save size={16} /> Desar
-              </button>
-            )}
+            <button
+              type="submit"
+              form="edit-form"
+              className="px-4 py-2 text-sm font-medium text-white bg-accent border border-transparent rounded-md hover:bg-accent-dark transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <Save size={16} /> Desar
+            </button>
           </div>
         </div>
       </div>
