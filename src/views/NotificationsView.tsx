@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { FilePlus, PenSquare, CheckCircle2 } from 'lucide-react';
+import { FilePlus, PenSquare, CheckCircle2, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface NotificationsViewProps {
@@ -80,10 +80,18 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
     }
   };
 
-  const handleMarkAllRead = () => {
-    const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
-    if (unreadIds.length > 0) {
-      markAsRead(unreadIds);
+  const handleClearAll = async () => {
+    if (notifications.length === 0) return;
+    try {
+      const ids = notifications.map(n => n.id);
+      const { error: sbError } = await supabase
+        .from('notifications')
+        .delete()
+        .in('id', ids);
+      if (sbError) throw sbError;
+      setNotifications([]);
+    } catch (err) {
+      console.error('Error netejant notificacions:', err);
     }
   };
 
@@ -111,7 +119,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
     }
   };
 
-  const allRead = notifications.every(n => n.is_read);
+  const hasNotifications = notifications.length > 0;
 
   if (loading) return <div className="p-8 text-center text-text-secondary">Carregant notificacions...</div>;
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
@@ -124,16 +132,16 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
           <p className="text-text-secondary">{getSubtitle()}</p>
         </div>
         <button
-          onClick={handleMarkAllRead}
-          disabled={allRead}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${allRead
+          onClick={handleClearAll}
+          disabled={!hasNotifications}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${!hasNotifications
             ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-            : 'bg-white border border-border-light text-primary hover:bg-slate-50 shadow-sm'
+            : 'bg-white border border-border-light text-red-600 hover:bg-red-50 shadow-sm'
             }`}
         >
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} />
-            Marcar totes com a llegides
+            <Trash2 size={16} />
+            Netejar totes les notificacions
           </div>
         </button>
       </div>
