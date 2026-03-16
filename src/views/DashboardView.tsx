@@ -89,11 +89,15 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
   const filteredRecords = records.filter(r => {
     if (filterSearch) {
       const searchLower = filterSearch.toLowerCase();
+      const total = (r.base_imposable || 0) + (r.quota_iva || 0);
+      const totalStr = String(total);
       const matchesSearch =
         (r.responsable_contracte?.toLowerCase() || '').includes(searchLower) ||
         (r.objecte_contracte?.toLowerCase() || '').includes(searchLower) ||
         (r.nom?.toLowerCase() || '').includes(searchLower) ||
-        (r.email?.toLowerCase() || '').includes(searchLower);
+        (r.email?.toLowerCase() || '').includes(searchLower) ||
+        totalStr.includes(searchLower) ||
+        (r.segex?.toLowerCase() || '').includes(searchLower);
       if (!matchesSearch) return false;
     }
 
