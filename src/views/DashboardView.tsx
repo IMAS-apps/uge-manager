@@ -97,7 +97,10 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
         (r.nom?.toLowerCase() || '').includes(searchLower) ||
         (r.email?.toLowerCase() || '').includes(searchLower) ||
         totalStr.includes(searchLower) ||
-        (r.segex?.toLowerCase() || '').includes(searchLower);
+        (r.segex?.toLowerCase() || '').includes(searchLower) ||
+        (r.codi_cpv?.toLowerCase() || '').includes(searchLower) ||
+        (r.partida_programa?.toLowerCase() || '').includes(searchLower) ||
+        (r.partida_economica?.toLowerCase() || '').includes(searchLower);
       if (!matchesSearch) return false;
     }
 
