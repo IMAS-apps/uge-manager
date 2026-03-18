@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS } from '../types';
+import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
 import { X, FileText, Download, Save, Info, Trash2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -32,6 +32,20 @@ const Field = ({ label, value, fullWidth = false }: { label: string, value: Reac
 
 export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest }: EditModalProps) {
   const [formData, setFormData] = useState({
+    responsable_contracte: record.responsable_contracte || '',
+    organ_contractacio: record.organ_contractacio || '',
+    justificacio: record.justificacio || '',
+    objecte_contracte: record.objecte_contracte || '',
+    caracteristiques_tecniques: record.caracteristiques_tecniques || '',
+    tipus_contracte: record.tipus_contracte || '',
+    tipus_despesa: record.tipus_despesa || '',
+    termini_execucio: record.termini_execucio || '',
+    codi_cpv: record.codi_cpv || '',
+    partida_organica: record.partida_organica || '',
+    partida_programa: record.partida_programa || '',
+    partida_economica: record.partida_economica || '',
+    base_imposable: record.base_imposable || 0,
+    quota_iva: record.quota_iva || 0,
     sistema_tramitacio: record.sistema_tramitacio || '',
     segex: record.segex || '',
     reg_factura: record.reg_factura || '',
@@ -65,7 +79,13 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const payload = {
+      ...formData,
+      termini_execucio: formData.termini_execucio ? Number(formData.termini_execucio) : null,
+      base_imposable: formData.base_imposable ? Number(formData.base_imposable) : 0,
+      quota_iva: formData.quota_iva ? Number(formData.quota_iva) : 0,
+    };
+    onSave(payload as any);
   };
 
   const formatCurrency = (amount: number) => {
@@ -86,7 +106,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     return data.publicUrl;
   };
 
-  const totalIva = record.base_imposable + record.quota_iva;
+  const totalIva = Number(formData.base_imposable) + Number(formData.quota_iva);
 
 
   return (
@@ -121,40 +141,173 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <Field label="Hora" value={record.hora} />
                   <Field label="Correu electrònic" value={record.email} />
                   <Field label="Nom" value={record.nom} />
-                  <Field label="Responsable del contracte" value={record.responsable_contracte} fullWidth />
-                  <Field label="Òrgan de contractació" value={record.organ_contractacio} fullWidth />
+                  
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Responsable del contracte</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <select name="responsable_contracte" value={formData.responsable_contracte} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
+                        <option value="">Seleccioni una opció</option>
+                        {RESPONSABLES.map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.responsable_contracte || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Òrgan de contractació</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <select name="organ_contractacio" value={formData.organ_contractacio} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
+                        <option value="">Seleccioni una opció</option>
+                        {ORGANS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.organ_contractacio || '—'}</div>
+                    )}
+                  </div>
                 </div>
               </SectionCard>
 
               <SectionCard title="Descripció">
                 <div className="grid grid-cols-1 gap-y-4">
-                  <Field label="Justificació de la necessitat" value={record.justificacio} fullWidth />
-                  <Field label="Objecte del contracte" value={record.objecte_contracte} fullWidth />
-                  <Field label="Característiques tècniques" value={record.caracteristiques_tecniques} fullWidth />
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Justificació de la necessitat</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <textarea name="justificacio" value={formData.justificacio} onChange={handleChange} form="edit-form" rows={3} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.justificacio || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Objecte del contracte</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <textarea name="objecte_contracte" value={formData.objecte_contracte} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.objecte_contracte || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Característiques tècniques</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <textarea name="caracteristiques_tecniques" value={formData.caracteristiques_tecniques} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.caracteristiques_tecniques || '—'}</div>
+                    )}
+                  </div>
                 </div>
               </SectionCard>
 
               <SectionCard title="Tipologia">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                  <Field label="Tipus de contracte" value={record.tipus_contracte} />
-                  <Field label="Tipus de despesa" value={record.tipus_despesa} />
-                  <Field label="Termini d'execució (dies)" value={record.termini_execucio} />
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Tipus de contracte</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <select name="tipus_contracte" value={formData.tipus_contracte} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
+                        <option value="">Selecciona un tipus</option>
+                        <option value="Subministrament">Subministrament</option>
+                        <option value="Servei">Servei</option>
+                        <option value="Obra">Obra</option>
+                      </select>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.tipus_contracte || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Tipus de despesa</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <select name="tipus_despesa" value={formData.tipus_despesa} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
+                        <option value="">Seleccioni una opció</option>
+                        <option value="Puntual">Puntual</option>
+                        <option value="Recurrent">Recurrent</option>
+                      </select>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.tipus_despesa || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Termini d'execució (dies)</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <input type="number" min="1" name="termini_execucio" value={formData.termini_execucio} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.termini_execucio || '—'}</div>
+                    )}
+                  </div>
                 </div>
               </SectionCard>
 
               <SectionCard title="Codificació Pressupostària">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                  <Field label="Codi CPV" value={record.codi_cpv} />
-                  <Field label="Partida Orgànica" value={record.partida_organica} />
-                  <Field label="Partida Programa" value={record.partida_programa} />
-                  <Field label="Partida Econòmica" value={record.partida_economica} />
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Codi CPV</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.codi_cpv || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Orgànica</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <select name="partida_organica" value={formData.partida_organica} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
+                        <option value="">Seleccioni</option>
+                        {PARTIDES_ORGANIQUES.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_organica || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Programa</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_programa || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Econòmica</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_economica || '—'}</div>
+                    )}
+                  </div>
                 </div>
               </SectionCard>
 
               <SectionCard title="Imports">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-                  <Field label="Base Imposable (sense IVA)" value={formatCurrency(record.base_imposable)} />
-                  <Field label="Quota d'IVA" value={formatCurrency(record.quota_iva)} />
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Base Imposable (sense IVA)</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <div className="relative">
+                        <input type="number" step="0.01" min="0" name="base_imposable" value={formData.base_imposable} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 pr-8 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                        <span className="absolute right-3 top-2 text-text-secondary">€</span>
+                      </div>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formatCurrency(Number(formData.base_imposable))}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Quota d'IVA</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <div className="relative">
+                        <input type="number" step="0.01" min="0" name="quota_iva" value={formData.quota_iva} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 pr-8 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                        <span className="absolute right-3 top-2 text-text-secondary">€</span>
+                      </div>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formatCurrency(Number(formData.quota_iva))}</div>
+                    )}
+                  </div>
+                  
                   <div>
                     <span className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Total (amb IVA)</span>
                     <div className="text-text-primary text-xl font-bold">{formatCurrency(totalIva)}</div>
