@@ -16,6 +16,16 @@ L'aplicació ha estat migrada a una arquitectura **Serverless** pura, eliminant 
 
 ---
 
+## ✨ Funcionalitats Principals
+
+- **Gestió de Sol·licituds**: Creació i manteniment detallat de peticions incloent informació avançada com el codi CPV, partides orgàniques/econòmiques, objecte del contracte i motivacions de no contractació.
+- **Càlculs en Temps Real**: Càlcul de base imposable, quota d'IVA i imports totals en temps real.
+- **Generació d'Informes (DOCX)**: Creació automàtica i personalitzada de documents `docx` basats en plantilles segons el Sistema de Tramitació (AD, ADO, OFI).
+- **Notificacions en Temps Real**: Avís immediat sobre canvis o noves sol·licituds mitjançant WebSockets, amb filtratge per rol.
+- **Processos de Negoci (Workflow)**: Seguiment des de la petició, aprovació, i control d'estats (publicat, finalitzat).
+
+---
+
 ## 🔐 Model de Seguretat (RBAC & RLS)
 
 L'accés a les dades està protegit mitjançant **Row Level Security (RLS)** de PostgreSQL, basat en el rol de l'usuari guardat a la taula `profiles`.
@@ -42,12 +52,14 @@ Estén la funcionalitat d'`auth.users`.
 - `role` (text): Un de `Lectura`, `Peticions`, `Gestió`, `Administrador`.
 
 ### Taula `records`
-Emmagatzema les sol·licituds de despesa.
-- `id` (bigint, PK): Identificador autoincremental.
-- `objecte_contracte` (text): Descripció de la necessitat.
-- `fitxers_pressupost` (jsonb): Array de metadades d'archius (`{name, path, size}`).
-- `segex`, `sistema_tramitacio`: Camps de gestió administrativa.
-- `created_by` (uuid): FK a l'usuari que va crear la petició.
+Emmagatzema les sol·licituds de despesa vinculades a cada contracte o petició.
+- `id` (bigint, PK): Identificador autoincremental i únic per a la sol·licitud.
+- `objecte_contracte`, `caracteristiques_tecniques`, `justificacio`: Descripció de la necessitat i motivació detallada.
+- `codi_cpv`, `partida_organica`, `partida_programa`, `partida_economica`, `segex`, `sistema_tramitacio`: Paràmetres administratius i econòmics de classificació.
+- `base_imposable`, `quota_iva`: S'utilitzen per mantenir l'estat financer del registre i calcular el total amb IVA de manera dinàmica.
+- `fitxers_pressupost` (jsonb): Array d'objectes amb metadades d'arxius (p. ex., `{name, path, size}`).
+- `created_by` (uuid): FK a l'usuari/perfil que va crear la petició.
+- `finalitzat`, `publicat`: Banderes per indicar l'estat en el flux d'aprovació.
 
 ### Taula `notifications`
 Generades automàticament per triggers de base de dades.
