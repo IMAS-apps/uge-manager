@@ -65,16 +65,16 @@ export const ORGANS = [
 ];
 
 export const SISTEMES_TRAMITACIO = [
-  "D", "AD", "ADO", "OFI", "REC", "CF", "R. Patrimonial", "REBUTJAT (veure notes)"
+  "AD", "ADO", "OFI", "REC", "CF", "R. PATRIMONIAL", "REBUTJAT (veure notes)"
 ];
 
 export const PARTIDES_ORGANIQUES = ["00", "10", "20", "30", "40", "50", "60"];
 
 export const MOTIVACIO_OPTIONS = [
   "",
-  "a) La despesa suposa fraccionament per ser repetitiva i gairebé periòdica, i supera els llindars que requereix la Llei de Contractes del Sector Públic per licitar-les.",
+  "a) Despesa que suposa fraccionament per ser repetitiva i gairebé periòdica, i supera els llindars que requereix la Llei de Contractes del Sector Públic per licitar-les.",
   "b) Despesa deguda a finalització de contractes administratius i les corresponents prorrogues en el seu cas, i no haver començat una nova licitació o bé tot i haver sortit a licitació encara no s'ha adjudicat el nou contracte administratiu.",
   "c) Despesa deguda a finalització de contractes administratius i les corresponents prorrogues en el seu cas, i tot i haver sortit a licitació, l'adjudicació ha resultat deserta.",
-  "d) Despesa mai executada que tot i haver sortit a licitació un nou contracte administratiu, l'adjudicació ha resultat deserta.",
-  "e) Despesa mai executada que permet contractació menor atès al no fraccionament de l'objecte."
+  "d) Despesa que ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte.",
+  "e) Despesa que no ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte."
 ];
