@@ -610,8 +610,12 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                       const isPublicat = record.publicat === true;
                       const isFinalitzat = record.finalitzat === true;
 
+                      const isSistemaOfiOrRec = record.sistema_tramitacio === 'OFI' || record.sistema_tramitacio === 'REC';
+                      const totalAmbIva = (record.base_imposable || 0) + (record.quota_iva || 0);
+                      const needsRedHighlight = isSistemaOfiOrRec && totalAmbIva >= 30000;
+
                       return (
-                        <tr key={record.id} className="hover:bg-primary-light transition-colors">
+                        <tr key={record.id} className={`${needsRedHighlight ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-primary-light'} transition-colors`}>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">{formatDate(record.hora)}</td>
                           {showResponsableColumn && (
                             <td className="px-4 py-3 text-sm text-text-secondary whitespace-nowrap" title={record.responsable_contracte}>{record.responsable_contracte}</td>
