@@ -477,7 +477,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                     <tr>
                       <th
                         scope="col"
-                        className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
                         onClick={() => handleSort('hora')}
                       >
                         <div className="flex items-center gap-1">
@@ -487,7 +487,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                       {showResponsableColumn && (
                         <th
                           scope="col"
-                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                          className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
                           onClick={() => handleSort('responsable_contracte')}
                         >
                           <div className="flex items-center gap-1">
@@ -497,7 +497,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                       )}
                       <th
                         scope="col"
-                        className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        className="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors w-full"
                         onClick={() => handleSort('objecte_contracte')}
                       >
                         <div className="flex items-center gap-1">
@@ -506,7 +506,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                       </th>
                       <th
                         scope="col"
-                        className="px-4 py-3 text-right text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        className="px-4 py-3 text-right text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
                         onClick={() => handleSort('total')}
                       >
                         <div className="flex items-center justify-end gap-1">
@@ -515,15 +515,15 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                       </th>
                       <th
                         scope="col"
-                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
                         onClick={() => handleSort('sistema_tramitacio')}
                       >
                         <div className="flex items-center justify-center gap-1">
                           Sistema <SortIndicator field="sistema_tramitacio" />
                         </div>
                       </th>
-                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Estat</th>
-                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Accions</th>
+                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Estat</th>
+                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Accions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-border-light">
@@ -535,10 +535,12 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                         <tr key={record.id} className="hover:bg-primary-light transition-colors">
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">{formatDate(record.hora)}</td>
                           {showResponsableColumn && (
-                            <td className="px-4 py-3 text-sm text-text-secondary max-w-[150px] truncate" title={record.responsable_contracte}>{record.responsable_contracte}</td>
+                            <td className="px-4 py-3 text-sm text-text-secondary whitespace-nowrap" title={record.responsable_contracte}>{record.responsable_contracte}</td>
                           )}
-                          <td className="px-4 py-3 text-sm text-text-secondary max-w-[200px] truncate" title={record.objecte_contracte}>
-                            {record.objecte_contracte.length > 60 ? record.objecte_contracte.substring(0, 60) + '...' : record.objecte_contracte}
+                          <td className="px-4 py-3 text-sm text-text-secondary w-full" title={record.objecte_contracte}>
+                            <div className="line-clamp-2 min-w-[200px] break-words">
+                              {record.objecte_contracte}
+                            </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-primary text-right font-medium">{formatCurrency(record.base_imposable + record.quota_iva)}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
