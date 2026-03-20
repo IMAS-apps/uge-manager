@@ -612,7 +612,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                                   title="Obrir expedient SEGEX"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  SEGEX
+                                  {record.segex}
                                 </a>
                               )}
                             </div>
