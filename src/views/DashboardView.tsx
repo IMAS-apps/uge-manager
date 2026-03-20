@@ -522,6 +522,24 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                           Sistema <SortIndicator field="sistema_tramitacio" />
                         </div>
                       </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
+                        onClick={() => handleSort('reg_factura')}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Reg. Factura <SortIndicator field="reg_factura" />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
+                        onClick={() => handleSort('relacio_q')}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Relació Q <SortIndicator field="relacio_q" />
+                        </div>
+                      </th>
                       <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Estat</th>
                       <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Accions</th>
                     </tr>
@@ -545,6 +563,12 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-primary text-right font-medium">{formatCurrency(record.base_imposable + record.quota_iva)}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                             {getSistemaBadge(record)}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-text-secondary font-medium">
+                            {record.reg_factura || '-'}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-text-secondary font-medium">
+                            {record.relacio_q || '-'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                             <div className="flex justify-center gap-1 items-center">
