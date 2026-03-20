@@ -514,7 +514,7 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
           </span>
         </div>
 
-        <div className="flex-1 overflow-auto p-4 md:p-6">
+        <div className="flex-1 flex flex-col overflow-hidden p-4 md:p-6">
           {loading ? (
             <div className="flex justify-center items-center h-full">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -531,10 +531,10 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
               <p className="text-sm mt-1">Prova de canviar els filtres o crea una nova petició.</p>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-border-light overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-border-light">
-                  <thead className="bg-primary sticky top-0 z-10">
+            <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-border-light overflow-hidden">
+              <div className="flex-1 overflow-auto">
+                <table className="min-w-full divide-y divide-border-light relative">
+                  <thead className="bg-primary sticky top-0 z-20">
                     <tr>
                       <th
                         scope="col"
