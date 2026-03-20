@@ -22,6 +22,8 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
   const [filterResponsable, setFilterResponsable] = useState('');
   const [filterOrgan, setFilterOrgan] = useState('');
   const [filterSistema, setFilterSistema] = useState('');
+  const [filterDataInici, setFilterDataInici] = useState('');
+  const [filterDataFi, setFilterDataFi] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Modal State
@@ -84,6 +86,8 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
     setFilterResponsable('');
     setFilterOrgan('');
     setFilterSistema('');
+    setFilterDataInici('');
+    setFilterDataFi('');
   };
 
   const filteredRecords = records.filter(r => {
@@ -114,6 +118,24 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
         if (r.sistema_tramitacio !== filterSistema) return false;
       }
     }
+
+    if (filterDataInici || filterDataFi) {
+      const recordDate = new Date(r.hora);
+      recordDate.setHours(0, 0, 0, 0);
+      
+      if (filterDataInici) {
+        const startDate = new Date(filterDataInici);
+        startDate.setHours(0, 0, 0, 0);
+        if (recordDate < startDate) return false;
+      }
+      
+      if (filterDataFi) {
+        const endDate = new Date(filterDataFi);
+        endDate.setHours(23, 59, 59, 999);
+        if (recordDate > endDate) return false;
+      }
+    }
+
     return true;
   });
 
@@ -316,6 +338,31 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                 onChange={(e) => setFilterSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 border border-border-light rounded-md focus:ring-1 focus:ring-primary outline-none text-sm"
               />
+            </div>
+          </div>
+
+          {/* Període */}
+          <div>
+            <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Període</label>
+            <div className="flex flex-col gap-2">
+              <div className="w-full">
+                <label className="block text-[10px] text-text-secondary uppercase mb-1">Des de</label>
+                <input
+                  type="date"
+                  value={filterDataInici}
+                  onChange={(e) => setFilterDataInici(e.target.value)}
+                  className="w-full text-sm px-2 py-1.5 border border-border-light rounded-md focus:ring-1 focus:ring-primary outline-none"
+                />
+              </div>
+              <div className="w-full">
+                <label className="block text-[10px] text-text-secondary uppercase mb-1">Fins a</label>
+                <input
+                  type="date"
+                  value={filterDataFi}
+                  onChange={(e) => setFilterDataFi(e.target.value)}
+                  className="w-full text-sm px-2 py-1.5 border border-border-light rounded-md focus:ring-1 focus:ring-primary outline-none"
+                />
+              </div>
             </div>
           </div>
 
