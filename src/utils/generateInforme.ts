@@ -38,6 +38,8 @@ export async function generateInforme(record: any): Promise<void> {
             templatePath = '/templates/Informe_de_necessitats_ADO.docx';
         } else if (sistema === 'OFI') {
             templatePath = '/templates/Informe_de_necessitats_OFI.docx';
+        } else if (sistema === 'REC') {
+            templatePath = '/templates/Informe_de_necessitats_REC.docx';
         } else {
             throw new Error(`Sistema no suportat per a informes: ${sistema}`);
         }
