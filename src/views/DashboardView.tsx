@@ -692,6 +692,15 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
                                 <Eye size={18} />
                               </button>
 
+                              {record.partida_economica && record.partida_economica.startsWith('6') && (
+                                <div 
+                                  className={`flex items-center justify-center min-w-[28px] px-1 h-[28px] rounded font-bold text-xs cursor-help ${record.projecte_despesa_cap_vi ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                                  title={record.projecte_despesa_cap_vi ? `Projecte cap. VI: ${record.projecte_despesa_cap_vi}` : 'Falta projecte de despesa cap. VI'}
+                                >
+                                  VI
+                                </div>
+                              )}
+
                               {record.segex && (
                                 <a
                                   href={`https://imas.secimallorca.net/segex/expediente.aspx?id=${record.segex.replace(/\D/g, '')}`}

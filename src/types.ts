@@ -22,6 +22,7 @@ export interface Record {
   partida_organica: string;
   partida_programa: string;
   partida_economica: string;
+  projecte_despesa_cap_vi?: string;
   base_imposable: number;
   quota_iva: number;
   fitxers_pressupost: { name: string, path: string, size: number }[];

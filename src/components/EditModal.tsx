@@ -44,6 +44,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     partida_organica: record.partida_organica || '',
     partida_programa: record.partida_programa || '',
     partida_economica: record.partida_economica || '',
+    projecte_despesa_cap_vi: record.projecte_despesa_cap_vi || '',
     base_imposable: record.base_imposable || 0,
     quota_iva: record.quota_iva || 0,
     sistema_tramitacio: record.sistema_tramitacio || '',
@@ -279,6 +280,17 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_economica || '—'}</div>
                     )}
                   </div>
+                  
+                  {formData.partida_economica && formData.partida_economica.startsWith('6') && (
+                    <div className="col-span-1 md:col-span-2 mt-2 p-4 bg-red-50 rounded-lg border border-red-100">
+                      <label className="block text-xs font-semibold text-red-800 uppercase tracking-wider mb-1">Projecte de despesa cap. VI</label>
+                      {mode === 'edit' && user.role === 'Administrador' ? (
+                        <input type="text" name="projecte_despesa_cap_vi" value={formData.projecte_despesa_cap_vi} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-red-200 rounded-md focus:ring-2 focus:ring-red-400 text-sm" placeholder="Introduir projecte..." />
+                      ) : (
+                        <div className="text-red-900 text-sm font-medium whitespace-pre-wrap">{formData.projecte_despesa_cap_vi || '—'}</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </SectionCard>
 
