@@ -3,6 +3,7 @@ import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../type
 import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
 import { supabase } from '../lib/supabase';
+import * as XLSX from 'xlsx';
 // import { generateInforme } from '../utils/generateInforme'; // Switched to dynamic import below
 
 interface DashboardViewProps {
@@ -209,6 +210,60 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
       setRecords(records.filter(r => r.id !== deleteConfirmRecord.id));
     } catch (err: any) {
       setToast({ msg: err.message, type: 'error' });
+    }
+  };
+
+  const handleExportExcel = () => {
+    try {
+      if (sortedRecords.length === 0) {
+        setToast({ msg: 'No hi ha dades per exportar.', type: 'error' });
+        return;
+      }
+
+      const exportData = sortedRecords.map(record => {
+        const isPublicat = record.publicat === true;
+        const isFinalitzat = record.finalitzat === true;
+        let estat = 'No finalitzat';
+        if (isPublicat && !isFinalitzat) estat = 'Publicat';
+        if (!isPublicat && isFinalitzat) estat = 'Finalitzat';
+        if (isPublicat && isFinalitzat) estat = 'Publicat i Finalitzat';
+
+        return {
+          'DATA': formatDate(record.hora),
+          'RESPONSABLE': record.responsable_contracte || '',
+          'OBJECTE DEL CONTRACTE': record.objecte_contracte || '',
+          'TOTAL (AMB IVA)': record.base_imposable + record.quota_iva,
+          'SISTEMA': record.sistema_tramitacio || 'Sense assignar',
+          'REG. FACTURA': record.reg_factura || '',
+          'RELACIÓ Q': record.relacio_q || '',
+          'ESTAT': estat,
+          'SEGEX': record.segex || ''
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      const colWidths = [
+        { wch: 12 }, 
+        { wch: 40 }, 
+        { wch: 60 }, 
+        { wch: 15 }, 
+        { wch: 15 }, 
+        { wch: 15 }, 
+        { wch: 15 }, 
+        { wch: 20 }, 
+        { wch: 15 }  
+      ];
+      ws['!cols'] = colWidths;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sol·licituds");
+      
+      const fileName = `Sollicituds_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      setToast({ msg: 'Arxiu Excel generat correctament.', type: 'success' });
+    } catch (err: any) {
+      setToast({ msg: 'Error al exportar a Excel: ' + err.message, type: 'error' });
     }
   };
 
@@ -434,12 +489,18 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
           </div>
         </div>
 
-        <div className="p-4 border-t border-border-light bg-bg-light">
+        <div className="p-4 border-t border-border-light bg-bg-light space-y-2">
           <button
             onClick={handleClearFilters}
             className="w-full py-2 px-4 bg-white border border-border-light text-text-primary rounded-md text-sm font-medium hover:bg-slate-50 transition-colors"
           >
             Netejar filtres
+          </button>
+          <button
+            onClick={handleExportExcel}
+            className="w-full py-2 px-4 bg-green-600 border border-transparent text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <FileDown size={18} /> Descarregar Excel
           </button>
         </div>
       </aside>
