@@ -9,6 +9,137 @@ export type Json =
 export type Database = {
     public: {
         Tables: {
+            contracts: {
+                Row: {
+                    id: number
+                    nom_contracte: string
+                    tipus_contracte: string
+                    dossier: string | null
+                    segex: string | null
+                    referencia_interna: string | null
+                    organ_contractacio: string
+                    responsable_contracte: string
+                    duracio_inicial: string | null
+                    prorrogable: boolean
+                    prorrogues: string | null
+                    procediment_adjudicacio: string | null
+                    modificable: boolean
+                    modificat: string | null
+                    sense_lots: boolean
+                    detalls_addicionals: string | null
+                    ppt_document: Json | null
+                    pcap_document: Json | null
+                    resolucio_document: Json | null
+                    created_by: string
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: number
+                    nom_contracte: string
+                    tipus_contracte: string
+                    dossier?: string | null
+                    segex?: string | null
+                    referencia_interna?: string | null
+                    organ_contractacio: string
+                    responsable_contracte: string
+                    duracio_inicial?: string | null
+                    prorrogable?: boolean
+                    prorrogues?: string | null
+                    procediment_adjudicacio?: string | null
+                    modificable?: boolean
+                    modificat?: string | null
+                    sense_lots?: boolean
+                    detalls_addicionals?: string | null
+                    ppt_document?: Json | null
+                    pcap_document?: Json | null
+                    resolucio_document?: Json | null
+                    created_by: string
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: number
+                    nom_contracte?: string
+                    tipus_contracte?: string
+                    dossier?: string | null
+                    segex?: string | null
+                    referencia_interna?: string | null
+                    organ_contractacio?: string
+                    responsable_contracte?: string
+                    duracio_inicial?: string | null
+                    prorrogable?: boolean
+                    prorrogues?: string | null
+                    procediment_adjudicacio?: string | null
+                    modificable?: boolean
+                    modificat?: string | null
+                    sense_lots?: boolean
+                    detalls_addicionals?: string | null
+                    ppt_document?: Json | null
+                    pcap_document?: Json | null
+                    resolucio_document?: Json | null
+                    created_by?: string
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
+            contract_lots: {
+                Row: {
+                    id: number
+                    contract_id: number
+                    nom_lot: string
+                    cpv: string | null
+                    adjudicatari: string | null
+                    import_comes: number | null
+                    data_inici: string | null
+                    data_fi: string | null
+                    data_limit_comunicacio_proroga: string | null
+                    data_inici_proroga: string | null
+                    data_fi_proroga: string | null
+                    centres: Json
+                    created_at: string
+                }
+                Insert: {
+                    id?: number
+                    contract_id: number
+                    nom_lot: string
+                    cpv?: string | null
+                    adjudicatari?: string | null
+                    import_comes?: number | null
+                    data_inici?: string | null
+                    data_fi?: string | null
+                    data_limit_comunicacio_proroga?: string | null
+                    data_inici_proroga?: string | null
+                    data_fi_proroga?: string | null
+                    centres?: Json
+                    created_at?: string
+                }
+                Update: {
+                    id?: number
+                    contract_id?: number
+                    nom_lot?: string
+                    cpv?: string | null
+                    adjudicatari?: string | null
+                    import_comes?: number | null
+                    data_inici?: string | null
+                    data_fi?: string | null
+                    data_limit_comunicacio_proroga?: string | null
+                    data_inici_proroga?: string | null
+                    data_fi_proroga?: string | null
+                    centres?: Json
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "contract_lots_contract_id_fkey"
+                        columns: ["contract_id"]
+                        isOneToOne: false
+                        referencedRelation: "contracts"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             notifications: {
                 Row: {
                     changed_fields: Json | null

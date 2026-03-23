@@ -1,119 +1,152 @@
-# UGE - Sol·licituds (UGE Manager)
+# 🏢 UGE Manager - Guia Tècnica Integral
 
-Aplicació web de gestió interna per a la **Unitat de Gestió Econòmica (UGE)** de l'IMAS. Aquesta eina centralitza la gestió, tramitació i seguiment de les sol·licituds de despesa de les residències i centres.
-
-## 🚀 Arquitectura i Stack Tecnològic
-
-L'aplicació ha estat migrada a una arquitectura **Serverless** pura, eliminant la dependència de servidors locals.
-
-*   **Frontend**: React 19 + Vite + Tailwind CSS.
-*   **Backend**: Supabase (Backend-as-a-Service).
-    *   **Auth**: Gestió d'usuaris i sessions.
-    *   **PostgreSQL**: Base de dades relacional amb seguretat a nivell de fila (RLS).
-    *   **Realtime**: Notificacions instantànies mitjançant subscripcions a canvis de taula.
-    *   **Storage**: Emmagatzematge de pressupostos en format PDF.
-*   **Deployment**: Compatible amb Vercel.
+Aquest document serveix com a manual de referència complet per a desenvolupadors, administradors i sistemes d'IA que necessitin entendre, mantenir o migrar dades en l'ecosistema **UGE Manager**.
 
 ---
 
-## ✨ Funcionalitats Principals
+## 🚀 1. Arquitectura del Sistema
 
-- **Gestió de Sol·licituds**: Creació i manteniment detallat de peticions incloent informació avançada com el codi CPV, partides orgàniques/econòmiques, objecte del contracte i motivacions de no contractació.
-- **Càlculs en Temps Real**: Càlcul de base imposable, quota d'IVA i imports totals en temps real.
-- **Generació d'Informes (DOCX)**: Creació automàtica i personalitzada de documents `docx` basats en plantilles segons el Sistema de Tramitació (AD, ADO, OFI).
-- **Notificacions en Temps Real**: Avís immediat sobre canvis o noves sol·licituds mitjançant WebSockets, amb filtratge per rol.
-- **Processos de Negoci (Workflow)**: Seguiment des de la petició, aprovació, i control d'estats (publicat, finalitzat).
+L'aplicació és una **Single Page Application (SPA)** moderna amb una arquitectura **Serverless**.
 
----
-
-## 🔐 Model de Seguretat (RBAC & RLS)
-
-L'accés a les dades està protegit mitjançant **Row Level Security (RLS)** de PostgreSQL, basat en el rol de l'usuari guardat a la taula `profiles`.
-
-### Rols de l'Usuari
-- **Lectura**: Accés bàsic per veure el dashboard. No pot crear ni editar.
-- **Peticions**: Pot crear noves sol·licituds i rebre notificacions quan algú les actualitza.
-- **Gestió**: Pot editar tots els registres (assignar SEGEX, sistema de tramitació, etc.) i rep notificacions de noves peticions.
-- **Administrador**: Control total. Gestió d'usuaris i visibilitat de totes les notificacions.
-
-### Polítiques RLS Clau
-- `records`: Tots els usuaris autenticats poden consultar. Només `Gestió` i `Admin` poden actualitzar qualsevol registre.
-- `notifications`: Els usuaris només veuen notificacions on són destinataris o que corresponen al seu rol de gestió.
-- `profiles`: L'usuari pot actualitzar el seu propi perfil. Els perfils són visibles per a tots els usuaris autenticats.
+- **Frontend**: React 19 + TypeScript + Vite.
+- **Estils**: Tailwind CSS (Disseny net, professional i corporatiu).
+- **Backend-as-a-Service (BaaS)**: Supabase.
+  - **Base de dades**: PostgreSQL.
+  - **Autenticació**: Supabase Auth (JWT).
+  - **Emmagatzematge**: Supabase Storage (Buckets per a PDFs).
+  - **Realtime**: Subscripcions via WebSockets per a notificacions instantànies.
 
 ---
 
-## 🗄️ Esquema de Base de Dades
+## 🔐 2. Seguretat i Rols (RBAC)
 
-### Taula `profiles`
-Estén la funcionalitat d'`auth.users`.
+L'accés a la informació està protegit mitjançant **Row Level Security (RLS)** a nivell de base de dades. El sistema identifica l'usuari mitjançant el seu JWT i consulta el seu rol a la taula `profiles`.
+
+### Rols Principals:
+1.  **Lectura**: Pot veure el dashboard de sol·licituds i contractes. No pot crear ni editar. No veu el mòdul de "Nou contracte".
+2.  **Peticions**: Pot crear noves Sol·licituds de despesa. Rep notificacions quan les seves peticions són actualitzades per un gestor.
+3.  **Gestió**: Pot editar totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.). Rep notificacions de noves peticions d'altres usuaris.
+4.  **Administrador**: Control total del sistema.
+    - Únic rol amb accés al mòdul **"Nou contracte"**.
+    - Únic rol amb permisos d'edició/eliminació de **Contractes**.
+    - Gestió d'usuaris (canvi de rols).
+
+---
+
+## 🗄️ 3. Esquema Detallat de la Base de Dades
+
+### A. Taula `profiles` (Usuaris)
+Vinculada directament a `auth.users`.
 - `id` (uuid, PK): FK a `auth.users`.
-- `full_name` (text): Nom real de l'usuari.
-- `role` (text): Un de `Lectura`, `Peticions`, `Gestió`, `Administrador`.
+- `full_name` (text): Nom complet.
+- `email` (text): Adreça de correu.
+- `role` (text): Valors: `Lectura`, `Peticions`, `Gestió`, `Administrador`.
 
-### Taula `records`
-Emmagatzema les sol·licituds de despesa vinculades a cada contracte o petició.
-- `id` (bigint, PK): Identificador autoincremental i únic per a la sol·licitud.
-- `objecte_contracte`, `caracteristiques_tecniques`, `justificacio`: Descripció de la necessitat i motivació detallada.
-- `codi_cpv`, `partida_organica`, `partida_programa`, `partida_economica`, `segex`, `sistema_tramitacio`: Paràmetres administratius i econòmics de classificació.
-- `base_imposable`, `quota_iva`: S'utilitzen per mantenir l'estat financer del registre i calcular el total amb IVA de manera dinàmica.
-- `fitxers_pressupost` (jsonb): Array d'objectes amb metadades d'arxius (p. ex., `{name, path, size}`).
-- `created_by` (uuid): FK a l'usuari/perfil que va crear la petició.
-- `finalitzat`, `publicat`: Banderes per indicar l'estat en el flux d'aprovació.
+### B. Taula `records` (Sol·licituds de Despesa)
+Gestiona el flux de peticions de les residències.
+- `id` (bigint, PK): Auto-increment.
+- `nom`, `email`: Dades del sol·licitant.
+- `objecte_contracte`, `caracteristiques_tecniques`, `justificacio`: Detalls de la petició.
+- `base_imposable` (numeric), `quota_iva` (numeric): Dades financeres.
+- `codi_cpv`, `partida_organica`, `partida_programa`, `partida_economica`: Classificació administrativa.
+- `sistema_tramitacio`: `AD`, `ADO`, `OFI`, `REC`, `CF`, `R. PATRIMONIAL`.
+- `estat`: `publicat` (boolean), `finalitzat` (boolean).
+- `fitxers_pressupost` (jsonb): Array d'objectes `{name, path, size}`.
+- `segex`, `reg_factura`, `relacio_q`, `relacio_o`: Referències de tramitació posterior.
 
-### Taula `notifications`
-Generades automàticament per triggers de base de dades.
-- `type`: `new_request` o `record_updated`.
-- `recipient_user_id`: Usuari que ha de rebre l'alerta (si és NULL, és una alerta per a Gestió/Admin).
-- `is_read` (boolean): Estat de lectura.
+### C. Taula `contracts` (Mòdul Contractes)
+Dades mestre dels contractes vigents.
+- `id` (bigint, PK): Auto-increment.
+- `nom_contracte` (text): Títol oficial del contracte.
+- `tipus_contracte` (text): `Subministrament`, `Servei`, `Obra`, `Exclòs`, `Privat`.
+- `organ_contractacio` (text): `UFAG Residència ...`, `Gerència`, `Vicepresidència`.
+- `responsable_contracte` (text): Persona o càrrec responsable.
+- `prorrogable` (boolean): Indica si el contracte admet pròrrogues.
+- `modificable` (boolean): Indica si s'ha modificat post-adjudicació.
+- `sense_lots` (boolean): Defineix si el contracte és d'un sol lot (auto-generat).
+- `ppt_document`, `pcap_document`, `resolucio_document` (jsonb): Metadades dels PDFs oficials.
+
+### D. Taula `contract_lots` (Lots de Contracte)
+Relació **1:N** amb `contracts`.
+- `contract_id` (bigint, FK): Enllaç a `contracts.id`.
+- `nom_lot` (text): Nom del lot (o del contracte si `sense_lots` és true).
+- `cpv` (text): Codi CPV específic del lot.
+- `adjudicatari` (text): Empresa guanyadora.
+- `import_comes` (numeric): Pressupost adjudicat.
+- `data_inici`, `data_fi`: Dates del període inicial.
+- `data_limit_comunicacio_proroga`: Data crítica per a la gestió administrativa.
+- `data_inici_proroga`, `data_fi_proroga`: Dates del període de pròrroga (si s'escau).
+- `centres` (jsonb): Array de strings amb els centres on s'aplica el lot.
+
+### E. Taula `notifications`
+- `type`: `new_request`, `record_updated`, `contract_update`.
+- `peticio_id`: Enllaç al registre de `records`.
+- `is_read`: Estat per usuari (gestionat via JSONB `read_by` per a notificacions globals).
 
 ---
 
-## ⚙️ Lògica de Negoci Automàtica (Triggers)
+## 📂 4. Emmagatzematge (Storage Buckets)
 
-El sistema utilitza un Trigger SQL (`on_record_change`) que executa la funció `handle_record_notification()` després de qualsevol canvi a `records`:
+Tots els fitxers es guarden en format PDF amb RLS per a usuaris autenticats.
 
-1.  **INSERT**: Si un usuari amb rol `Peticions` crea un registre, es genera una notificació tipus `new_request` per als rols de supervisió.
-2.  **UPDATE**: Si un gestor modifica un registre, es notifica automàticament al creador original (`record_updated`).
-
----
-
-## 📁 Gestió d'Arxius (Storage)
-
-- **Bucket**: `peticions_pressupostos` (Públic).
-- **Format**: PDF.
-- **Ruta**: `peticions/{peticio_id}/{filename}`.
-- **Seguretat**: Només usuaris autenticats poden pujar archius.
+1.  **`peticions_pressupostos`**:
+    - Ruta: `peticions/{peticio_id}/{nom_fitxer}`.
+    - Contingut: Pressupostos de sol·licituds.
+2.  **`contractes_documents`**:
+    - Ruta: `{user_id}/{timestamp}_{tipus}.pdf`.
+    - Contingut: PPT, PCAP i Resolucions d'adjudicació.
 
 ---
 
-## 🛠️ Configuració de Desenvolupament
+## 🖥️ 5. Funcionalitats dels Dashboards
 
-### Variables d'Entorn (.env)
-```env
-VITE_SUPABASE_URL=URL_DEL_PROJECTE
-VITE_SUPABASE_ANON_KEY=CLAU_ANONIMA_PUBLICA
+L'aplicació compta amb dues vistes principals unificades pel nou menú de navegació superior:
+
+### A. Control de Sol·licituds
+- Plana principal on es llisten i es filtren totes les peticions de noves despeses.
+- Depenent del rol, es poden visualitzar, editar o eliminar els registres.
+- Els registres de les referències SEGEX compten amb un botó de vinculació directa a l'adreça web pertinent.
+- Opcions d'exportació a Excel integrades.
+
+### B. Control de Contractes
+- Mòdul específic per al seguiment de tots els contractes i els seus respectius lots emmagatzemats al sistema de manera ordenada (per defecte per **Data d'inici**, del més nou al més antic).
+- **Filtres avançats:** Filtre escollit per defecte per veure els "Contractes vigents" (amb dates fi posteriors a l'actual o no determinades), llistes desplegables netes per al "Tipus de contracte" i filtre flexible de conjunts per a un o més "Centres".
+- Igual que en sol·licituds, les referències SEGEX disposen d'enllaços a l'expedient un cop introduït dins la xarxa SECI.
+
+---
+
+## 📊 6. Guia de Migració de Dades (CSV a SQL)
+
+Per importar dades de contractes existents des d'un CSV, s'ha de seguir aquesta lògica:
+
+### Pas 1: Inserció de Contractes
+El contracte és l'entitat pare. Cal generar un SQL `INSERT INTO public.contracts (...)` i obtenir l'ID.
+- **Important**: Si el CSV no separa lots però el contracte és únic, posar `sense_lots = true`.
+
+### Pas 2: Inserció de Lots
+Un cop inserit el contracte, cal inserir almenys un lot a `public.contract_lots`.
+- **Enllaç**: `contract_id` ha de coincidir amb l'ID del contracte creat al pas 1.
+- **Centres**: El camp `centres` ha de ser un format JSONB vàlid. Exemple: `'["Residència Bonanova", "Huialfàs"]'::jsonb`.
+- **Dates**: Format ISO `YYYY-MM-DD`.
+
+### Pas 3: Valors Constants
+Assegureu-vos d'utilitzar els valors exactes definits a `src/types.ts` per evitar problemes amb els filtres de la interfície:
+- **Tipus**: `Subministrament`, `Servei`, `Obra`, `Exclòs`, `Privat`.
+- **Òrgans**: `UFAG Residència Bonanova`, `UFAG Residència Llar dels Ancians`, etc.
+
+---
+
+## 🛠️ 7. Desenvolupament
+
+```bash
+# Instal·lació
+npm install
+
+# Execució local
+npm run dev
+
+# Verificació de tipus TS
+npx tsc --noEmit
 ```
 
-### Comandaments
-- `npm install`: Instal·la les dependències.
-- `npm run dev`: Inicia el servidor de desenvolupament (Vite).
-- `npm run build`: Genera el paquet per a producció al directori `/dist`.
-- `npm run lint`: Verifica els tipus de TypeScript.
-
----
-
-## 🚢 Deploy a Vercel
-
-1. Connectar el repositori a Vercel.
-2. Configurar les variables d'entorn `VITE_SUPABASE_URL` i `VITE_SUPABASE_ANON_KEY`.
-3. El Project Preset ha de ser **Vite**.
-4. (Opcional) Afegir un `vercel.json` per a rutes SPA si es fa servir React Router.
-
----
-
-## 👨‍💻 Notes per a Programadors / IA
-
-- **Tipus**: Utilitza `src/types/supabase.ts` (generat per Supabase CLI) per mantenir la integritat de les dades.
-- **Realtime**: La subscripció a notificacions es gestiona a `App.tsx` i s'actualitza de manera optimista o per polling de seguretat cada 60s.
-- **Sorting**: L'ordenació de la taula al Dashboard és purament frontend per a una major velocitat, calculant el camp "Total" en temps real.
+*Creat per i per a la Unitat de Gestió Econòmica - IMAS.*

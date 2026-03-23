@@ -39,6 +39,48 @@ export interface Record {
   updated_at: string;
 }
 
+export interface ContractLot {
+  id?: number;
+  contract_id?: number;
+  nom_lot: string;
+  cpv: string;
+  adjudicatari: string;
+  import_comes: number | null;
+  data_inici: string;
+  data_fi: string;
+  data_limit_comunicacio_proroga: string;
+  data_inici_proroga: string;
+  data_fi_proroga: string;
+  centres: string[];
+  created_at?: string;
+}
+
+export interface Contract {
+  id: number;
+  nom_contracte: string;
+  tipus_contracte: string;
+  dossier: string;
+  segex: string;
+  referencia_interna: string;
+  organ_contractacio: string;
+  responsable_contracte: string;
+  duracio_inicial: string;
+  prorrogable: boolean;
+  prorrogues: string;
+  procediment_adjudicacio: string;
+  modificable: boolean;
+  modificat: string;
+  sense_lots: boolean;
+  detalls_addicionals: string;
+  ppt_document: { name: string; path: string; size: number } | null;
+  pcap_document: { name: string; path: string; size: number } | null;
+  resolucio_document: { name: string; path: string; size: number } | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  lots?: ContractLot[];
+}
+
 export const RESPONSABLES = [
   "Direcció de la Residència Bonanova",
   "Direcció de la Residència Llar dels Ancians",
@@ -78,4 +120,68 @@ export const MOTIVACIO_OPTIONS = [
   "c) Despesa deguda a finalització de contractes administratius i les corresponents prorrogues en el seu cas, i tot i haver sortit a licitació, l'adjudicació ha resultat deserta.",
   "d) Despesa que ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte.",
   "e) Despesa que no ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte."
+];
+
+// ── Contract module constants ────────────────────────────────────────────────
+
+export const CONTRACTE_TIPUS = [
+  "Subministrament",
+  "Servei",
+  "Obra",
+  "Exclòs",
+  "Privat"
+];
+
+export const CONTRACTE_ORGANS = [
+  "UFAG Residència Bonanova",
+  "UFAG Residència Llar dels Ancians",
+  "UFAG Residència Huialfàs",
+  "UFAG Residència Oms-Sant Miquel",
+  "UFAG Residència Miquel Mir",
+  "UFAG Residència Sant Josep",
+  "UFAG Residència Son Caulelles",
+  "UFAG Residència Bartomeu Quetglas",
+  "Vicepresidència",
+  "Gerència"
+];
+
+export const CONTRACTE_RESPONSABLES = [
+  "Direcció de la Residència Bonanova",
+  "Direcció de la Residència Llar dels Ancians",
+  "Direcció de la Residència Huialfàs",
+  "Direcció de la Residència Oms-Sant Miquel",
+  "Direcció de la Residència Miquel Mir",
+  "Direcció de la Residència Sant Josep",
+  "Direcció de la Residència Son Caulelles",
+  "Direcció de la Residència Bartomeu Quetglas",
+  "Direcció del Centre de dia Reina Sofia",
+  "Direcció del Centre de dia Can Clar",
+  "Cap del Servei d'Atenció Sociosanitària",
+  "Cap del Negociat dels Serveis Generals",
+  "Direcció de varis centres"
+];
+
+export const PROCEDIMENTS_ADJUDICACIO = [
+  "Obert harmonitzat",
+  "Obert ordinari",
+  "Obert simplificat",
+  "Obert simplificat abreujat",
+  "Restringit",
+  "Acord marc",
+  "Privat"
+];
+
+export const CENTRES_IMAS = [
+  "Residència Bonanova",
+  "Residència Llar dels Ancians",
+  "Residència Bartomeu Quetglas",
+  "Residència Huialfàs",
+  "Residència Oms-Sant Miquel",
+  "Residència Miquel Mir",
+  "Residència Son Caulelles",
+  "Residència Sant Josep",
+  "Centre de dia Can Clar",
+  "Centre de dia Reina Sofia",
+  "Centre de dia L'Hospici",
+  "Centre de dia Son Perxana"
 ];

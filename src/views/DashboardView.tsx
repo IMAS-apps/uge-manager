@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../types';
-import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown } from 'lucide-react';
+import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown, Plus } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
@@ -8,11 +8,12 @@ import * as XLSX from 'xlsx';
 
 interface DashboardViewProps {
   user: User;
+  onNavigate: (view: 'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard') => void;
   pendingOpenPeticioId?: number | null;
   onPendingOpenHandled?: () => void;
 }
 
-export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled }: DashboardViewProps) {
+export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendingOpenHandled }: DashboardViewProps) {
   const [records, setRecords] = useState<Record[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -507,9 +508,20 @@ export function DashboardView({ user, pendingOpenPeticioId, onPendingOpenHandled
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <div className="p-4 md:p-6 border-b border-border-light bg-white flex justify-between items-center">
-          <h1 className="text-xl font-bold text-text-primary">Control de sol·licituds</h1>
-          <span className="bg-primary-light text-primary-dark text-xs font-semibold px-2.5 py-0.5 rounded-full">
+        <div className="p-4 md:p-6 border-b border-border-light bg-white flex justify-between items-center gap-4">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold text-text-primary">Control de sol·licituds</h1>
+            {user.role !== 'Lectura' && (
+              <button
+                onClick={() => onNavigate('form')}
+                className="flex items-center gap-2 px-4 py-2 bg-[#0072BC] hover:bg-[#005a96] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+              >
+                <Plus size={18} />
+                Nova sol·licitud
+              </button>
+            )}
+          </div>
+          <span className="bg-primary-light text-primary-dark text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap">
             Total: {sortedRecords.length} registres
           </span>
         </div>

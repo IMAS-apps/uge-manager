@@ -4,8 +4,10 @@ import { FormView } from './views/FormView';
 import { DashboardView } from './views/DashboardView';
 import { UserManagementView } from './views/UserManagementView';
 import { NotificationsView } from './views/NotificationsView';
+import { ContractFormView } from './views/ContractFormView';
+import { ContractDashboardView } from './views/ContractDashboardView';
 import { User } from './types';
-import { LogOut, FileText, LayoutDashboard, Users, AlertCircle, Bell } from 'lucide-react';
+import { LogOut, FileText, LayoutDashboard, Users, AlertCircle, Bell, FilePlus2, ClipboardList } from 'lucide-react';
 import { supabase } from './lib/supabase';
 
 
@@ -23,7 +25,7 @@ export function ImasLogo({ className = '' }: { className?: string }) {
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [currentView, setCurrentView] = useState<'form' | 'dashboard' | 'users' | 'notifications'>('dashboard');
+  const [currentView, setCurrentView] = useState<'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard'>('dashboard');
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -135,6 +137,9 @@ export default function App() {
       } else if (currentView === 'notifications' && user.role === 'Lectura') {
         setToast('No tens permisos per accedir a aquesta secció.');
         setCurrentView('dashboard');
+      } else if (currentView === 'contract-form' && user.role !== 'Administrador') {
+        setToast('No tens permisos per accedir a aquesta secció.');
+        setCurrentView('contract-dashboard');
       }
     }
   }, [currentView, user]);
@@ -198,7 +203,7 @@ export default function App() {
     setUnreadCount(0);
   };
 
-  const handleNavigate = (view: 'form' | 'dashboard' | 'users' | 'notifications') => {
+  const handleNavigate = (view: 'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard') => {
     if (view === 'form' && user?.role === 'Lectura') {
       setToast('No tens permisos per accedir a aquesta secció.');
       setCurrentView('dashboard');
@@ -212,6 +217,11 @@ export default function App() {
     if (view === 'notifications' && user?.role === 'Lectura') {
       setToast('No tens permisos per accedir a aquesta secció.');
       setCurrentView('dashboard');
+      return;
+    }
+    if (view === 'contract-form' && user?.role !== 'Administrador') {
+      setToast('No tens permisos per accedir a aquesta secció.');
+      setCurrentView('contract-dashboard');
       return;
     }
 
@@ -254,32 +264,34 @@ export default function App() {
           <p className="text-sm font-medium">{toast}</p>
         </div>
       )}
-      <nav className="bg-primary text-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <span className="font-bold text-xl tracking-tight">UGE - Sol·licitud de nova despesa</span>
-              <div className="hidden md:ml-10 md:flex md:space-x-4">
-                {user.role !== 'Lectura' && (
-                  <button
-                    onClick={() => handleNavigate('form')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${currentView === 'form' ? 'bg-primary-dark text-white' : 'text-primary-light hover:bg-primary-dark hover:text-white'}`}
-                  >
-                    <FileText size={18} />
-                    Nova sol·licitud
-                  </button>
-                )}
+      <nav className="bg-[#1E3A5F] text-white shadow-md sticky top-0 z-40">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-xl tracking-tight hidden lg:block text-white">UGE Manager</span>
+              </div>
+              <div className="hidden md:flex items-center space-x-1 border-l border-white/10 pl-6 h-10">
                 <button
                   onClick={() => handleNavigate('dashboard')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${currentView === 'dashboard' ? 'bg-primary-dark text-white' : 'text-primary-light hover:bg-primary-dark hover:text-white'}`}
+                  className={`px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${currentView === 'dashboard' ? 'bg-white/20 text-white shadow-inner' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
                 >
                   <LayoutDashboard size={18} />
-                  Control de sol·licituds
+                  Sol·licituds
                 </button>
+                
+                <button
+                  onClick={() => handleNavigate('contract-dashboard')}
+                  className={`px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${currentView === 'contract-dashboard' ? 'bg-white/20 text-white shadow-inner' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
+                >
+                  <ClipboardList size={18} />
+                  Contractes
+                </button>
+                
                 {user.role !== 'Lectura' && (
                   <button
                     onClick={() => handleNavigate('notifications')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${currentView === 'notifications' ? 'bg-primary-dark text-white' : 'text-primary-light hover:bg-primary-dark hover:text-white'}`}
+                    className={`px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${currentView === 'notifications' ? 'bg-white/20 text-white shadow-inner' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
                   >
                     <div className="relative">
                       <Bell size={18} />
@@ -295,10 +307,11 @@ export default function App() {
                     Notificacions
                   </button>
                 )}
+                
                 {user.role === 'Administrador' && (
                   <button
                     onClick={() => handleNavigate('users')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors ${currentView === 'users' ? 'bg-primary-dark text-white' : 'text-primary-light hover:bg-primary-dark hover:text-white'}`}
+                    className={`px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${currentView === 'users' ? 'bg-white/20 text-white shadow-inner' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
                   >
                     <Users size={18} />
                     Gestió d'Usuaris
@@ -306,14 +319,15 @@ export default function App() {
                 )}
               </div>
             </div>
+            
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-sm text-primary-light font-medium">{user.full_name}</span>
-                <span className="text-xs text-primary-light/70">{user.role}</span>
+                <span className="text-sm text-white font-medium">{user.full_name}</span>
+                <span className="text-xs text-[#A5C8E4] font-medium">{user.role}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-full text-primary-light hover:text-white hover:bg-primary-dark transition-colors"
+                className="p-2 rounded-full text-[#A5C8E4] hover:text-white hover:bg-white/10 transition-colors"
                 title="Tancar sessió"
               >
                 <LogOut size={20} />
@@ -321,44 +335,46 @@ export default function App() {
             </div>
           </div>
         </div>
+        
         {/* Mobile Navigation */}
-        <div className="md:hidden border-t border-primary-dark bg-primary flex justify-around p-2">
-          {user.role !== 'Lectura' && (
-            <button
-              onClick={() => handleNavigate('form')}
-              className={`flex-1 py-2 text-sm font-medium flex justify-center items-center gap-2 rounded-md ${currentView === 'form' ? 'bg-primary-dark text-white' : 'text-primary-light'}`}
-            >
-              <FileText size={18} />
-              Formulari
-            </button>
-          )}
+        <div className="md:hidden border-t border-white/10 bg-[#142A43] flex justify-around p-2 overflow-x-auto gap-1 shadow-inner">
           <button
             onClick={() => handleNavigate('dashboard')}
-            className={`flex-1 py-2 text-sm font-medium flex justify-center items-center gap-2 rounded-md ${currentView === 'dashboard' ? 'bg-primary-dark text-white' : 'text-primary-light'}`}
+            className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'dashboard' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
           >
             <LayoutDashboard size={18} />
-            Control
+            Sol·licituds
           </button>
+
+          <button
+            onClick={() => handleNavigate('contract-dashboard')}
+            className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'contract-dashboard' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
+          >
+            <ClipboardList size={18} />
+            Contractes
+          </button>
+          
           {user.role !== 'Lectura' && (
             <button
               onClick={() => handleNavigate('notifications')}
-              className={`flex-1 py-2 text-sm font-medium flex justify-center items-center gap-2 rounded-md ${currentView === 'notifications' ? 'bg-primary-dark text-white' : 'text-primary-light'}`}
+              className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'notifications' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
             >
               <div className="relative">
                 <Bell size={18} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] rounded-full px-1.5 min-w-[16px] text-center">
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full px-1 min-w-[14px] leading-[14px] text-center font-bold">
                     {unreadCount}
                   </span>
                 )}
               </div>
-              <span className="ml-2">Notificacions</span>
+              Notif.
             </button>
           )}
+          
           {user.role === 'Administrador' && (
             <button
               onClick={() => handleNavigate('users')}
-              className={`flex-1 py-2 text-sm font-medium flex justify-center items-center gap-2 rounded-md ${currentView === 'users' ? 'bg-primary-dark text-white' : 'text-primary-light'}`}
+              className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'users' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
             >
               <Users size={18} />
               Usuaris
@@ -372,10 +388,18 @@ export default function App() {
         {currentView === 'dashboard' && (
           <DashboardView
             user={user}
+            onNavigate={handleNavigate}
             pendingOpenPeticioId={pendingOpenPeticioId}
             onPendingOpenHandled={() => setPendingOpenPeticioId(null)}
           />
         )}
+        {currentView === 'contract-form' && (
+          <ContractFormView user={user} onSuccess={() => handleNavigate('contract-dashboard')} />
+        )}
+        {currentView === 'contract-dashboard' && (
+          <ContractDashboardView user={user} onNavigate={handleNavigate} />
+        )}
+
         {currentView === 'users' && <UserManagementView />}
         {currentView === 'notifications' && (
           <NotificationsView
