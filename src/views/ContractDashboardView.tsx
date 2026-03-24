@@ -188,9 +188,11 @@ export function ContractDashboardView({ user, onNavigate }: ContractDashboardVie
   const handleSaveEdit = async (updated: Partial<Contract>, updatedLots: ContractLot[]) => {
     if (!selectedContract) return;
 
+    const { lots, ...contractUpdateData } = updated;
+
     const { error: upErr } = await supabase
       .from('contracts')
-      .update(updated)
+      .update(contractUpdateData)
       .eq('id', selectedContract.id);
     if (upErr) throw upErr;
 
