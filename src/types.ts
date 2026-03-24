@@ -107,7 +107,8 @@ export const ORGANS = [
   "UFAG Residència Sant Josep",
   "UFAG Residència Son Caulelles",
   "UFAG Residència Bartomeu Quetglas",
-  "Vicepresidència"
+  "Vicepresidència",
+  "Presidència"
 ];
 
 export const SISTEMES_TRAMITACIO = [
@@ -145,7 +146,8 @@ export const CONTRACTE_ORGANS = [
   "UFAG Residència Son Caulelles",
   "UFAG Residència Bartomeu Quetglas",
   "Vicepresidència",
-  "Gerència"
+  "Gerència",
+  "Presidència"
 ];
 
 export const CONTRACTE_RESPONSABLES = [
