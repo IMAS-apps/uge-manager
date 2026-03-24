@@ -147,6 +147,8 @@ export function ContractEditModal({
         centres: [],
         contract_id: contract.id,
         formalitzacio_document: null,
+        telefon: '',
+        email: '',
       },
     ]);
     setExpandedLots((prev) => ({ ...prev, [editLots.length]: true }));
@@ -473,6 +475,8 @@ export function ContractEditModal({
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           <Field label="CPV" value={lot.cpv} />
                           <Field label="Adjudicatari" value={lot.adjudicatari} />
+                          <Field label="Telèfon Adjudicatari" value={lot.telefon} />
+                          <Field label="E-mail Adjudicatari" value={lot.email} />
                           <Field label="Import compromès" value={formatCurrency(lot.import_comes)} />
                           <Field label="Data d'inici" value={formatDate(lot.data_inici)} />
                           <Field label="Data de fi" value={formatDate(lot.data_fi)} />
@@ -522,6 +526,23 @@ export function ContractEditModal({
                             <label className={labelClass}>Adjudicatari</label>
                             <input type="text" name="adjudicatari" value={lot.adjudicatari}
                               onChange={(e) => handleLotChange(idx, e)} className={inputClass} />
+                          </div>
+                          <div>
+                            <label className={labelClass}>Telèfon Adjudicatari</label>
+                            <input type="text" name="telefon" value={lot.telefon || ''}
+                              maxLength={9}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                if (val.length <= 9) {
+                                  handleLotChange(idx, { ...e, target: { ...e.target, name: 'telefon', value: val } } as any);
+                                }
+                              }}
+                              className={inputClass} placeholder="9 digits" />
+                          </div>
+                          <div>
+                            <label className={labelClass}>E-mail Adjudicatari</label>
+                            <input type="email" name="email" value={lot.email || ''}
+                              onChange={(e) => handleLotChange(idx, e)} className={inputClass} placeholder="email@exemple.com" />
                           </div>
                           <div>
                             <label className={labelClass}>Import compromès (€)</label>

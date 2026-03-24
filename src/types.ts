@@ -52,6 +52,8 @@ export interface ContractLot {
   data_inici_proroga: string;
   data_fi_proroga: string;
   centres: string[];
+  telefon?: string;
+  email?: string;
   formalitzacio_document?: { name: string; path: string; size: number } | null;
   created_at?: string;
 }

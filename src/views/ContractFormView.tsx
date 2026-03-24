@@ -37,6 +37,8 @@ const EMPTY_LOT: Omit<ContractLot, 'id' | 'contract_id' | 'created_at'> = {
   data_inici_proroga: '',
   data_fi_proroga: '',
   centres: [],
+  telefon: '',
+  email: '',
   formalitzacio_document: null,
 };
 
@@ -264,6 +266,8 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
         data_inici_proroga: lot.data_inici_proroga || null,
         data_fi_proroga: lot.data_fi_proroga || null,
         centres: lot.centres,
+        telefon: lot.telefon || null,
+        email: lot.email || null,
         formalitzacio_document: lotDocsMeta[idx],
       }));
 
@@ -464,6 +468,23 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
                     <label className={labelClass}>Adjudicatari</label>
                     <input type="text" name="adjudicatari" value={lot.adjudicatari}
                       onChange={(e) => handleLotChange(idx, e)} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Telèfon Adjudicatari</label>
+                    <input type="text" name="telefon" value={lot.telefon || ''}
+                      maxLength={9}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        if (val.length <= 9) {
+                          handleLotChange(idx, { ...e, target: { ...e.target, name: 'telefon', value: val } } as any);
+                        }
+                      }}
+                      className={inputClass} placeholder="9 digits" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>E-mail Adjudicatari</label>
+                    <input type="email" name="email" value={lot.email || ''}
+                      onChange={(e) => handleLotChange(idx, e)} className={inputClass} placeholder="email@exemple.com" />
                   </div>
                   <div>
                     <label className={labelClass}>Import compromès (€)</label>
