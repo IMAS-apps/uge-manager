@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  UploadCloud,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -75,6 +76,7 @@ export function ContractEditModal({
   // Edit state
   const [editGeneral, setEditGeneral] = useState<Partial<Contract>>({});
   const [editLots, setEditLots] = useState<ContractLot[]>([]);
+  const [lotFiles, setLotFiles] = useState<Record<number, File | null>>({});
 
   useEffect(() => {
     if (mode === 'edit') {
@@ -144,6 +146,7 @@ export function ContractEditModal({
         data_fi_proroga: '',
         centres: [],
         contract_id: contract.id,
+        formalitzacio_document: null,
       },
     ]);
     setExpandedLots((prev) => ({ ...prev, [editLots.length]: true }));
@@ -151,6 +154,22 @@ export function ContractEditModal({
 
   const removeLot = (idx: number) => {
     setEditLots((prev) => prev.filter((_, i) => i !== idx));
+    const newFiles = { ...lotFiles };
+    delete newFiles[idx];
+    setLotFiles(newFiles);
+  };
+
+  const handleLotFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (file && file.type !== 'application/pdf') {
+      setError("Només s'accepten fitxers PDF.");
+      return;
+    }
+    setLotFiles((prev) => ({ ...prev, [idx]: file }));
+  };
+
+  const removeLotFile = (idx: number) => {
+    setLotFiles((prev) => ({ ...prev, [idx]: null }));
   };
 
   const toggleLot = (idx: number) => {
@@ -161,8 +180,29 @@ export function ContractEditModal({
     setSaving(true);
     setError('');
     try {
-      await onSave(editGeneral, editLots);
+      // Upload any new lot files
+      const finalLots = await Promise.all(
+        editLots.map(async (lot, idx) => {
+          const file = lotFiles[idx];
+          if (!file) return lot;
+
+          const ext = file.name.split('.').pop();
+          const path = `${user.id}/${Date.now()}_lot_${idx}_formalitzacio.${ext}`;
+          const { error: upErr, data } = await supabase.storage
+            .from('contractes_documents')
+            .upload(path, file);
+          if (upErr) throw upErr;
+
+          return {
+            ...lot,
+            formalitzacio_document: { name: file.name, path: data.path, size: file.size },
+          };
+        })
+      );
+
+      await onSave(editGeneral, finalLots);
       setMode('view');
+      setLotFiles({});
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -439,6 +479,18 @@ export function ContractEditModal({
                           <Field label="Límit comunicació pròrroga" value={formatDate(lot.data_limit_comunicacio_proroga)} />
                           <Field label="Inici pròrroga" value={formatDate(lot.data_inici_proroga)} />
                           <Field label="Fi pròrroga" value={formatDate(lot.data_fi_proroga)} />
+                          {lot.formalitzacio_document && (
+                            <div className="col-span-2 md:col-span-3">
+                              <p className={labelClass}>Formalització de contracte</p>
+                              <button
+                                onClick={() => getDocUrl(lot.formalitzacio_document!.path)}
+                                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors mt-1"
+                              >
+                                <ExternalLink size={14} />
+                                <span className="truncate">{lot.formalitzacio_document.name}</span>
+                              </button>
+                            </div>
+                          )}
                           {lot.centres.length > 0 && (
                             <div className="col-span-2 md:col-span-3">
                               <p className={labelClass}>Centres afectats</p>
@@ -507,6 +559,42 @@ export function ContractEditModal({
                                 );
                               })}
                             </div>
+                          </div>
+
+                          {/* Lot Document Edit */}
+                          <div className="md:col-span-2 lg:col-span-3 border-t border-slate-200 mt-4 pt-4">
+                            <label className={labelClass}>Formalització de contracte (PDF)</label>
+                            {lotFiles[idx] ? (
+                              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-md">
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                  <div className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">PDF</div>
+                                  <span className="text-xs text-slate-700 truncate">{lotFiles[idx]!.name}</span>
+                                </div>
+                                <button type="button" onClick={() => removeLotFile(idx)}
+                                  className="text-slate-400 hover:text-red-500 p-1 shrink-0">
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            ) : lot.formalitzacio_document ? (
+                              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                  <div className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">PDF</div>
+                                  <span className="text-xs text-blue-700 truncate">{lot.formalitzacio_document.name}</span>
+                                </div>
+                                <label className="text-xs text-blue-600 hover:text-blue-800 font-bold cursor-pointer underline">
+                                  Canviar
+                                  <input type="file" className="hidden" accept="application/pdf"
+                                    onChange={(e) => handleLotFileChange(idx, e)} />
+                                </label>
+                              </div>
+                            ) : (
+                              <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                                <UploadCloud className="w-5 h-5 mb-1 text-slate-400" />
+                                <p className="text-xs text-slate-500">Feu clic per pujar la formalització (PDF)</p>
+                                <input type="file" className="hidden" accept="application/pdf"
+                                  onChange={(e) => handleLotFileChange(idx, e)} />
+                              </label>
+                            )}
                           </div>
                         </div>
                       )}

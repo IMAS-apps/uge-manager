@@ -216,6 +216,7 @@ export function ContractDashboardView({ user, onNavigate }: ContractDashboardVie
         data_inici_proroga: l.data_inici_proroga || null,
         data_fi_proroga: l.data_fi_proroga || null,
         centres: l.centres,
+        formalitzacio_document: l.formalitzacio_document || null,
       }));
       const { error: insErr } = await supabase.from('contract_lots').insert(lotsToInsert);
       if (insErr) throw insErr;

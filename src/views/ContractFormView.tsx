@@ -37,6 +37,7 @@ const EMPTY_LOT: Omit<ContractLot, 'id' | 'contract_id' | 'created_at'> = {
   data_inici_proroga: '',
   data_fi_proroga: '',
   centres: [],
+  formalitzacio_document: null,
 };
 
 const inputClass =
@@ -71,6 +72,7 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
 
   // ── Lots ───────────────────────────────────────────────────────────────────
   const [lots, setLots] = useState<typeof EMPTY_LOT[]>([{ ...EMPTY_LOT }]);
+  const [lotFiles, setLotFiles] = useState<(File | null)[]>([null]);
 
   // ── Documents ──────────────────────────────────────────────────────────────
   const [documents, setDocuments] = useState<Record<DocumentKey, File | null>>({
@@ -126,10 +128,14 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
     );
   };
 
-  const addLot = () => setLots((prev) => [...prev, { ...EMPTY_LOT }]);
+  const addLot = () => {
+    setLots((prev) => [...prev, { ...EMPTY_LOT }]);
+    setLotFiles((prev) => [...prev, null]);
+  };
 
   const removeLot = (index: number) => {
     setLots((prev) => prev.filter((_, i) => i !== index));
+    setLotFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDocumentChange = (key: DocumentKey, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,6 +149,19 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
 
   const removeDocument = (key: DocumentKey) => {
     setDocuments((prev) => ({ ...prev, [key]: null }));
+  };
+
+  const handleLotDocumentChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (file && file.type !== 'application/pdf') {
+      setError("Només s'accepten fitxers PDF.");
+      return;
+    }
+    setLotFiles((prev) => prev.map((f, i) => (i === index ? file : f)));
+  };
+
+  const removeLotDocument = (index: number) => {
+    setLotFiles((prev) => prev.map((f, i) => (i === index ? null : f)));
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -188,6 +207,14 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
         ? await uploadDoc(documents.resolucio, 'resolucio')
         : null;
 
+      // 1b. Upload lot documents
+      const lotDocsMeta = await Promise.all(
+        lotFiles.map(async (file, idx) => {
+          if (!file) return null;
+          return await uploadDoc(file, `lot_${idx}_formalitzacio`);
+        })
+      );
+
       // 2. Resolve effective sense_lots: if user enabled lots, sense_lots = false
       const effectiveSenseLots = formData.sense_lots;
 
@@ -225,7 +252,7 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
       if (dbErr) throw dbErr;
 
       // 4. Insert lots
-      const lotsToInsert = effectiveLots.map((lot) => ({
+      const lotsToInsert = effectiveLots.map((lot, idx) => ({
         contract_id: contract.id,
         nom_lot: lot.nom_lot,
         cpv: lot.cpv || null,
@@ -237,6 +264,7 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
         data_inici_proroga: lot.data_inici_proroga || null,
         data_fi_proroga: lot.data_fi_proroga || null,
         centres: lot.centres,
+        formalitzacio_document: lotDocsMeta[idx],
       }));
 
       const { error: lotsErr } = await supabase.from('contract_lots').insert(lotsToInsert);
@@ -253,6 +281,7 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
         sense_lots: true, detalls_addicionals: '',
       });
       setLots([{ ...EMPTY_LOT }]);
+      setLotFiles([null]);
       setDocuments({ ppt: null, pcap: null, resolucio: null });
 
       setTimeout(() => onSuccess(), 2000);
@@ -485,6 +514,30 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Lot Document */}
+                  <div className="md:col-span-2 lg:col-span-3 border-t border-slate-200 mt-4 pt-4">
+                    <label className={labelClass}>Formalització de contracte (PDF)</label>
+                    {lotFiles[idx] ? (
+                      <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-md">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <div className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">PDF</div>
+                          <span className="text-xs text-slate-700 truncate">{lotFiles[idx]!.name}</span>
+                        </div>
+                        <button type="button" onClick={() => removeLotDocument(idx)}
+                          className="text-slate-400 hover:text-red-500 p-1 shrink-0">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                        <UploadCloud className="w-5 h-5 mb-1 text-slate-400" />
+                        <p className="text-xs text-slate-500">Feu clic per pujar la formalització (PDF)</p>
+                        <input type="file" className="hidden" accept="application/pdf"
+                          onChange={(e) => handleLotDocumentChange(idx, e)} />
+                      </label>
+                    )}
                   </div>
                 </div>
               </div>
