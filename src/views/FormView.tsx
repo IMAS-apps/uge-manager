@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
-import { Save, AlertCircle, CheckCircle2, UploadCloud, X, ExternalLink, Wand2 } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, UploadCloud, X, ExternalLink, Wand2, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface FormViewProps {
@@ -34,6 +34,8 @@ export function FormView({ user, onSuccess }: FormViewProps) {
 
   const [files, setFiles] = useState<File[]>([]);
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [copyId, setCopyId] = useState('');
+  const [copyLoading, setCopyLoading] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -48,6 +50,56 @@ export function FormView({ user, onSuccess }: FormViewProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCopyData = async () => {
+    if (!copyId) return;
+    
+    const numericId = parseInt(copyId, 10);
+    if (isNaN(numericId)) {
+      setError('El valor introduït no és numèric.');
+      return;
+    }
+
+    setCopyLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('records')
+        .select('*')
+        .eq('id', numericId)
+        .single();
+
+      if (fetchError || !data) {
+        throw new Error(`No s'ha trobat cap registre amb l'ID #${numericId}.`);
+      }
+
+      setFormData({
+        responsable_contracte: data.responsable_contracte || '',
+        organ_contractacio: data.organ_contractacio || '',
+        justificacio: data.justificacio || '',
+        objecte_contracte: data.objecte_contracte || '',
+        caracteristiques_tecniques: data.caracteristiques_tecniques || '',
+        tipus_contracte: data.tipus_contracte || '',
+        tipus_despesa: data.tipus_despesa || '',
+        termini_execucio: data.termini_execucio ? data.termini_execucio.toString() : '',
+        codi_cpv: data.codi_cpv || '',
+        partida_organica: data.partida_organica || '',
+        partida_programa: data.partida_programa || '',
+        partida_economica: data.partida_economica || '',
+        base_imposable: data.base_imposable ? data.base_imposable.toString() : '',
+        quota_iva: data.quota_iva ? data.quota_iva.toString() : '',
+        detalls_addicionals: data.detalls_addicionals || ''
+      });
+
+      setSuccess(`Dades copiades correctament del registre #${numericId}. S'hi han d'adjuntar els fitxers PDF corresponents a la nova sol·licitud.`);
+    } catch (err: any) {
+      setError("El valor numèric no correspon a cap registre de sol·licitud existent o hi ha hagut un error.");
+    } finally {
+      setCopyLoading(false);
+    }
   };
 
   const handleAIAssist = async (field: 'justificacio' | 'objecte_contracte' | 'caracteristiques_tecniques') => {
@@ -218,6 +270,41 @@ export function FormView({ user, onSuccess }: FormViewProps) {
           <div><span className="font-semibold">Hora:</span> {currentTime}</div>
           <div><span className="font-semibold">Sol·licitant:</span> {user.full_name}</div>
           <div><span className="font-semibold">Correu:</span> {user.email}</div>
+        </div>
+
+        {/* Copiar dades existents */}
+        <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl">
+          <div className="flex flex-col sm:flex-row items-end gap-4">
+            <div className="flex-1 w-full sm:max-w-xs">
+              <label className="block text-sm font-medium text-blue-900 mb-1">ID del registre a copiar</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-slate-500 font-medium">#</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={copyId}
+                  onChange={(e) => setCopyId(e.target.value)}
+                  placeholder="269"
+                  className="w-full pl-8 pr-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleCopyData}
+              disabled={copyLoading || !copyId}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70 h-[42px] w-full sm:w-auto"
+            >
+              {copyLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <><Copy size={18} /> Copiar dades existents</>
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-blue-700 mt-2">
+            Introdueixi l'ID per omplir els camps amb les dades d'una sol·licitud anterior.
+          </p>
         </div>
 
         {/* Identificació */}
