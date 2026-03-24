@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
-import { Save, AlertCircle, CheckCircle2, UploadCloud, X, ExternalLink } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, UploadCloud, X, ExternalLink, Wand2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface FormViewProps {
@@ -33,6 +33,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
   });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -47,6 +48,21 @@ export function FormView({ user, onSuccess }: FormViewProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAIAssist = async (field: 'justificacio' | 'objecte_contracte' | 'caracteristiques_tecniques') => {
+    if (!formData[field].trim()) return;
+    
+    setAiLoading(field);
+    try {
+      const { processTextWithAI } = await import('../lib/ai');
+      const result = await processTextWithAI(formData[field]);
+      setFormData(prev => ({ ...prev, [field]: result }));
+    } catch (err: any) {
+      setError(err.message || 'Error en processar el text amb IA');
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,15 +250,69 @@ export function FormView({ user, onSuccess }: FormViewProps) {
           </div>
           <div className="px-6 pb-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Justificació de la necessitat *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-slate-700">Justificació de la necessitat *</label>
+                {formData.justificacio.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => handleAIAssist('justificacio')}
+                    disabled={aiLoading !== null}
+                    className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-md transition-colors disabled:opacity-50"
+                    title="Millorar i traduir text amb IA"
+                  >
+                    {aiLoading === 'justificacio' ? (
+                      <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Wand2 size={14} />
+                    )}
+                    <span>Millorar text</span>
+                  </button>
+                )}
+              </div>
               <textarea required name="justificacio" value={formData.justificacio} onChange={handleChange} rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Objecte del contracte *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-slate-700">Objecte del contracte *</label>
+                {formData.objecte_contracte.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => handleAIAssist('objecte_contracte')}
+                    disabled={aiLoading !== null}
+                    className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-md transition-colors disabled:opacity-50"
+                    title="Millorar i traduir text amb IA"
+                  >
+                    {aiLoading === 'objecte_contracte' ? (
+                      <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Wand2 size={14} />
+                    )}
+                    <span>Millorar text</span>
+                  </button>
+                )}
+              </div>
               <textarea required name="objecte_contracte" value={formData.objecte_contracte} onChange={handleChange} rows={4} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Característiques tècniques *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-slate-700">Característiques tècniques *</label>
+                {formData.caracteristiques_tecniques.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => handleAIAssist('caracteristiques_tecniques')}
+                    disabled={aiLoading !== null}
+                    className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-md transition-colors disabled:opacity-50"
+                    title="Millorar i traduir text amb IA"
+                  >
+                    {aiLoading === 'caracteristiques_tecniques' ? (
+                      <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Wand2 size={14} />
+                    )}
+                    <span>Millorar text</span>
+                  </button>
+                )}
+              </div>
               <textarea required name="caracteristiques_tecniques" value={formData.caracteristiques_tecniques} onChange={handleChange} rows={4} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
           </div>

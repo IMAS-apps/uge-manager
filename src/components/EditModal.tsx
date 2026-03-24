@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
-import { X, FileText, Download, Save, Info, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface EditModalProps {
@@ -58,6 +58,8 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     detalls_addicionals: record.detalls_addicionals || ''
   });
 
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,6 +77,22 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleAIAssist = async (field: 'justificacio' | 'objecte_contracte' | 'caracteristiques_tecniques') => {
+    if (mode !== 'edit' || user.role !== 'Administrador') return;
+    if (!formData[field].trim()) return;
+    
+    setAiLoading(field);
+    try {
+      const { processTextWithAI } = await import('../lib/ai');
+      const result = await processTextWithAI(formData[field]);
+      setFormData(prev => ({ ...prev, [field]: result }));
+    } catch (err: any) {
+      alert(err.message || 'Error en processar el text amb IA');
+    } finally {
+      setAiLoading(null);
     }
   };
 
@@ -172,7 +190,25 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               <SectionCard title="Descripció">
                 <div className="grid grid-cols-1 gap-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Justificació de la necessitat</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Justificació de la necessitat</label>
+                      {mode === 'edit' && user.role === 'Administrador' && formData.justificacio.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => handleAIAssist('justificacio')}
+                          disabled={aiLoading !== null}
+                          className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
+                          title="Millorar i traduir text amb IA"
+                        >
+                          {aiLoading === 'justificacio' ? (
+                            <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <Wand2 size={12} />
+                          )}
+                          <span>Millorar text</span>
+                        </button>
+                      )}
+                    </div>
                     {mode === 'edit' && user.role === 'Administrador' ? (
                       <textarea name="justificacio" value={formData.justificacio} onChange={handleChange} form="edit-form" rows={3} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
@@ -181,7 +217,25 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   </div>
                   
                   <div>
-                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Objecte del contracte</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Objecte del contracte</label>
+                      {mode === 'edit' && user.role === 'Administrador' && formData.objecte_contracte.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => handleAIAssist('objecte_contracte')}
+                          disabled={aiLoading !== null}
+                          className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
+                          title="Millorar i traduir text amb IA"
+                        >
+                          {aiLoading === 'objecte_contracte' ? (
+                            <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <Wand2 size={12} />
+                          )}
+                          <span>Millorar text</span>
+                        </button>
+                      )}
+                    </div>
                     {mode === 'edit' && user.role === 'Administrador' ? (
                       <textarea name="objecte_contracte" value={formData.objecte_contracte} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
@@ -190,7 +244,25 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   </div>
                   
                   <div>
-                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Característiques tècniques</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Característiques tècniques</label>
+                      {mode === 'edit' && user.role === 'Administrador' && formData.caracteristiques_tecniques.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => handleAIAssist('caracteristiques_tecniques')}
+                          disabled={aiLoading !== null}
+                          className="flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
+                          title="Millorar i traduir text amb IA"
+                        >
+                          {aiLoading === 'caracteristiques_tecniques' ? (
+                            <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <Wand2 size={12} />
+                          )}
+                          <span>Millorar text</span>
+                        </button>
+                      )}
+                    </div>
                     {mode === 'edit' && user.role === 'Administrador' ? (
                       <textarea name="caracteristiques_tecniques" value={formData.caracteristiques_tecniques} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
