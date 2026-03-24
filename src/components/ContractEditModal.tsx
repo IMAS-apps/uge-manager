@@ -22,6 +22,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { CpvDescription } from './CpvDescription';
 
 interface ContractEditModalProps {
   contract: Contract;
@@ -517,7 +518,10 @@ export function ContractEditModal({
                     <div className="p-4">
                       {mode === 'view' ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          <Field label="CPV" value={lot.cpv} />
+                          <div>
+                            <Field label="CPV" value={lot.cpv} />
+                            <CpvDescription code={lot.cpv || ''} />
+                          </div>
                           <Field label="Adjudicatari" value={lot.adjudicatari} />
                           <Field label="Telèfon Adjudicatari" value={lot.telefon} />
                           <Field label="E-mail Adjudicatari" value={lot.email} />
@@ -565,6 +569,7 @@ export function ContractEditModal({
                             <label className={labelClass}>CPV</label>
                             <input type="text" name="cpv" value={lot.cpv}
                               onChange={(e) => handleLotChange(idx, e)} className={inputClass} />
+                            <CpvDescription code={lot.cpv || ''} />
                           </div>
                           <div>
                             <label className={labelClass}>Adjudicatari</label>

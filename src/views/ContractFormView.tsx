@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { CpvDescription } from '../components/CpvDescription';
 
 interface ContractFormViewProps {
   user: User;
@@ -459,11 +460,12 @@ export function ContractFormView({ user, onSuccess }: ContractFormViewProps) {
                         value={lot.nom_lot} onChange={(e) => handleLotChange(idx, e)} className={inputClass} />
                     </div>
                   )}
-                  <div>
-                    <label className={labelClass}>CPV</label>
-                    <input type="text" name="cpv" value={lot.cpv}
-                      onChange={(e) => handleLotChange(idx, e)} className={inputClass} placeholder="p.e. 55321000" />
-                  </div>
+                    <div>
+                      <label className={labelClass}>CPV</label>
+                      <input type="text" name="cpv" value={lot.cpv}
+                        onChange={(e) => handleLotChange(idx, e)} className={inputClass} placeholder="p.e. 55321000" />
+                      <CpvDescription code={lot.cpv} />
+                    </div>
                   <div>
                     <label className={labelClass}>Adjudicatari</label>
                     <input type="text" name="adjudicatari" value={lot.adjudicatari}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
 import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { CpvDescription } from './CpvDescription';
 
 interface EditModalProps {
   record: Record;
@@ -317,9 +318,15 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Codi CPV</label>
                     {mode === 'edit' && user.role === 'Administrador' ? (
-                      <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                      <>
+                        <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                        <CpvDescription code={formData.codi_cpv} />
+                      </>
                     ) : (
-                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.codi_cpv || '—'}</div>
+                      <>
+                        <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.codi_cpv || '—'}</div>
+                        <CpvDescription code={formData.codi_cpv} />
+                      </>
                     )}
                   </div>
                   

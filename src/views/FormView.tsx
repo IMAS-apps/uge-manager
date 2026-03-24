@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
 import { Save, AlertCircle, CheckCircle2, UploadCloud, X, ExternalLink, Wand2, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { CpvDescription } from '../components/CpvDescription';
 
 interface FormViewProps {
   user: User;
@@ -456,6 +457,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
                 </a>
               </div>
               <input required type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} placeholder="12345678" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <CpvDescription code={formData.codi_cpv} />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Partida Orgànica *</label>
