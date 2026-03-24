@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Contract, ContractLot, User, CONTRACTE_TIPUS, CONTRACTE_ORGANS, CENTRES_IMAS } from '../types';
 import {
   Filter, X, Eye, CheckCircle2, AlertCircle, Search,
-  ClipboardList, ChevronUp, ChevronDown, FileDown, Trash2, Plus
+  ClipboardList, ChevronUp, ChevronDown, FileDown, Plus
 } from 'lucide-react';
 import { ContractEditModal } from '../components/ContractEditModal';
 import { supabase } from '../lib/supabase';
@@ -508,14 +508,7 @@ export function ContractDashboardView({ user, onNavigate }: ContractDashboardVie
                                 title="Veure / Editar">
                                 <Eye size={18} />
                               </button>
-                              {isAdmin && (
-                                <button
-                                  onClick={() => setDeleteConfirm(contract)}
-                                  className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
-                                  title="Eliminar contracte">
-                                  <Trash2 size={18} />
-                                </button>
-                              )}
+
                             </div>
                           </td>
                         </tr>
