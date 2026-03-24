@@ -77,6 +77,7 @@ export function ContractEditModal({
   const [editGeneral, setEditGeneral] = useState<Partial<Contract>>({});
   const [editLots, setEditLots] = useState<ContractLot[]>([]);
   const [lotFiles, setLotFiles] = useState<Record<number, File | null>>({});
+  const [generalFiles, setGeneralFiles] = useState<Record<string, File | null>>({});
 
   useEffect(() => {
     if (mode === 'edit') {
@@ -174,6 +175,29 @@ export function ContractEditModal({
     setLotFiles((prev) => ({ ...prev, [idx]: null }));
   };
 
+  const handleGeneralFileChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (file && file.type !== 'application/pdf') {
+      setError("Només s'accepten fitxers PDF.");
+      return;
+    }
+    setGeneralFiles((prev) => ({ ...prev, [key]: file }));
+  };
+
+  const removeGeneralFile = (key: string) => {
+    // If it's a pending new file, remove it from generalFiles
+    if (generalFiles[key]) {
+      setGeneralFiles((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    } else {
+      // If it was an existing file, set it to null in editGeneral
+      setEditGeneral((prev) => ({ ...prev, [key]: null }));
+    }
+  };
+
   const toggleLot = (idx: number) => {
     setExpandedLots((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
@@ -182,7 +206,26 @@ export function ContractEditModal({
     setSaving(true);
     setError('');
     try {
-      // Upload any new lot files
+      // 1. Upload any new general files
+      const updatedGeneral = { ...editGeneral };
+      for (const [key, file] of Object.entries(generalFiles)) {
+        if (!file) continue;
+
+        const ext = file.name.split('.').pop();
+        const path = `${user.id}/${Date.now()}_${key}.${ext}`;
+        const { error: upErr, data } = await supabase.storage
+          .from('contractes_documents')
+          .upload(path, file);
+        if (upErr) throw upErr;
+
+        (updatedGeneral as any)[key] = {
+          name: file.name,
+          path: data.path,
+          size: file.size,
+        };
+      }
+
+      // 2. Upload any new lot files
       const finalLots = await Promise.all(
         editLots.map(async (lot, idx) => {
           const file = lotFiles[idx];
@@ -202,9 +245,10 @@ export function ContractEditModal({
         })
       );
 
-      await onSave(editGeneral, finalLots);
+      await onSave(updatedGeneral, finalLots);
       setMode('view');
       setLotFiles({});
+      setGeneralFiles({});
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -637,20 +681,59 @@ export function ContractEditModal({
                 { key: 'pcap_document', label: 'PCAP' },
                 { key: 'resolucio_document', label: "Resolució d'Adjudicació" },
               ] as const).map(({ key, label }) => {
-                const doc = contract[key];
+                const existingDoc = (displayGeneral as any)[key];
+                const newFile = generalFiles[key];
+
                 return (
                   <div key={key} className="border border-slate-200 rounded-lg p-3">
                     <p className="text-xs font-bold text-slate-500 uppercase mb-2">{label}</p>
-                    {doc ? (
-                      <button
-                        onClick={() => getDocUrl(doc.path)}
-                        className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                      >
-                        <ExternalLink size={14} />
-                        <span className="truncate">{doc.name}</span>
-                      </button>
+
+                    {mode === 'view' ? (
+                      existingDoc ? (
+                        <button
+                          onClick={() => getDocUrl(existingDoc.path)}
+                          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                        >
+                          <ExternalLink size={14} />
+                          <span className="truncate">{existingDoc.name}</span>
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">No adjuntat</span>
+                      )
                     ) : (
-                      <span className="text-xs text-slate-400 italic">No adjuntat</span>
+                      <div className="space-y-2">
+                        {newFile ? (
+                          <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-md">
+                            <span className="text-xs text-slate-700 truncate max-w-[120px]">{newFile.name}</span>
+                            <button type="button" onClick={() => removeGeneralFile(key)}
+                              className="text-slate-400 hover:text-red-500 p-0.5">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : existingDoc ? (
+                          <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-md">
+                            <span className="text-xs text-blue-700 truncate max-w-[100px]">{existingDoc.name}</span>
+                            <div className="flex items-center gap-1.5">
+                              <label className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer" title="Canviar">
+                                <UploadCloud size={14} />
+                                <input type="file" className="hidden" accept="application/pdf"
+                                  onChange={(e) => handleGeneralFileChange(key, e)} />
+                              </label>
+                              <button type="button" onClick={() => removeGeneralFile(key)}
+                                className="p-1 text-slate-400 hover:text-red-500" title="Eliminar">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                            <UploadCloud className="w-5 h-5 text-slate-400" />
+                            <p className="text-[10px] text-slate-500">Pujar PDF</p>
+                            <input type="file" className="hidden" accept="application/pdf"
+                              onChange={(e) => handleGeneralFileChange(key, e)} />
+                          </label>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
