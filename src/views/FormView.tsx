@@ -382,7 +382,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-slate-700">Característiques tècniques *</label>
+                <label className="block text-sm font-medium text-slate-700">Característiques tècniques (Opcional)</label>
                 {formData.caracteristiques_tecniques.trim() && (
                   <button
                     type="button"
@@ -400,7 +400,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
                   </button>
                 )}
               </div>
-              <textarea required name="caracteristiques_tecniques" value={formData.caracteristiques_tecniques} onChange={handleChange} rows={4} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+              <textarea name="caracteristiques_tecniques" value={formData.caracteristiques_tecniques} onChange={handleChange} rows={4} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
           </div>
         </section>

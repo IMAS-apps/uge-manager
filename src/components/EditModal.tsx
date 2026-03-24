@@ -245,7 +245,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Característiques tècniques</label>
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Característiques tècniques (Opcional)</label>
                       {mode === 'edit' && user.role === 'Administrador' && formData.caracteristiques_tecniques.trim() && (
                         <button
                           type="button"
