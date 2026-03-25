@@ -536,10 +536,10 @@ export function ContractEditModal({
                               <p className={labelClass}>Formalització de contracte</p>
                               <button
                                 onClick={() => getDocUrl(lot.formalitzacio_document!.path)}
-                                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors mt-1"
+                                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors mt-1 w-full min-w-0"
                               >
-                                <ExternalLink size={14} />
-                                <span className="truncate">{lot.formalitzacio_document.name}</span>
+                                <ExternalLink size={14} className="shrink-0" />
+                                <span className="truncate flex-1 text-left">{lot.formalitzacio_document.name}</span>
                               </button>
                             </div>
                           )}
@@ -636,9 +636,9 @@ export function ContractEditModal({
                             <label className={labelClass}>Formalització de contracte (PDF)</label>
                             {lotFiles[idx] ? (
                               <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-md">
-                                <div className="flex items-center gap-2 overflow-hidden">
+                                <div className="flex items-center gap-2 overflow-hidden min-w-0">
                                   <div className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">PDF</div>
-                                  <span className="text-xs text-slate-700 truncate">{lotFiles[idx]!.name}</span>
+                                  <span className="text-xs text-slate-700 truncate flex-1">{lotFiles[idx]!.name}</span>
                                 </div>
                                 <button type="button" onClick={() => removeLotFile(idx)}
                                   className="text-slate-400 hover:text-red-500 p-1 shrink-0">
@@ -647,9 +647,9 @@ export function ContractEditModal({
                               </div>
                             ) : lot.formalitzacio_document ? (
                               <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                <div className="flex items-center gap-2 overflow-hidden">
+                                <div className="flex items-center gap-2 overflow-hidden min-w-0">
                                   <div className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">PDF</div>
-                                  <span className="text-xs text-blue-700 truncate">{lot.formalitzacio_document.name}</span>
+                                  <span className="text-xs text-blue-700 truncate flex-1">{lot.formalitzacio_document.name}</span>
                                 </div>
                                 <label className="text-xs text-blue-600 hover:text-blue-800 font-bold cursor-pointer underline">
                                   Canviar
@@ -697,10 +697,10 @@ export function ContractEditModal({
                       existingDoc ? (
                         <button
                           onClick={() => getDocUrl(existingDoc.path)}
-                          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors w-full min-w-0"
                         >
-                          <ExternalLink size={14} />
-                          <span className="truncate">{existingDoc.name}</span>
+                          <ExternalLink size={14} className="shrink-0" />
+                          <span className="truncate flex-1 text-left">{existingDoc.name}</span>
                         </button>
                       ) : (
                         <span className="text-xs text-slate-400 italic">No adjuntat</span>
@@ -708,16 +708,16 @@ export function ContractEditModal({
                     ) : (
                       <div className="space-y-2">
                         {newFile ? (
-                          <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-md">
-                            <span className="text-xs text-slate-700 truncate max-w-[120px]">{newFile.name}</span>
+                          <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-md min-w-0">
+                            <span className="text-xs text-slate-700 truncate flex-1 mr-2">{newFile.name}</span>
                             <button type="button" onClick={() => removeGeneralFile(key)}
                               className="text-slate-400 hover:text-red-500 p-0.5">
                               <X size={14} />
                             </button>
                           </div>
                         ) : existingDoc ? (
-                          <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-md">
-                            <span className="text-xs text-blue-700 truncate max-w-[100px]">{existingDoc.name}</span>
+                          <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-md min-w-0">
+                            <span className="text-xs text-blue-700 truncate flex-1 mr-2">{existingDoc.name}</span>
                             <div className="flex items-center gap-1.5">
                               <label className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer" title="Canviar">
                                 <UploadCloud size={14} />
