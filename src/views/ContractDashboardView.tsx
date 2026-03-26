@@ -23,6 +23,12 @@ function formatDate(d?: string | null) {
   }
 }
 
+// Helpers
+const openVincleCSV = (csv: string) => {
+  const url = `https://imas.secimallorca.net/firma/documento.aspx?csv=${csv}&modo=abrir`;
+  window.open(url, '_blank');
+};
+
 // Compute effective start/end from lots
 function getContractDates(lots: ContractLot[]) {
   let earliest: string | null = null;
@@ -451,9 +457,9 @@ export function ContractDashboardView({ user, onNavigate }: ContractDashboardVie
                         { field: 'data_inici', label: 'Data inici', align: 'left' },
                         { field: 'data_fi', label: 'Data fi', align: 'left' },
                         { field: 'nom_contracte', label: 'Nom del contracte', align: 'left' },
-                        { field: 'organ_contractacio', label: 'Òrgan', align: 'left' },
-                        { field: 'prorrogable', label: 'Prorrogable', align: 'center' },
-                        { field: 'modificable', label: 'Modificable', align: 'center' },
+                        { field: 'ppt_document', label: 'PPT', align: 'center' },
+                        { field: 'pcap_document', label: 'PCAP', align: 'center' },
+                        { field: 'resolucio_document', label: 'RESOLUCIÓ', align: 'center' },
                       ].map(({ field, label, align }) => (
                         <th key={field} scope="col"
                           className={`px-4 py-3 text-${align} text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap`}
@@ -482,14 +488,38 @@ export function ContractDashboardView({ user, onNavigate }: ContractDashboardVie
                           <td className="px-4 py-3 text-sm text-text-primary font-medium w-full">
                             <div className="line-clamp-2 min-w-[200px]">{contract.nom_contracte}</div>
                           </td>
-                          <td className="px-4 py-3 text-sm text-text-secondary whitespace-nowrap">
-                            {contract.organ_contractacio}
+                          <td className="px-4 py-3 text-center whitespace-nowrap">
+                            {contract.ppt_document ? (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openVincleCSV(contract.ppt_document!); }}
+                                className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold hover:bg-blue-200 transition-colors"
+                                title="Veure PPT"
+                              >
+                                PPT
+                              </button>
+                            ) : '—'}
                           </td>
                           <td className="px-4 py-3 text-center whitespace-nowrap">
-                            <BoolBadge value={contract.prorrogable} />
+                            {contract.pcap_document ? (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openVincleCSV(contract.pcap_document!); }}
+                                className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold hover:bg-blue-200 transition-colors"
+                                title="Veure PCAP"
+                              >
+                                PCAP
+                              </button>
+                            ) : '—'}
                           </td>
                           <td className="px-4 py-3 text-center whitespace-nowrap">
-                            <BoolBadge value={contract.modificable} />
+                            {contract.resolucio_document ? (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openVincleCSV(contract.resolucio_document!); }}
+                                className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold hover:bg-blue-200 transition-colors"
+                                title="Veure RESOL"
+                              >
+                                RESOL
+                              </button>
+                            ) : '—'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
                             <div className="flex items-center justify-center gap-2">
