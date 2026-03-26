@@ -54,7 +54,7 @@ export interface ContractLot {
   centres: string[];
   telefon?: string;
   email?: string;
-  formalitzacio_document?: { name: string; path: string; size: number } | null;
+  formalitzacio_document?: string | null;
   created_at?: string;
 }
 
@@ -75,9 +75,9 @@ export interface Contract {
   modificat: string;
   sense_lots: boolean;
   detalls_addicionals: string;
-  ppt_document: { name: string; path: string; size: number } | null;
-  pcap_document: { name: string; path: string; size: number } | null;
-  resolucio_document: { name: string; path: string; size: number } | null;
+  ppt_document: string | null;
+  pcap_document: string | null;
+  resolucio_document: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

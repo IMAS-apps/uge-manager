@@ -19,7 +19,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
-  UploadCloud,
+  FileText,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CpvDescription } from './CpvDescription';
@@ -77,8 +77,6 @@ export function ContractEditModal({
   // Edit state
   const [editGeneral, setEditGeneral] = useState<Partial<Contract>>({});
   const [editLots, setEditLots] = useState<ContractLot[]>([]);
-  const [lotFiles, setLotFiles] = useState<Record<number, File | null>>({});
-  const [generalFiles, setGeneralFiles] = useState<Record<string, File | null>>({});
 
   useEffect(() => {
     if (mode === 'edit') {
@@ -148,7 +146,7 @@ export function ContractEditModal({
         data_fi_proroga: '',
         centres: [],
         contract_id: contract.id,
-        formalitzacio_document: null,
+        formalitzacio_document: '',
         telefon: '',
         email: '',
       },
@@ -158,45 +156,16 @@ export function ContractEditModal({
 
   const removeLot = (idx: number) => {
     setEditLots((prev) => prev.filter((_, i) => i !== idx));
-    const newFiles = { ...lotFiles };
-    delete newFiles[idx];
-    setLotFiles(newFiles);
   };
 
   const handleLotFileChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    if (file && file.type !== 'application/pdf') {
-      setError("Només s'accepten fitxers PDF.");
-      return;
-    }
-    setLotFiles((prev) => ({ ...prev, [idx]: file }));
-  };
-
-  const removeLotFile = (idx: number) => {
-    setLotFiles((prev) => ({ ...prev, [idx]: null }));
+    setEditLots((prev) =>
+      prev.map((lot, i) => (i === idx ? { ...lot, formalitzacio_document: e.target.value } : lot))
+    );
   };
 
   const handleGeneralFileChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    if (file && file.type !== 'application/pdf') {
-      setError("Només s'accepten fitxers PDF.");
-      return;
-    }
-    setGeneralFiles((prev) => ({ ...prev, [key]: file }));
-  };
-
-  const removeGeneralFile = (key: string) => {
-    // If it's a pending new file, remove it from generalFiles
-    if (generalFiles[key]) {
-      setGeneralFiles((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
-    } else {
-      // If it was an existing file, set it to null in editGeneral
-      setEditGeneral((prev) => ({ ...prev, [key]: null }));
-    }
+    setEditGeneral((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
   const toggleLot = (idx: number) => {
@@ -207,49 +176,8 @@ export function ContractEditModal({
     setSaving(true);
     setError('');
     try {
-      // 1. Upload any new general files
-      const updatedGeneral = { ...editGeneral };
-      for (const [key, file] of Object.entries(generalFiles)) {
-        if (!file) continue;
-
-        const ext = file.name.split('.').pop();
-        const path = `${user.id}/${Date.now()}_${key}.${ext}`;
-        const { error: upErr, data } = await supabase.storage
-          .from('contractes_documents')
-          .upload(path, file);
-        if (upErr) throw upErr;
-
-        (updatedGeneral as any)[key] = {
-          name: file.name,
-          path: data.path,
-          size: file.size,
-        };
-      }
-
-      // 2. Upload any new lot files
-      const finalLots = await Promise.all(
-        editLots.map(async (lot, idx) => {
-          const file = lotFiles[idx];
-          if (!file) return lot;
-
-          const ext = file.name.split('.').pop();
-          const path = `${user.id}/${Date.now()}_lot_${idx}_formalitzacio.${ext}`;
-          const { error: upErr, data } = await supabase.storage
-            .from('contractes_documents')
-            .upload(path, file);
-          if (upErr) throw upErr;
-
-          return {
-            ...lot,
-            formalitzacio_document: { name: file.name, path: data.path, size: file.size },
-          };
-        })
-      );
-
-      await onSave(updatedGeneral, finalLots);
+      await onSave(editGeneral, editLots);
       setMode('view');
-      setLotFiles({});
-      setGeneralFiles({});
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -257,11 +185,9 @@ export function ContractEditModal({
     }
   };
 
-  const getDocUrl = async (path: string) => {
-    const { data } = await supabase.storage
-      .from('contractes_documents')
-      .createSignedUrl(path, 60);
-    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  const openVincleCSV = (csv: string) => {
+    const url = `https://imas.secimallorca.net/firma/documento.aspx?csv=${csv}&modo=abrir`;
+    window.open(url, '_blank');
   };
 
   const displayLots = mode === 'edit' ? editLots : contract.lots || [];
@@ -533,14 +459,19 @@ export function ContractEditModal({
                           <Field label="Fi pròrroga" value={formatDate(lot.data_fi_proroga)} />
                           {lot.formalitzacio_document && (
                             <div className="col-span-2 md:col-span-3">
-                              <p className={labelClass}>Formalització de contracte</p>
-                              <button
-                                onClick={() => getDocUrl(lot.formalitzacio_document!.path)}
-                                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors mt-1 w-full min-w-0"
-                              >
-                                <ExternalLink size={14} className="shrink-0" />
-                                <span className="truncate flex-1 text-left">{lot.formalitzacio_document.name}</span>
-                              </button>
+                              <p className={labelClass}>Codi CSV Formalització de contracte</p>
+                              <div className="flex flex-col gap-2 mt-1">
+                                <div className="text-sm font-mono bg-slate-50 p-2 rounded border border-slate-200 text-slate-600 break-all">
+                                  {lot.formalitzacio_document}
+                                </div>
+                                <button
+                                  onClick={() => openVincleCSV(lot.formalitzacio_document!)}
+                                  className="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors w-full sm:w-auto"
+                                >
+                                  <ExternalLink size={14} className="shrink-0" />
+                                  <span>Veure Document (CSV)</span>
+                                </button>
+                              </div>
                             </div>
                           )}
                           {lot.centres.length > 0 && (
@@ -633,38 +564,19 @@ export function ContractEditModal({
 
                           {/* Lot Document Edit */}
                           <div className="md:col-span-2 lg:col-span-3 border-t border-slate-200 mt-4 pt-4">
-                            <label className={labelClass}>Formalització de contracte (PDF)</label>
-                            {lotFiles[idx] ? (
-                              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-md">
-                                <div className="flex items-center gap-2 overflow-hidden min-w-0">
-                                  <div className="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">PDF</div>
-                                  <span className="text-xs text-slate-700 truncate flex-1">{lotFiles[idx]!.name}</span>
-                                </div>
-                                <button type="button" onClick={() => removeLotFile(idx)}
-                                  className="text-slate-400 hover:text-red-500 p-1 shrink-0">
-                                  <X size={16} />
-                                </button>
+                            <label className={labelClass}>Codi CSV Formalització de contracte</label>
+                            <div className="relative mt-1">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <FileText className="h-4 w-4 text-slate-400" />
                               </div>
-                            ) : lot.formalitzacio_document ? (
-                              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                <div className="flex items-center gap-2 overflow-hidden min-w-0">
-                                  <div className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-xs font-bold shrink-0">PDF</div>
-                                  <span className="text-xs text-blue-700 truncate flex-1">{lot.formalitzacio_document.name}</span>
-                                </div>
-                                <label className="text-xs text-blue-600 hover:text-blue-800 font-bold cursor-pointer underline">
-                                  Canviar
-                                  <input type="file" className="hidden" accept="application/pdf"
-                                    onChange={(e) => handleLotFileChange(idx, e)} />
-                                </label>
-                              </div>
-                            ) : (
-                              <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
-                                <UploadCloud className="w-5 h-5 mb-1 text-slate-400" />
-                                <p className="text-xs text-slate-500">Feu clic per pujar la formalització (PDF)</p>
-                                <input type="file" className="hidden" accept="application/pdf"
-                                  onChange={(e) => handleLotFileChange(idx, e)} />
-                              </label>
-                            )}
+                              <input
+                                type="text"
+                                value={lot.formalitzacio_document || ''}
+                                onChange={(e) => handleLotFileChange(idx, e)}
+                                className={`${inputClass} pl-10`}
+                                placeholder="Ex: K9AADEVJKM947AC2AXZR"
+                              />
+                            </div>
                           </div>
                         </div>
                       )}
@@ -682,62 +594,45 @@ export function ContractEditModal({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {([
-                { key: 'ppt_document', label: 'PPT' },
-                { key: 'pcap_document', label: 'PCAP' },
-                { key: 'resolucio_document', label: "Resolució d'Adjudicació" },
+                { key: 'ppt_document', label: 'Codi CSV PPT' },
+                { key: 'pcap_document', label: 'Codi CSV PCAP' },
+                { key: 'resolucio_document', label: "Codi CSV Resolució" },
               ] as const).map(({ key, label }) => {
-                const existingDoc = (displayGeneral as any)[key];
-                const newFile = generalFiles[key];
+                const csvValue = (displayGeneral as any)[key];
 
                 return (
                   <div key={key} className="border border-slate-200 rounded-lg p-3">
                     <p className="text-xs font-bold text-slate-500 uppercase mb-2">{label}</p>
 
                     {mode === 'view' ? (
-                      existingDoc ? (
-                        <button
-                          onClick={() => getDocUrl(existingDoc.path)}
-                          className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors w-full min-w-0"
-                        >
-                          <ExternalLink size={14} className="shrink-0" />
-                          <span className="truncate flex-1 text-left">{existingDoc.name}</span>
-                        </button>
+                      csvValue ? (
+                        <div className="space-y-2">
+                          <div className="text-[11px] font-mono bg-slate-50 p-1.5 rounded border border-slate-200 text-slate-500 truncate" title={csvValue}>
+                            {csvValue}
+                          </div>
+                          <button
+                            onClick={() => openVincleCSV(csvValue)}
+                            className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-bold transition-colors w-full"
+                          >
+                            <ExternalLink size={14} className="shrink-0" />
+                            <span>Veure Document (CSV)</span>
+                          </button>
+                        </div>
                       ) : (
-                        <span className="text-xs text-slate-400 italic">No adjuntat</span>
+                        <span className="text-xs text-slate-400 italic">No introduït</span>
                       )
                     ) : (
-                      <div className="space-y-2">
-                        {newFile ? (
-                          <div className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-md min-w-0">
-                            <span className="text-xs text-slate-700 truncate flex-1 mr-2">{newFile.name}</span>
-                            <button type="button" onClick={() => removeGeneralFile(key)}
-                              className="text-slate-400 hover:text-red-500 p-0.5">
-                              <X size={14} />
-                            </button>
-                          </div>
-                        ) : existingDoc ? (
-                          <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-md min-w-0">
-                            <span className="text-xs text-blue-700 truncate flex-1 mr-2">{existingDoc.name}</span>
-                            <div className="flex items-center gap-1.5">
-                              <label className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer" title="Canviar">
-                                <UploadCloud size={14} />
-                                <input type="file" className="hidden" accept="application/pdf"
-                                  onChange={(e) => handleGeneralFileChange(key, e)} />
-                              </label>
-                              <button type="button" onClick={() => removeGeneralFile(key)}
-                                className="p-1 text-slate-400 hover:text-red-500" title="Eliminar">
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
-                            <UploadCloud className="w-5 h-5 text-slate-400" />
-                            <p className="text-[10px] text-slate-500">Pujar PDF</p>
-                            <input type="file" className="hidden" accept="application/pdf"
-                              onChange={(e) => handleGeneralFileChange(key, e)} />
-                          </label>
-                        )}
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <FileText className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={csvValue || ''}
+                          onChange={(e) => handleGeneralFileChange(key, e)}
+                          className={`${inputClass} pl-10`}
+                          placeholder="Ex: K9AADE..."
+                        />
                       </div>
                     )}
                   </div>
