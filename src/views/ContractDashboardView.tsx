@@ -51,36 +51,45 @@ function getContractDates(lots: ContractLot[]) {
   return { dataInici: earliest, dataFi: latest };
 }
 
-function getRenewalTheme(lots?: ContractLot[]) {
+function getRenewalTheme(contract: any) {
+  const lots = contract.lots as ContractLot[];
   if (!lots || lots.length === 0) return '';
   
   const d = new Date();
   const today = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   
-  let soonestDeadline: Date | null = null;
+  let minDaysUntilDeadline: number | null = null;
   
   lots.forEach(lot => {
-    if (lot.data_limit_comunicacio_proroga) {
-      const deadlineDate = new Date(lot.data_limit_comunicacio_proroga + 'T00:00:00');
-      if (!soonestDeadline || deadlineDate < soonestDeadline) {
-        soonestDeadline = deadlineDate;
-      }
+    const checkDates = [
+      lot.data_limit_comunicacio_proroga,
+      lot.data_fi_proroga
+    ];
+
+    // Added: data_fi only if contract is not extendable
+    if (contract.prorrogable === false) {
+      checkDates.push(lot.data_fi);
     }
+
+    checkDates.forEach(dateStr => {
+      if (dateStr) {
+        const deadlineDate = new Date(dateStr + 'T00:00:00');
+        const diffTime = deadlineDate.getTime() - today.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays >= 0) {
+          if (minDaysUntilDeadline === null || diffDays < minDaysUntilDeadline) {
+            minDaysUntilDeadline = diffDays;
+          }
+        }
+      }
+    });
   });
   
-  if (!soonestDeadline) return '';
+  if (minDaysUntilDeadline === null) return '';
   
-  const diffTime = soonestDeadline.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  // If deadline has passed, return to white
-  if (diffDays < 0) return '';
-  
-  // 30 days or less = intense red
-  if (diffDays <= 30) return 'bg-[#FFBABA] hover:bg-[#FF9B9B]';
-  
-  // 60 days or less = pastel red
-  if (diffDays <= 60) return 'bg-[#FFE5E5] hover:bg-[#FFD1D1]';
+  if (minDaysUntilDeadline <= 30) return 'bg-[#FFBABA] hover:bg-[#FF9B9B]';
+  if (minDaysUntilDeadline <= 60) return 'bg-[#FFE5E5] hover:bg-[#FFD1D1]';
   
   return '';
 }
@@ -523,7 +532,7 @@ export function ContractDashboardView({ user, onNavigate, pendingOpenContractId,
                   <tbody className="bg-white divide-y divide-border-light">
                     {sorted.map((contract) => {
                       const { dataInici, dataFi } = getContractDates(contract.lots || []);
-                      const themeClass = getRenewalTheme(contract.lots);
+                      const themeClass = getRenewalTheme(contract);
                       return (
                         <tr key={contract.id} className={`${themeClass || 'hover:bg-primary-light'} transition-colors`}>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">

@@ -58,6 +58,10 @@ export interface ContractLot {
   formalitzacio_document?: string | null;
   notified_proroga_60?: boolean;
   notified_proroga_30?: boolean;
+  notified_fi_proroga_60?: boolean;
+  notified_fi_proroga_30?: boolean;
+  notified_fi_60?: boolean;
+  notified_fi_30?: boolean;
   created_at?: string;
 }
 
