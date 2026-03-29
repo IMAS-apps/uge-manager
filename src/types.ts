@@ -56,6 +56,8 @@ export interface ContractLot {
   telefon?: string;
   email?: string;
   formalitzacio_document?: string | null;
+  notified_proroga_60?: boolean;
+  notified_proroga_30?: boolean;
   created_at?: string;
 }
 

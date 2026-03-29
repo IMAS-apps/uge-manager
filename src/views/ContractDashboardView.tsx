@@ -11,6 +11,8 @@ import * as XLSX from 'xlsx';
 interface ContractDashboardViewProps {
   user: User;
   onNavigate: (view: 'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard') => void;
+  pendingOpenContractId?: number | null;
+  onPendingOpenHandled?: () => void;
 }
 
 function formatDate(d?: string | null) {
@@ -49,7 +51,41 @@ function getContractDates(lots: ContractLot[]) {
   return { dataInici: earliest, dataFi: latest };
 }
 
-export function ContractDashboardView({ user, onNavigate }: ContractDashboardViewProps) {
+function getRenewalTheme(lots?: ContractLot[]) {
+  if (!lots || lots.length === 0) return '';
+  
+  const d = new Date();
+  const today = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  
+  let soonestDeadline: Date | null = null;
+  
+  lots.forEach(lot => {
+    if (lot.data_limit_comunicacio_proroga) {
+      const deadlineDate = new Date(lot.data_limit_comunicacio_proroga + 'T00:00:00');
+      if (!soonestDeadline || deadlineDate < soonestDeadline) {
+        soonestDeadline = deadlineDate;
+      }
+    }
+  });
+  
+  if (!soonestDeadline) return '';
+  
+  const diffTime = soonestDeadline.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // If deadline has passed, return to white
+  if (diffDays < 0) return '';
+  
+  // 30 days or less = intense red
+  if (diffDays <= 30) return 'bg-[#FFBABA] hover:bg-[#FF9B9B]';
+  
+  // 60 days or less = pastel red
+  if (diffDays <= 60) return 'bg-[#FFE5E5] hover:bg-[#FFD1D1]';
+  
+  return '';
+}
+
+export function ContractDashboardView({ user, onNavigate, pendingOpenContractId, onPendingOpenHandled }: ContractDashboardViewProps) {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -104,6 +140,16 @@ export function ContractDashboardView({ user, onNavigate }: ContractDashboardVie
   };
 
   useEffect(() => { fetchContracts(); }, []);
+
+  useEffect(() => {
+    if (pendingOpenContractId && contracts.length > 0) {
+      const target = contracts.find(c => c.id === pendingOpenContractId);
+      if (target) {
+        setSelectedContract(target);
+      }
+      if (onPendingOpenHandled) onPendingOpenHandled();
+    }
+  }, [pendingOpenContractId, contracts]);
 
   useEffect(() => {
     if (toast) {
@@ -477,8 +523,9 @@ export function ContractDashboardView({ user, onNavigate }: ContractDashboardVie
                   <tbody className="bg-white divide-y divide-border-light">
                     {sorted.map((contract) => {
                       const { dataInici, dataFi } = getContractDates(contract.lots || []);
+                      const themeClass = getRenewalTheme(contract.lots);
                       return (
-                        <tr key={contract.id} className="hover:bg-primary-light transition-colors">
+                        <tr key={contract.id} className={`${themeClass || 'hover:bg-primary-light'} transition-colors`}>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
                             {formatDate(dataInici)}
                           </td>

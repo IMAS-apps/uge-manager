@@ -30,6 +30,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [pendingOpenPeticioId, setPendingOpenPeticioId] = useState<number | null>(null);
+  const [pendingOpenContractId, setPendingOpenContractId] = useState<number | null>(null);
 
   useEffect(() => {
     if (toast) {
@@ -239,6 +240,11 @@ export default function App() {
     setCurrentView('dashboard');
   };
 
+  const handleNavigateToContract = (contractId: number) => {
+    setPendingOpenContractId(contractId);
+    setCurrentView('contract-dashboard');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -395,7 +401,12 @@ export default function App() {
           <ContractFormView user={user} onSuccess={() => handleNavigate('contract-dashboard')} />
         )}
         {currentView === 'contract-dashboard' && (
-          <ContractDashboardView user={user} onNavigate={handleNavigate} />
+          <ContractDashboardView
+            user={user}
+            onNavigate={handleNavigate}
+            pendingOpenContractId={pendingOpenContractId}
+            onPendingOpenHandled={() => setPendingOpenContractId(null)}
+          />
         )}
 
         {currentView === 'users' && <UserManagementView />}
@@ -403,6 +414,7 @@ export default function App() {
           <NotificationsView
             user={user}
             onNavigateToRecord={handleNavigateToRecord}
+            onNavigateToContract={handleNavigateToContract}
             onProfileUpdate={() => {
               supabase.auth.getSession().then(({ data: { session } }) => {
                 if (session) handleUserSession(session);

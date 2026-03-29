@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
-import { FilePlus, PenSquare, CheckCircle2, Trash2 } from 'lucide-react';
+import { FilePlus, PenSquare, CheckCircle2, Trash2, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface NotificationsViewProps {
   user: User;
   onNavigateToRecord: (recordId: number) => void;
+  onNavigateToContract: (contractId: number) => void;
   onProfileUpdate: () => void;
 }
 
 interface Notification {
   id: number;
   created_at: string;
-  type: 'new_request' | 'record_updated' | 'new_contract';
+  type: 'new_request' | 'record_updated' | 'new_contract' | 'renewal_alert';
   recipient_user_id: string | null;
   triggered_by_user_id: string;
   triggered_by_name: string;
@@ -22,7 +23,12 @@ interface Notification {
   is_read: boolean;
 }
 
-export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNavigateToRecord, onProfileUpdate }) => {
+export const NotificationsView: React.FC<NotificationsViewProps> = ({ 
+  user, 
+  onNavigateToRecord, 
+  onNavigateToContract,
+  onProfileUpdate 
+}) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -190,9 +196,13 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
                     <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
                       <PenSquare size={20} className="text-[#F0A500]" />
                     </div>
-                  ) : (
+                  ) : notification.type === 'new_contract' ? (
                     <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
                       <CheckCircle2 size={20} className="text-green-600" />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                      <AlertCircle size={20} className="text-red-600" />
                     </div>
                   )}
                 </div>
@@ -201,11 +211,12 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
                   <h3 className="font-semibold text-text-primary mb-1">
                     {notification.type === 'new_request' ? 'Nova sol·licitud enviada' : 
                      notification.type === 'record_updated' ? 'Registre actualitzat' : 
-                     'Nou contracte formalitzat'}
+                     notification.type === 'new_contract' ? 'Nou contracte formalitzat' :
+                     'Alerta de data límit de comunicació de pròrroga'}
                   </h3>
 
                   <p className="text-text-secondary text-sm mb-2">
-                    {notification.type === 'new_contract' ? (
+                    {notification.type === 'new_contract' || notification.type === 'renewal_alert' ? (
                       notification.peticio_objecte
                     ) : (
                       <>
@@ -227,7 +238,14 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
                       {formatDate(notification.created_at)}
                     </span>
 
-                    {notification.type !== 'new_contract' && (
+                    {notification.type === 'renewal_alert' ? (
+                      <button
+                        onClick={() => onNavigateToContract(notification.peticio_id)}
+                        className="text-xs font-medium text-primary hover:text-primary-dark hover:underline flex items-center gap-1"
+                      >
+                        Veure contracte →
+                      </button>
+                    ) : notification.type !== 'new_contract' && (
                       <button
                         onClick={() => onNavigateToRecord(notification.peticio_id)}
                         className="text-xs font-medium text-primary hover:text-primary-dark hover:underline flex items-center gap-1"
