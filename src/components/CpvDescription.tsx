@@ -50,7 +50,10 @@ export function CpvDescription({ code, className = "" }: CpvDescriptionProps) {
       {loading ? (
         <span className="text-slate-400 animate-pulse italic">Cercant descripció...</span>
       ) : (
-        <span className="text-blue-600 font-medium italic">
+        <span 
+          className="text-blue-600 font-medium italic block truncate" 
+          title={description || ''}
+        >
           {description}
         </span>
       )}

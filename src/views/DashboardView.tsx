@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../types';
 import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown, Plus } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
+import { CpvDescription } from '../components/CpvDescription';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
 // import { generateInforme } from '../utils/generateInforme'; // Switched to dynamic import below
@@ -606,14 +607,22 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                       </th>
                       <th
                         scope="col"
-                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
-                        onClick={() => handleSort('relacio_q')}
+                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors w-[250px] max-w-[250px]"
+                        onClick={() => handleSort('codi_cpv')}
                       >
                         <div className="flex items-center justify-center gap-1">
-                          Relació Q <SortIndicator field="relacio_q" />
+                          Codi CPV <SortIndicator field="codi_cpv" />
                         </div>
                       </th>
-                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Estat</th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
+                        onClick={() => handleSort('partida_economica')}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          P. Econòmica <SortIndicator field="partida_economica" />
+                        </div>
+                      </th>
                       <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Accions</th>
                     </tr>
                   </thead>
@@ -644,38 +653,12 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-text-secondary font-medium">
                             {record.reg_factura || '-'}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-text-secondary font-medium">
-                            {record.relacio_q || '-'}
+                          <td className="px-4 py-3 text-sm text-center text-text-secondary font-medium w-[250px] max-w-[250px]">
+                            <div className="font-bold mb-0.5">{record.codi_cpv || '-'}</div>
+                            <CpvDescription code={record.codi_cpv} />
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                            <div className="flex justify-center gap-1 items-center">
-                              {!isPublicat && !isFinalitzat && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                  No finalitzat
-                                </span>
-                              )}
-                              {isPublicat && !isFinalitzat && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                  Publicat
-                                </span>
-                              )}
-                              {!isPublicat && isFinalitzat && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                  Finalitzat
-                                </span>
-                              )}
-                              {isPublicat && isFinalitzat && (
-                                <>
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                                    Publicat
-                                  </span>
-                                  {' '}
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                    Finalitzat
-                                  </span>
-                                </>
-                              )}
-                            </div>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-text-secondary font-medium">
+                            {record.partida_economica || '-'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
                             <div className="flex items-center justify-center gap-2">
