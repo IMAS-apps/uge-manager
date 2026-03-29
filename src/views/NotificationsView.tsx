@@ -12,7 +12,7 @@ interface NotificationsViewProps {
 interface Notification {
   id: number;
   created_at: string;
-  type: 'new_request' | 'record_updated';
+  type: 'new_request' | 'record_updated' | 'new_contract';
   recipient_user_id: string | null;
   triggered_by_user_id: string;
   triggered_by_name: string;
@@ -38,10 +38,14 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (user.role === 'Gestió') {
-        query = query.or('recipient_user_id.is.null,type.eq.new_request');
+      if (user.role === 'Administrador') {
+        query = query.neq('triggered_by_user_id', user.id);
+      } else if (user.role === 'Gestió') {
+        query = query.or(`recipient_user_id.eq.${user.id},type.eq.new_request,type.eq.new_contract`);
       } else if (user.role === 'Peticions') {
-        query = query.eq('recipient_user_id', user.id);
+        query = query.or(`recipient_user_id.eq.${user.id},type.eq.new_contract`);
+      } else if (user.role === 'Lectura') {
+        query = query.eq('type', 'new_contract');
       }
 
       if (user.last_notifications_cleared_at) {
@@ -121,8 +125,10 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
         return "Noves sol·licituds enviades per qualsevol usuari";
       case 'Administrador':
         return "Totes les notificacions del sistema";
+      case 'Lectura':
+        return "Notificacions de nous contractes";
       default:
-        return "";
+        return "Avisos i actualitzacions del sistema";
     }
   };
 
@@ -180,20 +186,32 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
                     <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
                       <FilePlus size={20} className="text-[#0072BC]" />
                     </div>
-                  ) : (
+                  ) : notification.type === 'record_updated' ? (
                     <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
                       <PenSquare size={20} className="text-[#F0A500]" />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
+                      <CheckCircle2 size={20} className="text-green-600" />
                     </div>
                   )}
                 </div>
 
                 <div className="flex-grow">
                   <h3 className="font-semibold text-text-primary mb-1">
-                    {notification.type === 'new_request' ? 'Nova sol·licitud enviada' : 'Registre actualitzat'}
+                    {notification.type === 'new_request' ? 'Nova sol·licitud enviada' : 
+                     notification.type === 'record_updated' ? 'Registre actualitzat' : 
+                     'Nou contracte formalitzat'}
                   </h3>
 
                   <p className="text-text-secondary text-sm mb-2">
-                    En <span className="font-medium text-text-primary">{notification.triggered_by_name}</span> {notification.type === 'new_request' ? 'ha enviat una nova sol·licitud:' : 'ha modificat la teva sol·licitud:'} <span className="font-medium text-text-primary">"{notification.peticio_objecte}"</span>
+                    {notification.type === 'new_contract' ? (
+                      notification.peticio_objecte
+                    ) : (
+                      <>
+                        En <span className="font-medium text-text-primary">{notification.triggered_by_name}</span> {notification.type === 'new_request' ? 'ha enviat una nova sol·licitud:' : 'ha modificat la teva sol·licitud:'} <span className="font-medium text-text-primary">"{notification.peticio_objecte}"</span>
+                      </>
+                    )}
                   </p>
 
                   {notification.type === 'record_updated' && notification.changed_fields && notification.changed_fields.length > 0 && (
@@ -209,12 +227,14 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
                       {formatDate(notification.created_at)}
                     </span>
 
-                    <button
-                      onClick={() => onNavigateToRecord(notification.peticio_id)}
-                      className="text-xs font-medium text-primary hover:text-primary-dark hover:underline flex items-center gap-1"
-                    >
-                      Veure registre →
-                    </button>
+                    {notification.type !== 'new_contract' && (
+                      <button
+                        onClick={() => onNavigateToRecord(notification.peticio_id)}
+                        className="text-xs font-medium text-primary hover:text-primary-dark hover:underline flex items-center gap-1"
+                      >
+                        Veure registre →
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

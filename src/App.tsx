@@ -136,9 +136,6 @@ export default function App() {
       } else if (currentView === 'users' && user.role !== 'Administrador') {
         setToast('No tens permisos per accedir a aquesta secció.');
         setCurrentView('dashboard');
-      } else if (currentView === 'notifications' && user.role === 'Lectura') {
-        setToast('No tens permisos per accedir a aquesta secció.');
-        setCurrentView('dashboard');
       } else if (currentView === 'contract-form' && user.role !== 'Administrador') {
         setToast('No tens permisos per accedir a aquesta secció.');
         setCurrentView('contract-dashboard');
@@ -148,7 +145,7 @@ export default function App() {
 
   // Subscribe to real-time notifications and poll for unread count
   useEffect(() => {
-    if (!user || user.role === 'Lectura') return;
+    if (!user) return;
 
     const fetchUnreadCount = async () => {
       try {
@@ -157,10 +154,14 @@ export default function App() {
           .select('*', { count: 'exact', head: true })
           .eq('is_read', false);
 
-        if (user.role === 'Gestió') {
-          query = query.or('recipient_user_id.is.null,type.eq.new_request');
+        if (user.role === 'Administrador') {
+          query = query.neq('triggered_by_user_id', user.id);
+        } else if (user.role === 'Gestió') {
+          query = query.or(`recipient_user_id.eq.${user.id},type.eq.new_request,type.eq.new_contract`);
         } else if (user.role === 'Peticions') {
-          query = query.eq('recipient_user_id', user.id);
+          query = query.or(`recipient_user_id.eq.${user.id},type.eq.new_contract`);
+        } else if (user.role === 'Lectura') {
+          query = query.eq('type', 'new_contract');
         }
 
         if (user.last_notifications_cleared_at) {
@@ -216,11 +217,6 @@ export default function App() {
       return;
     }
     if (view === 'users' && user?.role !== 'Administrador') {
-      setToast('No tens permisos per accedir a aquesta secció.');
-      setCurrentView('dashboard');
-      return;
-    }
-    if (view === 'notifications' && user?.role === 'Lectura') {
       setToast('No tens permisos per accedir a aquesta secció.');
       setCurrentView('dashboard');
       return;
@@ -294,25 +290,23 @@ export default function App() {
                   Contractes
                 </button>
                 
-                {user.role !== 'Lectura' && (
-                  <button
-                    onClick={() => handleNavigate('notifications')}
-                    className={`px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${currentView === 'notifications' ? 'bg-white/20 text-white shadow-inner' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
-                  >
-                    <div className="relative">
-                      <Bell size={18} />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 text-white text-[10px] items-center justify-center font-bold">
-                            {unreadCount}
-                          </span>
+                <button
+                  onClick={() => handleNavigate('notifications')}
+                  className={`px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${currentView === 'notifications' ? 'bg-white/20 text-white shadow-inner' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
+                >
+                  <div className="relative">
+                    <Bell size={18} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 text-white text-[10px] items-center justify-center font-bold">
+                          {unreadCount}
                         </span>
-                      )}
-                    </div>
-                    Notificacions
-                  </button>
-                )}
+                      </span>
+                    )}
+                  </div>
+                  Notificacions
+                </button>
                 
                 {user.role === 'Administrador' && (
                   <button
@@ -360,22 +354,20 @@ export default function App() {
             Contractes
           </button>
           
-          {user.role !== 'Lectura' && (
-            <button
-              onClick={() => handleNavigate('notifications')}
-              className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'notifications' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
-            >
-              <div className="relative">
-                <Bell size={18} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full px-1 min-w-[14px] leading-[14px] text-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </div>
-              Notif.
-            </button>
-          )}
+          <button
+            onClick={() => handleNavigate('notifications')}
+            className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'notifications' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
+          >
+            <div className="relative">
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full px-1 min-w-[14px] leading-[14px] text-center font-bold">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            Notif.
+          </button>
           
           {user.role === 'Administrador' && (
             <button
