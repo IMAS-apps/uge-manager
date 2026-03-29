@@ -151,6 +151,7 @@ export function ContractEditModal({
         email: '',
       },
     ]);
+    setEditGeneral((prev) => ({ ...prev, sense_lots: false }));
     setExpandedLots((prev) => ({ ...prev, [editLots.length]: true }));
   };
 
@@ -365,6 +366,7 @@ export function ContractEditModal({
                   {[
                     { name: 'prorrogable', label: 'Prorrogable' },
                     { name: 'modificable', label: 'Modificable' },
+                    { name: 'sense_lots', label: 'Contracte sense lots' },
                   ].map(({ name, label }) => (
                     <label key={name} className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" name={name}
@@ -406,7 +408,7 @@ export function ContractEditModal({
               <h3 className="text-sm font-bold text-primary uppercase tracking-wider">
                 Lots ({displayLots.length})
               </h3>
-              {mode === 'edit' && !contract.sense_lots && (
+              {mode === 'edit' && (
                 <button type="button" onClick={addLot}
                   className="flex items-center gap-1 text-xs text-primary hover:text-primary-dark font-medium">
                   <Plus size={14} /> Afegir lot
@@ -425,7 +427,7 @@ export function ContractEditModal({
                       {lot.nom_lot || `Lot ${idx + 1}`}
                     </span>
                     <div className="flex items-center gap-2">
-                      {mode === 'edit' && !contract.sense_lots && (
+                      {mode === 'edit' && (
                         <span
                           role="button"
                           tabIndex={0}
@@ -489,7 +491,7 @@ export function ContractEditModal({
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {!contract.sense_lots && (
+                          {mode === 'edit' && (
                             <div className="md:col-span-2 lg:col-span-3">
                               <label className={labelClass}>Nom del lot</label>
                               <input type="text" name="nom_lot"
