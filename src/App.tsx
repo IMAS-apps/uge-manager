@@ -38,6 +38,63 @@ export default function App() {
     }
   }, [toast]);
 
+  const handleUserSession = async (session: any) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profile) {
+        const userData: User = {
+          id: session.user.id,
+          email: session.user.email!,
+          full_name: profile.full_name,
+          role: profile.role,
+          last_notifications_cleared_at: profile.last_notifications_cleared_at,
+        };
+        setUser(userData);
+        if (userData.role === 'Lectura') {
+          setCurrentView('dashboard');
+        }
+      } else {
+        // Fallback logic
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+
+        const fallbackRole = (count === 0) ? 'Administrador' : 'Lectura';
+        const displayName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuari';
+
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email!,
+            full_name: displayName,
+            role: fallbackRole,
+          })
+          .select()
+          .single();
+
+        if (!insertError && newProfile) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            full_name: newProfile.full_name,
+            role: newProfile.role,
+            last_notifications_cleared_at: newProfile.last_notifications_cleared_at,
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error handling session:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Initial check for session
     const checkSession = async () => {
@@ -50,61 +107,6 @@ export default function App() {
         }
       } catch (err) {
         console.error('Error checking session:', err);
-        setLoading(false);
-      }
-    };
-
-    const handleUserSession = async (session: any) => {
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (profile) {
-          const userData: User = {
-            id: session.user.id,
-            email: session.user.email!,
-            full_name: profile.full_name,
-            role: profile.role,
-          };
-          setUser(userData);
-          if (userData.role === 'Lectura') {
-            setCurrentView('dashboard');
-          }
-        } else {
-          // Fallback logic
-          const { count } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
-
-          const fallbackRole = (count === 0) ? 'Administrador' : 'Lectura';
-          const displayName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuari';
-
-          const { data: newProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: session.user.id,
-              email: session.user.email!,
-              full_name: displayName,
-              role: fallbackRole,
-            })
-            .select()
-            .single();
-
-          if (!insertError && newProfile) {
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              full_name: newProfile.full_name,
-              role: newProfile.role,
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Error handling session:', err);
-      } finally {
         setLoading(false);
       }
     };
@@ -159,6 +161,10 @@ export default function App() {
           query = query.or('recipient_user_id.is.null,type.eq.new_request');
         } else if (user.role === 'Peticions') {
           query = query.eq('recipient_user_id', user.id);
+        }
+
+        if (user.last_notifications_cleared_at) {
+          query = query.gt('created_at', user.last_notifications_cleared_at);
         }
 
         const { count, error } = await query;
@@ -405,6 +411,11 @@ export default function App() {
           <NotificationsView
             user={user}
             onNavigateToRecord={handleNavigateToRecord}
+            onProfileUpdate={() => {
+              supabase.auth.getSession().then(({ data: { session } }) => {
+                if (session) handleUserSession(session);
+              });
+            }}
           />
         )}
       </main>

@@ -3,6 +3,7 @@ export interface User {
   full_name: string;
   email: string;
   role: string;
+  last_notifications_cleared_at?: string;
 }
 
 export interface Record {

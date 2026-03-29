@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 interface NotificationsViewProps {
   user: User;
   onNavigateToRecord: (recordId: number) => void;
+  onProfileUpdate: () => void;
 }
 
 interface Notification {
@@ -21,7 +22,7 @@ interface Notification {
   is_read: boolean;
 }
 
-export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNavigateToRecord }) => {
+export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNavigateToRecord, onProfileUpdate }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,10 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
         query = query.or('recipient_user_id.is.null,type.eq.new_request');
       } else if (user.role === 'Peticions') {
         query = query.eq('recipient_user_id', user.id);
+      }
+
+      if (user.last_notifications_cleared_at) {
+        query = query.gt('created_at', user.last_notifications_cleared_at);
       }
       // Admin continues to see everything (no filter)
 
@@ -83,13 +88,15 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ user, onNa
   const handleClearAll = async () => {
     if (notifications.length === 0) return;
     try {
-      const ids = notifications.map(n => n.id);
       const { error: sbError } = await supabase
-        .from('notifications')
-        .delete()
-        .in('id', ids);
+        .from('profiles')
+        .update({ last_notifications_cleared_at: new Date().toISOString() })
+        .eq('id', user.id);
+
       if (sbError) throw sbError;
+      
       setNotifications([]);
+      onProfileUpdate();
     } catch (err) {
       console.error('Error netejant notificacions:', err);
     }
