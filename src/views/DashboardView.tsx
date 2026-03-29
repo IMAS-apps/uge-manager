@@ -27,6 +27,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
   const [filterSistema, setFilterSistema] = useState('');
   const [filterDataInici, setFilterDataInici] = useState('');
   const [filterDataFi, setFilterDataFi] = useState('');
+  const [filterCapitolVI, setFilterCapitolVI] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Modal State
@@ -91,6 +92,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     setFilterSistema('');
     setFilterDataInici('');
     setFilterDataFi('');
+    setFilterCapitolVI(false);
   };
 
   const filteredRecords = records.filter(r => {
@@ -138,6 +140,8 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
         if (recordDate > endDate) return false;
       }
     }
+
+    if (filterCapitolVI && !(r.partida_economica?.startsWith('6'))) return false;
 
     return true;
   });
@@ -451,6 +455,21 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                 );
               })}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Capitol VI</label>
+            <label
+              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors border-l-2 ${filterCapitolVI ? 'bg-primary-light border-primary' : 'border-transparent hover:bg-slate-100'}`}
+            >
+              <input
+                type="checkbox"
+                className="rounded border-border-light text-primary focus:ring-primary"
+                checked={filterCapitolVI}
+                onChange={(e) => setFilterCapitolVI(e.target.checked)}
+              />
+              <span className="text-sm text-text-primary">Només inversions (capítol 6)</span>
+            </label>
           </div>
 
           <div>
