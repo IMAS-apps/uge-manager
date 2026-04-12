@@ -1,0 +1,193 @@
+##############################################################################
+# UGE Manager — CI/CD Pipeline
+#
+# ACTIVATE BRANCH PROTECTION (required to block merges on failure):
+# 1. Go to: GitHub → Repository → Settings → Branches
+# 2. Click "Add branch protection rule"
+# 3. Branch name pattern: main
+# 4. Enable: ✅ "Require status checks to pass before merging"
+# 5. In the search box, add these required status checks:
+#      - lint
+#      - test
+# 6. Enable: ✅ "Require branches to be up to date before merging"
+# 7. Enable: ✅ "Do not allow bypassing the above settings"
+# 8. Click "Save changes"
+#
+# REQUIRED GITHUB SECRETS (Settings → Secrets and variables → Actions):
+#   VITE_SUPABASE_URL       — Supabase project URL
+#   VITE_SUPABASE_ANON_KEY  — Supabase anon/public key
+##############################################################################
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main, master]
+
+# Cancel in-progress runs for the same branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1: Install dependencies with cache ─────────────────────────────────
+  install:
+    name: Install dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Cache node_modules for downstream jobs
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+  # ── Job 2: TypeScript type check ───────────────────────────────────────────
+  lint:
+    name: Lint (TypeScript)
+    runs-on: ubuntu-latest
+    needs: install
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GEMINI_API_KEY: 'placeholder-not-needed-for-typecheck'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore node_modules from cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Run TypeScript type check
+        run: npm run lint
+
+  # ── Job 3: Unit & Integration tests ───────────────────────────────────────
+  test:
+    name: Unit & Integration tests
+    runs-on: ubuntu-latest
+    needs: install
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GEMINI_API_KEY: 'placeholder-not-needed-in-tests'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore node_modules from cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      # ── GitHub Step Summary — inline test report ──────────────────────────
+      - name: Add coverage summary to GitHub Step Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          npm run test:coverage 2>&1 | tail -30 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ── Upload coverage report as artifact ────────────────────────────────
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  # ── Job 4: E2E tests (Playwright) ─────────────────────────────────────────
+  # NOTE: E2E tests run against the real Vite dev server.
+  # Supabase credentials are required here. If not available, the job
+  # degrades gracefully — auth/navigation tests that don't need a DB session
+  # will still pass (they test the login page structure only).
+  test-e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GEMINI_API_KEY: 'placeholder'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore node_modules from cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      # ── Publish Playwright results as GitHub Step Summary ─────────────────
+      - name: Add E2E summary to GitHub Step Summary
+        if: always()
+        run: |
+          echo "## 🎭 Playwright E2E Results" >> $GITHUB_STEP_SUMMARY
+          if [ -f playwright-results.xml ]; then
+            echo "JUnit results uploaded as artifact." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # ── Upload Playwright HTML report ─────────────────────────────────────
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      # ── Upload JUnit XML for GitHub test annotations ───────────────────────
+      - name: Upload Playwright JUnit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-junit
+          path: playwright-results.xml
+          retention-days: 14

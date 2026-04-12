@@ -7,6 +7,7 @@ import {
 import { ContractEditModal } from '../components/ContractEditModal';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
+import { formatDate, getContractDates, getRenewalTheme, isContractVigent } from '../utils/contractHelpers';
 
 interface ContractDashboardViewProps {
   user: User;
@@ -15,84 +16,11 @@ interface ContractDashboardViewProps {
   onPendingOpenHandled?: () => void;
 }
 
-function formatDate(d?: string | null) {
-  if (!d) return '—';
-  try {
-    const dt = new Date(d + 'T00:00:00');
-    return dt.toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  } catch {
-    return d;
-  }
-}
-
 // Helpers
 const openVincleCSV = (csv: string) => {
   const url = `https://imas.secimallorca.net/firma/documento.aspx?csv=${csv}&modo=abrir`;
   window.open(url, '_blank');
 };
-
-// Compute effective start/end from lots
-function getContractDates(lots: ContractLot[]) {
-  let earliest: string | null = null;
-  let latest: string | null = null;
-
-  lots.forEach((lot) => {
-    const start = lot.data_inici;
-    const end = lot.data_fi_proroga || lot.data_fi;
-
-    if (start) {
-      if (!earliest || start < earliest) earliest = start;
-    }
-    if (end) {
-      if (!latest || end > latest) latest = end;
-    }
-  });
-
-  return { dataInici: earliest, dataFi: latest };
-}
-
-function getRenewalTheme(contract: any) {
-  const lots = contract.lots as ContractLot[];
-  if (!lots || lots.length === 0) return '';
-  
-  const d = new Date();
-  const today = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  
-  let minDaysUntilDeadline: number | null = null;
-  
-  lots.forEach(lot => {
-    const checkDates = [
-      lot.data_limit_comunicacio_proroga,
-      lot.data_fi_proroga
-    ];
-
-    // Added: data_fi only if contract is not extendable
-    if (contract.prorrogable === false) {
-      checkDates.push(lot.data_fi);
-    }
-
-    checkDates.forEach(dateStr => {
-      if (dateStr) {
-        const deadlineDate = new Date(dateStr + 'T00:00:00');
-        const diffTime = deadlineDate.getTime() - today.getTime();
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays >= 0) {
-          if (minDaysUntilDeadline === null || diffDays < minDaysUntilDeadline) {
-            minDaysUntilDeadline = diffDays;
-          }
-        }
-      }
-    });
-  });
-  
-  if (minDaysUntilDeadline === null) return '';
-  
-  if (minDaysUntilDeadline <= 30) return 'bg-[#FFBABA] hover:bg-[#FF9B9B]';
-  if (minDaysUntilDeadline <= 60) return 'bg-[#FFE5E5] hover:bg-[#FFD1D1]';
-  
-  return '';
-}
 
 export function ContractDashboardView({ user, onNavigate, pendingOpenContractId, onPendingOpenHandled }: ContractDashboardViewProps) {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -208,12 +136,7 @@ export function ContractDashboardView({ user, onNavigate, pendingOpenContractId,
       if (filterDataFi && dataInici > filterDataFi) return false;
     }
     if (filterVigents) {
-      const { dataFi } = getContractDates(c.lots || []);
-      if (dataFi) {
-        const d = new Date();
-        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        if (dataFi < today) return false;
-      }
+      if (!isContractVigent(c.lots || [])) return false;
     }
     return true;
   });

@@ -120,8 +120,9 @@ export function AuthView({ onLogin }: AuthViewProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Nom complet</label>
+              <label htmlFor="fullName" className="block text-sm font-medium text-text-primary mb-1">Nom complet</label>
               <input
+                id="fullName"
                 type="text"
                 required
                 value={fullName}
@@ -132,8 +133,9 @@ export function AuthView({ onLogin }: AuthViewProps) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Correu electrònic</label>
+            <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-1">Correu electrònic</label>
             <input
+              id="email"
               type="email"
               required
               value={email}
@@ -143,8 +145,9 @@ export function AuthView({ onLogin }: AuthViewProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Contrasenya</label>
+            <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-1">Contrasenya</label>
             <input
+              id="password"
               type="password"
               required
               minLength={8}

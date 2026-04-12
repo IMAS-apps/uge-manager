@@ -1,5 +1,7 @@
 # 🏢 UGE Manager - Guia Tècnica Integral
 
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+
 Aquest document serveix com a manual de referència complet per a desenvolupadors, administradors i sistemes d'IA que necessitin entendre, mantenir o migrar dades en l'ecosistema **UGE Manager**.
 
 ---
@@ -148,5 +150,36 @@ npm run dev
 # Verificació de tipus TS
 npx tsc --noEmit
 ```
+
+---
+
+## 🧪 8. Testing i CI/CD
+
+El projecte disposa d'una estratègia de testing automatitzat completa que inclou tests unitaris, d'integració i E2E orientats a garantir la continuïtat de les funcionalitats clau i la integritat del codi abans de cada desplegament.
+
+### Com executar els tests en local
+```bash
+# Executa tota la suite de tests unitaris i d'integració (Vitest)
+npm run test
+
+# Executa amb coverage report
+npm run test:coverage
+
+# Executa els tests end-to-end (Playwright)
+# Nota: Configurat per aixecar automàticament el servidor Vite (npm run dev)
+npm run test:e2e
+```
+
+### Cobertura de tests
+* **Unitaris (`src/**/__tests__/*.test.ts`)**: Validen la lògica aïllada com regles de dates (`contractHelpers.ts`), format de text IA (`ai.ts`), selecció de plantilles (`generateInforme.ts`) i immutabilitat d'opcions base (`types.ts`).
+* **Integració (`src/views/__tests__/*.test.tsx`)**: Recrea interaccions d'usuari a través de múltiples components mockejant Supabase i AI API. Verifiquen el comportament esperat de la UI (formularis, alertes, renders condicionals i els guards RBAC).
+* **E2E (`e2e/*.spec.ts`)**: Mitjançant Playwright, valida els controls sense requerir dades estables des de base de dades. Confirma que la navegació i l'esquema d'usuari respon on toca.
+
+### Workflow de GitHub Actions
+S'executa a qualsevol push a `main` i Pull Requests, convertint aquests passos en **criteris bloquejants** si hi ha algun error:
+1. `install`: Instala (i fa cache) de dependents per augmentar la rapidesa d'avaluació.
+2. `lint`: Verifica sintàcticament cap trencament i ús restrictiu de tipejats a través de tsc.
+3. `test`: Llença els tests interns i recull la cobertura d'ànalisi com artefacte i comentari al log (Step Summary).
+4. `test-e2e`: Inicia un Chrome headless i navega pel compilable actiu garantint que les especificacions del framework es compleixen integralment.
 
 *Creat per i per a la Unitat de Gestió Econòmica - IMAS.*
