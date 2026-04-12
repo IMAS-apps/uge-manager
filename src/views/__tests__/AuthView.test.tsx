@@ -23,7 +23,7 @@ import { supabase } from '../../lib/supabase';
 
 const mockSignIn = supabase.auth.signInWithPassword as ReturnType<typeof vi.fn>;
 const mockSignUp = supabase.auth.signUp as ReturnType<typeof vi.fn>;
-const mockMaybeSingle = supabase.maybeSingle as ReturnType<typeof vi.fn>;
+const mockMaybeSingle = (supabase as any).maybeSingle as ReturnType<typeof vi.fn>;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

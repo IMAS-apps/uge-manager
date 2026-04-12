@@ -14,7 +14,7 @@ vi.mock('../../lib/supabase', () => ({
 
 import { supabase } from '../../lib/supabase';
 
-const mockMaybeSingle = supabase.maybeSingle as ReturnType<typeof vi.fn>;
+const mockMaybeSingle = (supabase as any).maybeSingle as ReturnType<typeof vi.fn>;
 
 describe('CpvDescription', () => {
   beforeEach(() => {
