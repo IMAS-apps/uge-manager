@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
+import { User, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI } from '../types';
 import { Save, AlertCircle, CheckCircle2, UploadCloud, X, ExternalLink, Wand2, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CpvDescription } from '../components/CpvDescription';
@@ -17,6 +17,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
 
   const [formData, setFormData] = useState({
     responsable_contracte: '',
+    centre_servei: '',
     organ_contractacio: '',
     justificacio: '',
     objecte_contracte: '',
@@ -79,6 +80,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
 
       setFormData({
         responsable_contracte: data.responsable_contracte || '',
+        centre_servei: data.centre_servei || '',
         organ_contractacio: data.organ_contractacio || '',
         justificacio: data.justificacio || '',
         objecte_contracte: data.objecte_contracte || '',
@@ -197,6 +199,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
         .from('records')
         .insert({
           responsable_contracte: formData.responsable_contracte,
+          centre_servei: formData.centre_servei,
           organ_contractacio: formData.organ_contractacio,
           justificacio: formData.justificacio,
           objecte_contracte: formData.objecte_contracte,
@@ -224,7 +227,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
 
       setSuccess(`Petició #${record.id} creada correctament.`);
       setFormData({
-        responsable_contracte: '', organ_contractacio: '', justificacio: '', objecte_contracte: '',
+        responsable_contracte: '', centre_servei: '', organ_contractacio: '', justificacio: '', objecte_contracte: '',
         caracteristiques_tecniques: '', tipus_contracte: '', tipus_despesa: '', termini_execucio: '',
         codi_cpv: '', partida_organica: '', partida_programa: '', partida_economica: '',
         base_imposable: '', quota_iva: '', detalls_addicionals: ''
@@ -319,6 +322,13 @@ export function FormView({ user, onSuccess }: FormViewProps) {
               <select required name="responsable_contracte" value={formData.responsable_contracte} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="">Seleccioni una opció</option>
                 {RESPONSABLES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Centre/Servei *</label>
+              <select required name="centre_servei" value={formData.centre_servei} onChange={handleChange} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Seleccioni una opció</option>
+                {CENTRES_SERVEI.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>

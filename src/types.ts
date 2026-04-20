@@ -12,6 +12,7 @@ export interface Record {
   email: string;
   nom: string;
   responsable_contracte: string;
+  centre_servei: string;
   organ_contractacio: string;
   justificacio: string;
   objecte_contracte: string;
@@ -29,6 +30,8 @@ export interface Record {
   fitxers_pressupost: { name: string, path: string, size: number }[];
   detalls_addicionals: string;
   motivacio_no_contractacio?: string;
+  adjudicatari?: string;
+  nif?: string;
   sistema_tramitacio: string;
   segex: string;
   reg_factura: string;
@@ -103,6 +106,21 @@ export const RESPONSABLES = [
   "Direcció del Centre de dia Reina Sofia",
   "Direcció del Centre de dia Can Clar",
   "Cap del Servei d'Atenció Sociosanitària"
+];
+
+export const CENTRES_SERVEI = [
+  "Residència Bonanova",
+  "Residència Llar dels Ancians",
+  "Residència Huialfàs",
+  "Residència Oms-Sant Miquel",
+  "Residència Miquel Mir",
+  "Residència Sant Josep",
+  "Residència Son Caulelles",
+  "Residència Bartomeu Quetglas",
+  "Centre de dia Reina Sofia",
+  "Centre de dia Can Clar",
+  "Centre de dia Son Perxana",
+  "Oficines centrals d'Atenció Sociosanitària"
 ];
 
 export const ORGANS = [

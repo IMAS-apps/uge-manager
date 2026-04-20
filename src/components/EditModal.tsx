@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES } from '../types';
+import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI } from '../types';
 import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CpvDescription } from './CpvDescription';
@@ -34,6 +34,7 @@ const Field = ({ label, value, fullWidth = false }: { label: string, value: Reac
 export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest }: EditModalProps) {
   const [formData, setFormData] = useState({
     responsable_contracte: record.responsable_contracte || '',
+    centre_servei: record.centre_servei || '',
     organ_contractacio: record.organ_contractacio || '',
     justificacio: record.justificacio || '',
     objecte_contracte: record.objecte_contracte || '',
@@ -56,6 +57,8 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     finalitzat: record.finalitzat,
     publicat: record.publicat,
     motivacio_no_contractacio: record.motivacio_no_contractacio || '',
+    adjudicatari: record.adjudicatari || '',
+    nif: record.nif || '',
     detalls_addicionals: record.detalls_addicionals || ''
   });
 
@@ -171,6 +174,18 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       </select>
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.responsable_contracte || '—'}</div>
+                    )}
+                  </div>
+
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Centre/Servei</label>
+                    {mode === 'edit' && user.role === 'Administrador' ? (
+                      <select name="centre_servei" value={formData.centre_servei} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
+                        <option value="">Seleccioni una opció</option>
+                        {CENTRES_SERVEI.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.centre_servei || '—'}</div>
                     )}
                   </div>
                   
@@ -500,6 +515,28 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         <option value="">Sense motivació</option>
                         {MOTIVACIO_OPTIONS.slice(1).map(opt => <option key={opt} value={opt}>{opt}</option>)}
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Adjudicatari</label>
+                      <input
+                        type="text"
+                        name="adjudicatari"
+                        value={formData.adjudicatari}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">NIF</label>
+                      <input
+                        type="text"
+                        name="nif"
+                        value={formData.nif}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                      />
                     </div>
 
                     <div>
