@@ -31,6 +31,12 @@ export type Database = {
           id: number
           import_comes: number | null
           nom_lot: string
+          notified_fi_30: boolean | null
+          notified_fi_60: boolean | null
+          notified_fi_proroga_30: boolean | null
+          notified_fi_proroga_60: boolean | null
+          notified_proroga_30: boolean | null
+          notified_proroga_60: boolean | null
           telefon: string | null
         }
         Insert: {
@@ -49,6 +55,12 @@ export type Database = {
           id?: number
           import_comes?: number | null
           nom_lot: string
+          notified_fi_30?: boolean | null
+          notified_fi_60?: boolean | null
+          notified_fi_proroga_30?: boolean | null
+          notified_fi_proroga_60?: boolean | null
+          notified_proroga_30?: boolean | null
+          notified_proroga_60?: boolean | null
           telefon?: string | null
         }
         Update: {
@@ -67,6 +79,12 @@ export type Database = {
           id?: number
           import_comes?: number | null
           nom_lot?: string
+          notified_fi_30?: boolean | null
+          notified_fi_60?: boolean | null
+          notified_fi_proroga_30?: boolean | null
+          notified_fi_proroga_60?: boolean | null
+          notified_proroga_30?: boolean | null
+          notified_proroga_60?: boolean | null
           telefon?: string | null
         }
         Relationships: [
@@ -272,8 +290,10 @@ export type Database = {
       }
       records: {
         Row: {
+          adjudicatari: string | null
           base_imposable: number
           caracteristiques_tecniques: string
+          centre_servei: string | null
           codi_cpv: string
           created_by: string
           detalls_addicionals: string | null
@@ -284,6 +304,7 @@ export type Database = {
           id: number
           justificacio: string
           motivacio_no_contractacio: string | null
+          nif: string | null
           nom: string
           objecte_contracte: string
           organ_contractacio: string
@@ -305,8 +326,10 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          adjudicatari?: string | null
           base_imposable: number
           caracteristiques_tecniques: string
+          centre_servei?: string | null
           codi_cpv: string
           created_by: string
           detalls_addicionals?: string | null
@@ -317,6 +340,7 @@ export type Database = {
           id?: number
           justificacio: string
           motivacio_no_contractacio?: string | null
+          nif?: string | null
           nom: string
           objecte_contracte: string
           organ_contractacio: string
@@ -338,8 +362,10 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          adjudicatari?: string | null
           base_imposable?: number
           caracteristiques_tecniques?: string
+          centre_servei?: string | null
           codi_cpv?: string
           created_by?: string
           detalls_addicionals?: string | null
@@ -350,6 +376,7 @@ export type Database = {
           id?: number
           justificacio?: string
           motivacio_no_contractacio?: string | null
+          nif?: string | null
           nom?: string
           objecte_contracte?: string
           organ_contractacio?: string
@@ -377,6 +404,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_contract_renewal_deadlines: { Args: never; Returns: undefined }
       get_user_role: { Args: never; Returns: string }
     }
     Enums: {
