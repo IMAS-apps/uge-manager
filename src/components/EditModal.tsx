@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI } from '../types';
-import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2 } from 'lucide-react';
+import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2, UploadCloud } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CpvDescription } from './CpvDescription';
 
@@ -63,6 +63,12 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
   });
 
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [localFiles, setLocalFiles] = useState<{ name: string; path: string; size: number }[]>(
+    (record.fitxers_pressupost as { name: string; path: string; size: number }[]) || []
+  );
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -100,22 +106,69 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      termini_execucio: formData.termini_execucio ? Number(formData.termini_execucio) : null,
-      base_imposable: formData.base_imposable ? Number(formData.base_imposable) : 0,
-      quota_iva: formData.quota_iva ? Number(formData.quota_iva) : 0,
-    };
-    onSave(payload as any);
+    setIsSaving(true);
+    setUploadError('');
+    try {
+      let updatedFiles = [...localFiles];
+      if (pendingFiles.length > 0) {
+        const timestamp = Date.now();
+        for (const file of pendingFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${timestamp}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+          const filePath = `${record.created_by}/${fileName}`;
+          const { error: uploadErr, data } = await supabase.storage
+            .from('peticions_pressupostos')
+            .upload(filePath, file);
+          if (uploadErr) throw uploadErr;
+          updatedFiles.push({ name: file.name, path: data.path, size: file.size });
+        }
+      }
+      const payload = {
+        ...formData,
+        termini_execucio: formData.termini_execucio ? Number(formData.termini_execucio) : null,
+        base_imposable: formData.base_imposable ? Number(formData.base_imposable) : 0,
+        quota_iva: formData.quota_iva ? Number(formData.quota_iva) : 0,
+        fitxers_pressupost: updatedFiles,
+      };
+      onSave(payload as any);
+    } catch (err: any) {
+      setUploadError(err.message || "Error en pujar els fitxers.");
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveExistingFile = (index: number) => {
+    setLocalFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleNewFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const selected = Array.from(e.target.files) as File[];
+    const valid = selected.filter(f => f.type === 'application/pdf');
+    if (valid.length !== selected.length) setUploadError("Només s'accepten fitxers PDF.");
+    setPendingFiles(prev => {
+      const combined = [...prev, ...valid];
+      const total = localFiles.length + combined.length;
+      if (total > 3) {
+        setUploadError('El màxim és 3 fitxers en total.');
+        return combined.slice(0, Math.max(0, 3 - localFiles.length));
+      }
+      return combined;
+    });
+    e.target.value = '';
+  };
+
+  const handleRemovePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(amount);
   };
 
-  const files = record.fitxers_pressupost || [];
+
 
   const getFileUrl = (path: string) => {
     // If the path is already a full URL (e.g. a SharePoint link loaded manually),
@@ -422,24 +475,98 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               </SectionCard>
 
               <SectionCard title="Documentació">
-                {files.length > 0 ? (
-                  <ul className="space-y-2">
-                    {files.map((file: any, index: number) => (
-                      <li key={index}>
-                        <a
-                          href={getFileUrl(file.path)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-primary hover:text-primary-dark hover:underline text-sm font-medium"
-                        >
-                          <Download size={16} />
-                          {file.name}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+                {mode === 'edit' && user.role === 'Administrador' ? (
+                  <div className="space-y-3">
+                    {uploadError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-xs font-medium">
+                        {uploadError}
+                      </div>
+                    )}
+
+                    {localFiles.length > 0 && (
+                      <ul className="space-y-2">
+                        {localFiles.map((file: any, index: number) => (
+                          <li key={index} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-md gap-2">
+                            <a
+                              href={getFileUrl(file.path)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-primary hover:text-primary-dark hover:underline text-sm font-medium truncate min-w-0"
+                            >
+                              <Download size={14} className="flex-shrink-0" />
+                              <span className="truncate">{file.name}</span>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExistingFile(index)}
+                              className="flex-shrink-0 p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
+                              title="Eliminar fitxer"
+                            >
+                              <X size={15} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {pendingFiles.length > 0 && (
+                      <ul className="space-y-2">
+                        {pendingFiles.map((file, index) => (
+                          <li key={index} className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-md gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="flex-shrink-0 bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-xs font-bold">PDF</span>
+                              <span className="text-sm font-medium text-slate-700 truncate">{file.name}</span>
+                              <span className="flex-shrink-0 text-xs text-slate-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePendingFile(index)}
+                              className="flex-shrink-0 p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
+                            >
+                              <X size={15} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {(localFiles.length + pendingFiles.length) < 3 && (
+                      <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                        <div className="flex flex-col items-center justify-center py-3">
+                          <UploadCloud className="w-6 h-6 mb-1 text-slate-400" />
+                          <p className="text-xs text-slate-500 text-center">
+                            <span className="font-semibold">Afegir fitxer PDF</span><br />
+                            (màx. 3 fitxers en total)
+                          </p>
+                        </div>
+                        <input type="file" className="hidden" accept="application/pdf" onChange={handleNewFileChange} />
+                      </label>
+                    )}
+
+                    {localFiles.length === 0 && pendingFiles.length === 0 && (
+                      <p className="text-sm text-slate-400 italic">Cap fitxer adjuntat.</p>
+                    )}
+                  </div>
                 ) : (
-                  <div className="text-text-primary text-sm">—</div>
+                  localFiles.length > 0 ? (
+                    <ul className="space-y-2">
+                      {localFiles.map((file: any, index: number) => (
+                        <li key={index}>
+                          <a
+                            href={getFileUrl(file.path)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-primary hover:text-primary-dark hover:underline text-sm font-medium"
+                          >
+                            <Download size={16} />
+                            {file.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="text-text-primary text-sm">—</div>
+                  )
                 )}
               </SectionCard>
 
@@ -626,9 +753,15 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
             <button
               type="submit"
               form="edit-form"
-              className="px-4 py-2 text-sm font-medium text-white bg-accent border border-transparent rounded-md hover:bg-accent-dark transition-colors flex items-center gap-2 shadow-sm"
+              disabled={isSaving}
+              className="px-4 py-2 text-sm font-medium text-white bg-accent border border-transparent rounded-md hover:bg-accent-dark transition-colors flex items-center gap-2 shadow-sm disabled:opacity-70"
             >
-              <Save size={16} /> Desar
+              {isSaving ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Save size={16} />
+              )}
+              {isSaving ? 'Desant...' : 'Desar'}
             </button>
           </div>
         </div>
