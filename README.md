@@ -32,6 +32,7 @@ L'accés a la informació està protegit mitjançant **Row Level Security (RLS)*
     - Únic rol amb accés al mòdul **"Nou contracte"**.
     - Únic rol amb permisos d'edició/eliminació de **Contractes**.
     - Gestió d'usuaris (canvi de rols).
+    - Gestió de fitxers pressupostaris (pujada i eliminació) des del modal de detalls de sol·licituds.
 
 ---
 
@@ -53,8 +54,9 @@ Gestiona el flux de peticions de les residències.
 - `codi_cpv`, `partida_organica`, `partida_programa`, `partida_economica`: Classificació administrativa.
 - `sistema_tramitacio`: `AD`, `ADO`, `OFI`, `REC`, `CF`, `R. PATRIMONIAL`.
 - `estat`: `publicat` (boolean), `finalitzat` (boolean).
-- `fitxers_pressupost` (jsonb): Array d'objectes `{name, path, size}`.
-- `segex`, `reg_factura`, `relacio_q`, `relacio_o`: Referències de tramitació posterior.
+- `centre_servei`: Centre o servei sol·licitant (Residències, Centres de dia, etc.).
+- `fitxers_pressupost` (jsonb): Array d'objectes `{name, path, size}`. Administrables post-enviament pels Administradors.
+- `segex`, `adjudicatari`, `nif`, `reg_factura`, `relacio_q`, `relacio_o`: Referències de tramitació posterior.
 
 ### C. Taula `contracts` (Mòdul Contractes)
 Dades mestre dels contractes vigents.
@@ -134,7 +136,8 @@ Un cop inserit el contracte, cal inserir almenys un lot a `public.contract_lots`
 ### Pas 3: Valors Constants
 Assegureu-vos d'utilitzar els valors exactes definits a `src/types.ts` per evitar problemes amb els filtres de la interfície:
 - **Tipus**: `Subministrament`, `Servei`, `Obra`, `Exclòs`, `Privat`.
-- **Òrgans**: `UFAG Residència Bonanova`, `UFAG Residència Llar dels Ancians`, etc.
+- **Centres/Serveis (Sol·licituds)**: `Residència Bonanova`, `Centre de dia Can Clar`, `Oficines centrals ...`, etc.
+- **Òrgans (Contractes)**: `UFAG Residència Bonanova`, `UFAG Residència Llar dels Ancians`, etc.
 
 ---
 
