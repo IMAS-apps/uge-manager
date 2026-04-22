@@ -235,30 +235,78 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
         if (isPublicat && isFinalitzat) estat = 'Publicat i Finalitzat';
 
         return {
+          'ID': record.id,
           'DATA': formatDate(record.hora),
+          'EMAIL PETICIONARI': record.email || '',
+          'NOM PETICIONARI': record.nom || '',
           'RESPONSABLE': record.responsable_contracte || '',
+          'CENTRE / SERVEI': record.centre_servei || '',
+          'ÒRGAN DE CONTRACTACIÓ': record.organ_contractacio || '',
+          'JUSTIFICACIÓ': record.justificacio || '',
           'OBJECTE DEL CONTRACTE': record.objecte_contracte || '',
-          'TOTAL (AMB IVA)': record.base_imposable + record.quota_iva,
-          'SISTEMA': record.sistema_tramitacio || 'Sense assignar',
+          'CARACTERÍSTIQUES TÈCNIQUES': record.caracteristiques_tecniques || '',
+          'TIPUS DE CONTRACTE': record.tipus_contracte || '',
+          'TIPUS DE DESPESA': record.tipus_despesa || '',
+          'TERMINI EXECUCIÓ (MESOS)': record.termini_execucio || 0,
+          'CODI CPV': record.codi_cpv || '',
+          'PARTIDA ORGÀNICA': record.partida_organica || '',
+          'PARTIDA PROGRAMA': record.partida_programa || '',
+          'PARTIDA ECONÒMICA': record.partida_economica || '',
+          'PROJECTE DESPESA CAP. VI': record.projecte_despesa_cap_vi || '',
+          'BASE IMPOSABLE': record.base_imposable || 0,
+          'QUOTA IVA': record.quota_iva || 0,
+          'TOTAL (BASE + IVA)': (record.base_imposable || 0) + (record.quota_iva || 0),
+          'ADJUDICATARI': record.adjudicatari || '',
+          'NIF ADJUDICATARI': record.nif || '',
+          'SISTEMA TRAMITACIÓ': record.sistema_tramitacio || 'Sense assignar',
+          'SEGEX': record.segex || '',
           'REG. FACTURA': record.reg_factura || '',
           'RELACIÓ Q': record.relacio_q || '',
+          'RELACIÓ O': record.relacio_o || '',
           'ESTAT': estat,
-          'SEGEX': record.segex || ''
+          'MOTIVACIÓ NO CONTRACTACIÓ': record.motivacio_no_contractacio || '',
+          'DETALLS ADDICIONALS': record.detalls_addicionals || '',
+          'CREAT PER (UUID)': record.created_by || '',
+          'ÚLTIMA ACTUALITZACIÓ': record.updated_at ? new Date(record.updated_at).toLocaleString('ca-ES') : ''
         };
       });
 
       const ws = XLSX.utils.json_to_sheet(exportData);
       
       const colWidths = [
-        { wch: 12 }, 
-        { wch: 40 }, 
-        { wch: 60 }, 
-        { wch: 15 }, 
-        { wch: 15 }, 
-        { wch: 15 }, 
-        { wch: 15 }, 
-        { wch: 20 }, 
-        { wch: 15 }  
+        { wch: 6 },  // ID
+        { wch: 12 }, // DATA
+        { wch: 25 }, // EMAIL
+        { wch: 25 }, // NOM
+        { wch: 40 }, // RESPONSABLE
+        { wch: 30 }, // CENTRE / SERVEI
+        { wch: 30 }, // ORGAN
+        { wch: 50 }, // JUSTIFICACIÓ
+        { wch: 60 }, // OBJECTE
+        { wch: 60 }, // CARACTERISTIQUES
+        { wch: 20 }, // TIPUS CONTRACTE
+        { wch: 20 }, // TIPUS DESPESA
+        { wch: 10 }, // TERMINI
+        { wch: 15 }, // CPV
+        { wch: 10 }, // ORGÀNICA
+        { wch: 15 }, // PROGRAMA
+        { wch: 15 }, // ECONÒMICA
+        { wch: 25 }, // CAP VI
+        { wch: 15 }, // BASE
+        { wch: 15 }, // IVA
+        { wch: 15 }, // TOTAL
+        { wch: 30 }, // ADJUDICATARI
+        { wch: 15 }, // NIF
+        { wch: 20 }, // SISTEMA
+        { wch: 15 }, // SEGEX
+        { wch: 15 }, // REG. FACTURA
+        { wch: 15 }, // RELACIÓ Q
+        { wch: 15 }, // RELACIÓ O
+        { wch: 20 }, // ESTAT
+        { wch: 60 }, // MOTIVACIÓ
+        { wch: 60 }, // DETALLS
+        { wch: 36 }, // CREAT PER
+        { wch: 20 }  // ACTUALITZAT
       ];
       ws['!cols'] = colWidths;
 

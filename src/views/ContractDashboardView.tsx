@@ -227,31 +227,136 @@ export function ContractDashboardView({ user, onNavigate, pendingOpenContractId,
   };
 
   const handleExportExcel = () => {
-    if (sorted.length === 0) { setToast({ msg: 'No hi ha dades per exportar.', type: 'error' }); return; }
-    const rows = sorted.map((c) => {
-      const { dataInici, dataFi } = getContractDates(c.lots || []);
-      return {
-        'NOM CONTRACTE': c.nom_contracte,
-        'TIPUS': c.tipus_contracte,
-        "ÒRGAN DE CONTRACTACIÓ": c.organ_contractacio,
-        'RESPONSABLE': c.responsable_contracte,
-        'PROCEDIMENT': c.procediment_adjudicacio || '',
-        'DOSSIER': c.dossier || '',
-        'SEGEX': c.segex || '',
-        'DATA INICI': dataInici ? formatDate(dataInici) : '',
-        'DATA FI': dataFi ? formatDate(dataFi) : '',
-        'PRORROGABLE': c.prorrogable ? 'Sí' : 'No',
-        'PRÒRROGUES': c.prorrogues || '',
-        'MODIFICABLE': c.modificable ? 'Sí' : 'No',
-        'MODIFICAT': c.modificat || '',
-        'DURACIÓ INICIAL': c.duracio_inicial || '',
-      };
+    if (sorted.length === 0) {
+      setToast({ msg: 'No hi ha dades per exportar.', type: 'error' });
+      return;
+    }
+
+    // 1. Prepare Contractes Sheet
+    const contractRows = sorted.map((c) => ({
+      'ID CONTRACTE': c.id,
+      'NOM DEL CONTRACTE': c.nom_contracte || '',
+      'TIPUS DE CONTRACTE': c.tipus_contracte || '',
+      'DOSSIER': c.dossier || '',
+      'SEGEX': c.segex || '',
+      'REFERÈNCIA INTERNA': c.referencia_interna || '',
+      'ÒRGAN DE CONTRACTACIÓ': c.organ_contractacio || '',
+      'RESPONSABLE': c.responsable_contracte || '',
+      'DURACIÓ INICIAL': c.duracio_inicial || '',
+      'PRORROGABLE': c.prorrogable ? 'Sí' : 'No',
+      'PRÒRROGUES': c.prorrogues || '',
+      'PROCEDIMENT D\'ADJUDICACIÓ': c.procediment_adjudicacio || '',
+      'MODIFICABLE': c.modificable ? 'Sí' : 'No',
+      'MODIFICAT': c.modificat || '',
+      'SENSE LOTS': c.sense_lots ? 'Sí' : 'No',
+      'DETALLS ADDICIONALS': c.detalls_addicionals || '',
+      'PPT (CSV)': c.ppt_document || '',
+      'PCAP (CSV)': c.pcap_document || '',
+      'RESOLUCIÓ (CSV)': c.resolucio_document || '',
+      'CREAT PER (UUID)': c.created_by || '',
+      'DATA CREACIÓ': c.created_at ? new Date(c.created_at).toLocaleString('ca-ES') : '',
+      'ÚLTIMA ACTUALITZACIÓ': c.updated_at ? new Date(c.updated_at).toLocaleString('ca-ES') : ''
+    }));
+
+    // 2. Prepare Lots Sheet
+    const allLots: any[] = [];
+    sorted.forEach(c => {
+      if (c.lots && c.lots.length > 0) {
+        c.lots.forEach(l => {
+          allLots.push({
+            'ID LOT': l.id,
+            'ID CONTRACTE': l.contract_id,
+            'NOM DEL CONTRACTE (REF)': c.nom_contracte,
+            'NOM DEL LOT': l.nom_lot || '',
+            'CODI CPV': l.cpv || '',
+            'ADJUDICATARI': l.adjudicatari || '',
+            'IMPORT (IVA EXCLÒS)': l.import_comes || 0,
+            'DATA INICI': l.data_inici ? formatDate(l.data_inici) : '',
+            'DATA FI': l.data_fi ? formatDate(l.data_fi) : '',
+            'DATA LÍMIT COMUNICACIÓ PRÒRROGA': l.data_limit_comunicacio_proroga ? formatDate(l.data_limit_comunicacio_proroga) : '',
+            'DATA INICI PRÒRROGA': l.data_inici_proroga ? formatDate(l.data_inici_proroga) : '',
+            'DATA FI PRÒRROGA': l.data_fi_proroga ? formatDate(l.data_fi_proroga) : '',
+            'CENTRES': Array.isArray(l.centres) ? l.centres.join(', ') : (l.centres || ''),
+            'TELÈFON ADJUDICATARI': l.telefon || '',
+            'EMAIL ADJUDICATARI': l.email || '',
+            'DOCUMENT FORMALITZACIÓ (CSV)': l.formalitzacio_document || '',
+            'NOTIFICAT PRÒRROGA 60d': l.notified_proroga_60 ? 'Sí' : 'No',
+            'NOTIFICAT PRÒRROGA 30d': l.notified_proroga_30 ? 'Sí' : 'No',
+            'NOTIFICAT FI PRÒRROGA 60d': l.notified_fi_proroga_60 ? 'Sí' : 'No',
+            'NOTIFICAT FI PRÒRROGA 30d': l.notified_fi_proroga_30 ? 'Sí' : 'No',
+            'NOTIFICAT FI 60d': l.notified_fi_60 ? 'Sí' : 'No',
+            'NOTIFICAT FI 30d': l.notified_fi_30 ? 'Sí' : 'No',
+            'DATA CREACIÓ': l.created_at ? new Date(l.created_at).toLocaleString('ca-ES') : ''
+          });
+        });
+      }
     });
-    const ws = XLSX.utils.json_to_sheet(rows);
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Contractes');
-    XLSX.writeFile(wb, `Contractes_${new Date().toISOString().split('T')[0]}.xlsx`);
-    setToast({ msg: 'Arxiu Excel generat correctament.', type: 'success' });
+
+    // Create Contractes worksheet
+    const wsContracts = XLSX.utils.json_to_sheet(contractRows);
+    const contractColWidths = [
+      { wch: 15 }, // ID CONTRACTE
+      { wch: 60 }, // NOM DEL CONTRACTE
+      { wch: 20 }, // TIPUS DE CONTRACTE
+      { wch: 20 }, // DOSSIER
+      { wch: 15 }, // SEGEX
+      { wch: 20 }, // REFERÈNCIA INTERNA
+      { wch: 30 }, // ÒRGAN DE CONTRACTACIÓ
+      { wch: 40 }, // RESPONSABLE
+      { wch: 20 }, // DURACIÓ INICIAL
+      { wch: 12 }, // PRORROGABLE
+      { wch: 30 }, // PRÒRROGUES
+      { wch: 30 }, // PROCEDIMENT
+      { wch: 12 }, // MODIFICABLE
+      { wch: 30 }, // MODIFICAT
+      { wch: 12 }, // SENSE LOTS
+      { wch: 50 }, // DETALLS ADDICIONALS
+      { wch: 20 }, // PPT
+      { wch: 20 }, // PCAP
+      { wch: 20 }, // RESOLUCIÓ
+      { wch: 36 }, // CREAT PER
+      { wch: 20 }, // DATA CREACIÓ
+      { wch: 20 }  // ACTUALITZAT
+    ];
+    wsContracts['!cols'] = contractColWidths;
+    XLSX.utils.book_append_sheet(wb, wsContracts, 'Contractes');
+
+    // Create Lots worksheet
+    if (allLots.length > 0) {
+      const wsLots = XLSX.utils.json_to_sheet(allLots);
+      const lotColWidths = [
+        { wch: 10 }, // ID LOT
+        { wch: 15 }, // ID CONTRACTE
+        { wch: 40 }, // NOM DEL CONTRACTE (REF)
+        { wch: 40 }, // NOM DEL LOT
+        { wch: 15 }, // CODI CPV
+        { wch: 30 }, // ADJUDICATARI
+        { wch: 20 }, // IMPORT
+        { wch: 12 }, // DATA INICI
+        { wch: 12 }, // DATA FI
+        { wch: 15 }, // DATA LÍMIT
+        { wch: 15 }, // DATA INICI PRÒRROGA
+        { wch: 15 }, // DATA FI PRÒRROGA
+        { wch: 40 }, // CENTRES
+        { wch: 20 }, // TELÈFON
+        { wch: 25 }, // EMAIL
+        { wch: 20 }, // FORMALITZACIÓ
+        { wch: 15 }, // NOTIF 60
+        { wch: 15 }, // NOTIF 30
+        { wch: 15 }, // NOTIF FI PR 60
+        { wch: 15 }, // NOTIF FI PR 30
+        { wch: 15 }, // NOTIF FI 60
+        { wch: 15 }, // NOTIF FI 30
+        { wch: 20 }  // DATA CREACIÓ
+      ];
+      wsLots['!cols'] = lotColWidths;
+      XLSX.utils.book_append_sheet(wb, wsLots, 'Lots');
+    }
+
+    XLSX.writeFile(wb, `Contractes_i_Lots_${new Date().toISOString().split('T')[0]}.xlsx`);
+    setToast({ msg: 'Arxiu Excel generat correctament amb dues fulles (Contractes i Lots).', type: 'success' });
   };
 
   const BoolBadge = ({ value }: { value: boolean }) => (
