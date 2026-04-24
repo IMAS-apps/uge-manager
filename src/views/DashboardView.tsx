@@ -252,6 +252,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
           'PARTIDA ORGÀNICA': record.partida_organica || '',
           'PARTIDA PROGRAMA': record.partida_programa || '',
           'PARTIDA ECONÒMICA': record.partida_economica || '',
+          'Nº OPERACIÓ RC': record.num_rc || '',
           'PROJECTE DESPESA CAP. VI': record.projecte_despesa_cap_vi || '',
           'BASE IMPOSABLE': record.base_imposable || 0,
           'QUOTA IVA': record.quota_iva || 0,

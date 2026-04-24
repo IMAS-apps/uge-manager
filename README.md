@@ -57,8 +57,25 @@ Gestiona el flux de peticions de les residències.
 - `centre_servei`: Centre o servei sol·licitant (Residències, Centres de dia, etc.).
 - `fitxers_pressupost` (jsonb): Array d'objectes `{name, path, size}`. Administrables post-enviament pels Administradors.
 - `segex`, `adjudicatari`, `nif`, `reg_factura`, `relacio_q`, `relacio_o`: Referències de tramitació posterior.
+- `num_rc` (text): Nº operació RC (ex: 220260015212).
 
-### C. Taula `contracts` (Mòdul Contractes)
+### C. Taula `factures` (Factures de Sol·licituds)
+Relació **1:N** amb `records`.
+- `id` (bigserial, PK): Auto-increment.
+- `record_id` (bigint, FK): Enllaç a `records.id`.
+- `expedient` (text): Número d'expedient vinculat a la factura.
+- `data` (date): Data de la factura.
+- `numero_registre` (text): Número de registre de la factura.
+- `descripcio` (text): Concepte o descripció.
+- `periode` (text): Període de facturació.
+- `numero_factura` (text): Identificador de la factura.
+- `import_total` (numeric): Total facturat (amb IVA).
+- **Camps Autocalculats (UI)**:
+  - `Crèdit reconegut`: Sumatori d'import total de les factures vinculades.
+  - `Crèdit disponible`: Resta entre el total de la sol·licitud (Base + IVA) i el crèdit reconegut.
+- **RLS**: Tots els usuaris poden llegir. Només `Administrador` i `Gestió` poden afegir, modificar o eliminar.
+
+### D. Taula `contracts` (Mòdul Contractes)
 Dades mestre dels contractes vigents.
 - `id` (bigint, PK): Auto-increment.
 - `nom_contracte` (text): Títol oficial del contracte.

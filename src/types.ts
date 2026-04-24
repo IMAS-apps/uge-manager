@@ -41,6 +41,22 @@ export interface Record {
   publicat: boolean;
   created_by: string;
   updated_at: string;
+  num_rc?: string | null;
+  factures?: Factura[];
+}
+
+export interface Factura {
+  id?: number;
+  record_id?: number;
+  expedient?: string;
+  data: string;
+  numero_registre: string;
+  descripcio: string;
+  periode: string;
+  numero_factura: string;
+  import_total: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ContractLot {

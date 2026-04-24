@@ -211,6 +211,56 @@ export type Database = {
         }
         Relationships: []
       }
+      factures: {
+        Row: {
+          created_at: string | null
+          data: string
+          descripcio: string
+          expedient: string | null
+          id: number
+          import_total: number
+          numero_factura: string
+          numero_registre: string
+          periode: string
+          record_id: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data: string
+          descripcio: string
+          expedient?: string | null
+          id?: number
+          import_total: number
+          numero_factura: string
+          numero_registre: string
+          periode: string
+          record_id?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          descripcio?: string
+          expedient?: string | null
+          id?: number
+          import_total?: number
+          numero_factura?: string
+          numero_registre?: string
+          periode?: string
+          record_id?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factures_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "records"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       notifications: {
         Row: {
           changed_fields: Json | null
@@ -306,6 +356,7 @@ export type Database = {
           motivacio_no_contractacio: string | null
           nif: string | null
           nom: string
+          num_rc: string | null
           objecte_contracte: string
           organ_contractacio: string
           partida_economica: string
@@ -342,6 +393,7 @@ export type Database = {
           motivacio_no_contractacio?: string | null
           nif?: string | null
           nom: string
+          num_rc?: string | null
           objecte_contracte: string
           organ_contractacio: string
           partida_economica: string
@@ -378,6 +430,7 @@ export type Database = {
           motivacio_no_contractacio?: string | null
           nif?: string | null
           nom?: string
+          num_rc?: string | null
           objecte_contracte?: string
           organ_contractacio?: string
           partida_economica?: string
