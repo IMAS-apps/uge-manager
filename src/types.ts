@@ -30,6 +30,8 @@ export interface Record {
   fitxers_pressupost: { name: string, path: string, size: number }[];
   detalls_addicionals: string;
   motivacio_no_contractacio?: string;
+  justificacio_preu?: string;
+  data_ofi_inicial?: string | null;
   adjudicatari?: string;
   nif?: string;
   sistema_tramitacio: string;
@@ -160,11 +162,19 @@ export const PARTIDES_ORGANIQUES = ["00", "10", "20", "30", "40", "50", "60"];
 
 export const MOTIVACIO_OPTIONS = [
   "",
-  "a) Despesa que suposa fraccionament per ser repetitiva i gairebé periòdica, i supera els llindars que requereix la Llei de Contractes del Sector Públic per licitar-les.",
-  "b) Despesa deguda a finalització de contractes administratius i les corresponents prorrogues en el seu cas, i no haver començat una nova licitació o bé tot i haver sortit a licitació encara no s'ha adjudicat el nou contracte administratiu.",
-  "c) Despesa deguda a finalització de contractes administratius i les corresponents prorrogues en el seu cas, i tot i haver sortit a licitació, l'adjudicació ha resultat deserta.",
-  "d) Despesa que ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte.",
-  "e) Despesa que no ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte."
+  "a) Finalització del contracte o de les pròrrogues sense haver iniciat una nova licitació. No s’havia tramitat a temps el nou expedient i, per evitar perjudicis, el proveïdor va continuar prestant el servei.",
+  "b) Finalització d’un concert social sense nova convocatòria.La prestació era imprescindible i no existia concert vigent.",
+  "c) Licitació publicada però resultant deserta. La manca d’ofertes va obligar a mantenir la prestació per garantir el servei.",
+  "d) Fraccionament per la naturalesa repetitiva de les despeses. Despeses recurrents que, per volum anual, superen els llindars de contracte menor.",
+  "e) Manca de mitjans personals per planificar adequadament la contractació. Les càrregues de feina i la manca de personal varen impedir la tramitació a temps.",
+  "f) Superació del crèdit del contracte vigent. Tot i existir contracte, s’havia esgotat la seva dotació i calia garantir el servei."
+];
+
+export const JUSTIFICACIO_PREU_OPTIONS = [
+  "",
+  "a) Consultes al mercat i comparatives amb altres proveïdors.\nS'han sol·licitat i comparat pressuposts amb diversos operadors econòmics, constatant-se que els preus facturats són equivalents o inferiors als habituals per serveis/subministraments de naturalesa similar. Aquestes consultes acrediten l'adequació dels imports al mercat actual.",
+  "b) Informe econòmic del tècnic responsable.\nEl/la tècnic/a responsable ha emès un informe econòmic específic, incorporat com annex, en el qual analitza les tarifes aplicades i conclou que els imports són correctes, raonables i conformes als preus habituals del sector. Aquest informe serveix de fonament per justificar la proporcionalitat i adequació del cost de la prestació.",
+  "c) Manteniment de preus d'un contracte o concert anterior.\nEn aquelles prestacions vinculades a un contracte, conveni o concert social ja finalitzat, els imports facturats coincideixen amb els preus que s'havien aplicat durant la vigència del contracte anterior, sense increments. Aquest fet constitueix un referent vàlid d'adequació al mercat i dona suport al valor econòmic aplicat."
 ];
 
 // ── Contract module constants ────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI, Factura } from '../types';
+import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, JUSTIFICACIO_PREU_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI, Factura } from '../types';
 import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2, UploadCloud, Plus, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CpvDescription } from './CpvDescription';
@@ -58,6 +58,8 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     finalitzat: record.finalitzat,
     publicat: record.publicat,
     motivacio_no_contractacio: record.motivacio_no_contractacio || '',
+    justificacio_preu: record.justificacio_preu || '',
+    data_ofi_inicial: record.data_ofi_inicial || '',
     adjudicatari: record.adjudicatari || '',
     nif: record.nif || '',
     detalls_addicionals: record.detalls_addicionals || ''
@@ -311,7 +313,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true">
-      <div ref={modalRef} className="bg-bg-light rounded-xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div ref={modalRef} className="bg-bg-light rounded-xl shadow-2xl w-full max-w-[95vw] max-h-[95vh] flex flex-col overflow-hidden">
 
         {/* Header */}
         <div className="px-6 py-4 border-b border-border-light bg-white flex justify-between items-center sticky top-0 z-10">
@@ -332,9 +334,9 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <div className="lg:col-span-2">
+            <div className={formData.sistema_tramitacio === 'OFI' ? "lg:col-span-5" : "lg:col-span-7"}>
               <SectionCard title="Identificació">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <Field label="Id" value={`#${record.id}`} />
@@ -724,7 +726,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
             </div>
 
             {/* Gestió Interna */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-2">
               <div className="sticky top-0">
                 <SectionCard title="Gestió Interna">
                   <form id="edit-form" onSubmit={handleSubmit} className="space-y-4">
@@ -763,19 +765,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       <Field label="SEGEX" value={record.segex} />
                     )}
 
-                    {/* The following 6 fields are editable for ALL roles */}
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Motivació de no contractació</label>
-                      <select
-                        name="motivacio_no_contractacio"
-                        value={formData.motivacio_no_contractacio}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      >
-                        <option value="">Sense motivació</option>
-                        {MOTIVACIO_OPTIONS.slice(1).map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
-                    </div>
+                    {/* The following fields are editable for ALL roles */}
 
                     <div>
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Adjudicatari</label>
@@ -860,8 +850,65 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               </div>
             </div>
 
+            {/* Detalls OFI — visible only when sistema_tramitacio === 'OFI' */}
+            {(formData.sistema_tramitacio === 'OFI' || record.sistema_tramitacio === 'OFI') && (
+              <div className="lg:col-span-2">
+                <div className="sticky top-0">
+                  <SectionCard title="Detalls OFI">
+                    <div className="space-y-4">
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Motivació de no contractació</label>
+                        <select
+                          name="motivacio_no_contractacio"
+                          value={formData.motivacio_no_contractacio}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                        >
+                          <option value="">Sense motivació</option>
+                          {MOTIVACIO_OPTIONS.slice(1).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Justificació del preu</label>
+                        <select
+                          name="justificacio_preu"
+                          value={formData.justificacio_preu}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                        >
+                          <option value="">Sense justificació</option>
+                          {JUSTIFICACIO_PREU_OPTIONS.slice(1).map(opt => (
+                            <option key={opt.charAt(0)} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                        {formData.justificacio_preu && (
+                          <p className="mt-2 text-xs text-text-secondary whitespace-pre-wrap leading-relaxed bg-slate-50 border border-border-light rounded p-2">
+                            {formData.justificacio_preu}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Data OFI inicial</label>
+                        <input
+                          type="date"
+                          name="data_ofi_inicial"
+                          value={formData.data_ofi_inicial || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                        />
+                      </div>
+
+                    </div>
+                  </SectionCard>
+                </div>
+              </div>
+            )}
+
             {/* Factures */}
-            <div className="lg:col-span-1 xl:col-span-1">
+            <div className="lg:col-span-3">
               <div className="sticky top-0">
                 <SectionCard title="Factures">
                   <div className="space-y-4">

@@ -266,6 +266,8 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
           'RELACIÓ O': record.relacio_o || '',
           'ESTAT': estat,
           'MOTIVACIÓ NO CONTRACTACIÓ': record.motivacio_no_contractacio || '',
+          'JUSTIFICACIÓ PREU': record.justificacio_preu || '',
+          'DATA OFI INICIAL': record.data_ofi_inicial || '',
           'DETALLS ADDICIONALS': record.detalls_addicionals || '',
           'CREAT PER (UUID)': record.created_by || '',
           'ÚLTIMA ACTUALITZACIÓ': record.updated_at ? new Date(record.updated_at).toLocaleString('ca-ES') : ''
@@ -305,6 +307,8 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
         { wch: 15 }, // RELACIÓ O
         { wch: 20 }, // ESTAT
         { wch: 60 }, // MOTIVACIÓ
+        { wch: 60 }, // JUSTIFICACIÓ PREU
+        { wch: 15 }, // DATA OFI INICIAL
         { wch: 60 }, // DETALLS
         { wch: 36 }, // CREAT PER
         { wch: 20 }  // ACTUALITZAT

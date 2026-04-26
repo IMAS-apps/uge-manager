@@ -134,4 +134,41 @@ describe('EditModal', () => {
       expect(screen.getByText(/EXP-E2E/)).toBeInTheDocument();
     });
   });
+
+  it('should show Detalls OFI section when sistema_tramitacio is OFI', async () => {
+    const ofiRecord = { ...mockRecord, sistema_tramitacio: 'OFI' };
+    
+    render(
+      <EditModal 
+        record={ofiRecord as any} 
+        user={mockUser as any} 
+        mode="edit" 
+        onClose={vi.fn()} 
+        onSave={vi.fn()} 
+        onDeleteRequest={vi.fn()} 
+      />
+    );
+
+    expect(screen.getByText('Detalls OFI')).toBeInTheDocument();
+    expect(screen.getByText('Motivació de no contractació')).toBeInTheDocument();
+    expect(screen.getByText('Justificació del preu')).toBeInTheDocument();
+    expect(screen.getByText('Data OFI inicial')).toBeInTheDocument();
+  });
+
+  it('should not show Detalls OFI section when sistema_tramitacio is not OFI', async () => {
+    const adRecord = { ...mockRecord, sistema_tramitacio: 'AD' };
+    
+    render(
+      <EditModal 
+        record={adRecord as any} 
+        user={mockUser as any} 
+        mode="edit" 
+        onClose={vi.fn()} 
+        onSave={vi.fn()} 
+        onDeleteRequest={vi.fn()} 
+      />
+    );
+
+    expect(screen.queryByText('Detalls OFI')).not.toBeInTheDocument();
+  });
 });
