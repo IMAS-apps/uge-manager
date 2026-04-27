@@ -61,6 +61,21 @@ export interface Factura {
   updated_at?: string;
 }
 
+export interface OFI {
+  id: number;
+  codi_ofi: string;
+  expedient_ofi: string;
+  centre_servei: string;
+  justificacio_general: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  total_import?: number;
+  num_factures?: number;
+  data_min?: string;
+  data_max?: string;
+}
+
 export interface ContractLot {
   id?: number;
   contract_id?: number;

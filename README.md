@@ -27,11 +27,12 @@ L'accés a la informació està protegit mitjançant **Row Level Security (RLS)*
 ### Rols Principals:
 1.  **Lectura**: Pot veure el dashboard de sol·licituds i contractes. No pot crear ni editar. No veu el mòdul de "Nou contracte".
 2.  **Peticions**: Pot crear noves Sol·licituds de despesa. Rep notificacions quan les seves peticions són actualitzades per un gestor.
-3.  **Gestió**: Pot editar totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.). Rep notificacions de noves peticions d'altres usuaris.
+3.  **Gestió**: Pot editar totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.) i **crear/editar OFIs**. Rep notificacions de noves peticions d'altres usuaris.
 4.  **Administrador**: Control total del sistema.
     - Únic rol amb accés al mòdul **"Nou contracte"**.
     - Únic rol amb permisos d'edició/eliminació de **Contractes**.
     - Gestió d'usuaris (canvi de rols).
+    - **Creació i edició d'OFIs**.
     - Gestió de fitxers pressupostaris (pujada i eliminació) des del modal de detalls de sol·licituds.
 
 ---
@@ -104,6 +105,17 @@ Relació **1:N** amb `contracts`.
 - `peticio_id`: Enllaç al registre de `records`.
 - `is_read`: Estat per usuari (gestionat via JSONB `read_by` per a notificacions globals).
 
+### F. Taula `ofi` (Ordres de Facturació Interna)
+Control i seguiment d'expedients de facturació interna.
+- `id` (bigserial, PK): Auto-increment.
+- `codi_ofi` (text): Codi de l'ordre (ex: 001/26).
+- `expedient_ofi` (text): Número d'expedient vinculat (ex: 1234567A).
+- `centre_servei` (text): Centre o servei (text lliure).
+- `justificacio_general` (text): Descripció detallada de la justificació.
+- `created_by` (uuid, FK): Enllaç a `profiles.id`.
+- **Funcionalitat clau**: El botó "veure" del dashboard filtra automàticament la taula `factures` on `factura.expedient === ofi.expedient_ofi`.
+- **Hipervincle SEGEX**: El camp `expedient_ofi` es mostra a la columna d'Accions com un badge clickable que extreu l'ID numèric per obrir l'expedient a SEGEX (`https://imas.secimallorca.net/segex/expediente.aspx?id={digits}`).
+
 ---
 
 ## 📂 4. Emmagatzematge (Storage Buckets)
@@ -133,6 +145,11 @@ L'aplicació compta amb dues vistes principals unificades pel nou menú de naveg
 - Mòdul específic per al seguiment de tots els contractes i els seus respectius lots emmagatzemats al sistema de manera ordenada (per defecte per **Data d'inici**, del més nou al més antic).
 - **Filtres avançats:** Filtre escollit per defecte per veure els "Contractes vigents" (amb dates fi posteriors a l'actual o no determinades), llistes desplegables netes per al "Tipus de contracte" i filtre flexible de conjunts per a un o més "Centres".
 - Igual que en sol·licituds, les referències SEGEX disposen d'enllaços a l'expedient un cop introduït dins la xarxa SECI.
+
+### C. Control d'OFIs
+- Mòdul intermedi per al seguiment d'Ordres de Facturació Interna.
+- Relaciona de manera dinàmica els expedients d'OFI amb les factures introduïdes al sistema mitjançant el número d'expedient.
+- Permet una traçabilitat directa entre l'ordre interna i l'execució comptable (factures).
 
 ---
 
