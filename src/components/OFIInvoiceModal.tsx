@@ -1,17 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { OFI, Factura } from '../types';
-import { X, Eye, AlertCircle, FileText, Calendar, Hash, Tag, Euro } from 'lucide-react';
+import { OFI, Factura, User } from '../types';
+import { X, Eye, AlertCircle, FileText, Calendar, Hash, Tag, Euro, Pencil, Trash2, Save, RotateCcw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface OFIInvoiceModalProps {
   ofi: OFI;
+  user: User;
   onClose: () => void;
+  onRefresh: () => void;
 }
 
-export function OFIInvoiceModal({ ofi, onClose }: OFIInvoiceModalProps) {
+export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceModalProps) {
   const [factures, setFactures] = useState<(Factura & { records?: { nom: string, objecte_contracte: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editData, setEditData] = useState({
+    codi_ofi: ofi.codi_ofi,
+    centre_servei: ofi.centre_servei,
+    expedient_ofi: ofi.expedient_ofi,
+    justificacio_general: ofi.justificacio_general
+  });
+
+  const canEdit = user.role === 'Administrador' || user.role === 'Gestió';
 
   useEffect(() => {
     const fetchFactures = async () => {
@@ -53,6 +69,62 @@ export function OFIInvoiceModal({ ofi, onClose }: OFIInvoiceModalProps) {
     }
   };
 
+  const handleUpdate = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const { error: sbError } = await supabase
+        .from('ofi')
+        .update({
+          codi_ofi: editData.codi_ofi,
+          centre_servei: editData.centre_servei,
+          expedient_ofi: editData.expedient_ofi,
+          justificacio_general: editData.justificacio_general,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', ofi.id);
+
+      if (sbError) throw sbError;
+      
+      setSuccess('OFI actualitzat correctament.');
+      setIsEditing(false);
+      onRefresh();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Estàs segur que vols eliminar aquest OFI? Aquesta acció no es pot desfer.')) return;
+    
+    setDeleting(true);
+    setError('');
+    try {
+      const { error: sbError } = await supabase
+        .from('ofi')
+        .delete()
+        .eq('id', ofi.id);
+
+      if (sbError) throw sbError;
+      
+      onRefresh();
+      onClose();
+    } catch (err: any) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto" role="dialog" aria-modal="true">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[90vh] overflow-hidden">
@@ -62,21 +134,165 @@ export function OFIInvoiceModal({ ofi, onClose }: OFIInvoiceModalProps) {
           <div className="flex flex-col">
             <h2 className="text-xl font-bold text-primary flex items-center gap-2">
               <Eye className="text-accent" />
-              Factures de l'expedient {ofi.expedient_ofi}
+              Detalls de l'OFI
             </h2>
-            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mt-1">OFI: {ofi.codi_ofi} | {ofi.centre_servei}</p>
+            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mt-1">Expedient: {ofi.expedient_ofi} | Codi: {ofi.codi_ofi}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-text-secondary hover:text-text-primary hover:bg-slate-200 rounded-full transition-colors"
-            aria-label="Tancar"
-          >
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            {canEdit && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-border-light text-primary hover:bg-slate-50 rounded-lg text-xs font-bold transition-all shadow-sm"
+              >
+                <Pencil size={14} /> Editar OFI
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 text-text-secondary hover:text-text-primary hover:bg-slate-200 rounded-full transition-colors"
+              aria-label="Tancar"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* General OFI Info Section */}
+          <div className="mb-8 bg-white rounded-xl border border-border-light overflow-hidden shadow-sm">
+            <div className="bg-slate-50 px-4 py-2 border-b border-border-light flex justify-between items-center">
+              <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Informació General de l'OFI</h3>
+              {isEditing && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting || saving}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded text-[10px] font-bold transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 size={12} /> {deleting ? 'Suprimint...' : 'Suprimir OFI'}
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4">
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Codi OFI</label>
+                      <input
+                        type="text"
+                        name="codi_ofi"
+                        value={editData.codi_ofi}
+                        onChange={handleChange}
+                        className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Centre o servei</label>
+                      <input
+                        type="text"
+                        name="centre_servei"
+                        value={editData.centre_servei}
+                        onChange={handleChange}
+                        className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Expedient OFI</label>
+                      <input
+                        type="text"
+                        name="expedient_ofi"
+                        value={editData.expedient_ofi}
+                        onChange={handleChange}
+                        className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Justificació general</label>
+                    <textarea
+                      name="justificacio_general"
+                      value={editData.justificacio_general}
+                      onChange={handleChange}
+                      rows={3}
+                      className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary outline-none resize-none"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditData({
+                          codi_ofi: ofi.codi_ofi,
+                          centre_servei: ofi.centre_servei,
+                          expedient_ofi: ofi.expedient_ofi,
+                          justificacio_general: ofi.justificacio_general
+                        });
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-text-secondary hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                      <RotateCcw size={16} /> Cancel·lar
+                    </button>
+                    <button
+                      onClick={handleUpdate}
+                      disabled={saving}
+                      className="flex items-center gap-1.5 px-6 py-2 bg-accent text-white font-bold rounded-lg text-sm hover:bg-accent-dark transition-all shadow-md disabled:opacity-70"
+                    >
+                      {saving ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Save size={16} />
+                      )}
+                      {saving ? 'Desant...' : 'Desar Canvis'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                  <div className="md:col-span-8 grid grid-cols-2 gap-y-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Codi OFI</p>
+                      <p className="text-sm font-bold text-primary">{ofi.codi_ofi}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Centre o servei</p>
+                      <p className="text-sm font-medium text-text-primary">{ofi.centre_servei}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Justificació</p>
+                      <p className="text-sm text-text-secondary italic line-clamp-2" title={ofi.justificacio_general}>
+                        {ofi.justificacio_general || 'Sense justificació.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-4 bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col justify-center items-center gap-1">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Expedient SEGEX</p>
+                    <p className="text-lg font-bold text-accent">{ofi.expedient_ofi}</p>
+                    <span className="text-[10px] text-text-secondary">Creat el {new Date(ofi.created_at).toLocaleDateString('ca-ES')}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+              <AlertCircle size={18} /> {success}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-center gap-2">
+              <AlertCircle size={18} /> {error}
+            </div>
+          )}
+
+          <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+            <FileText size={14} /> Factures de l'expedient
+          </h3>
           {loading ? (
             <div className="flex flex-col justify-center items-center h-64 gap-3">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

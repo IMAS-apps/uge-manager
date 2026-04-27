@@ -380,7 +380,9 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
       {selectedOfi && (
         <OFIInvoiceModal 
           ofi={selectedOfi} 
+          user={user}
           onClose={() => setSelectedOfi(null)} 
+          onRefresh={fetchOfis}
         />
       )}
     </div>
