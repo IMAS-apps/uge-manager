@@ -471,8 +471,8 @@ export function FormView({ user, onSuccess }: FormViewProps) {
               </div>
               <input required type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} placeholder="12340000" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               <CpvDescription code={formData.codi_cpv} />
-              {formData.codi_cpv.length === 8 && formData.codi_cpv.endsWith('0000') && (
-                <p className="text-amber-600 text-xs mt-1 font-medium">
+              {formData.codi_cpv.length === 8 && !formData.codi_cpv.endsWith('0000') && (
+                <p className="text-red-600 text-xs mt-1 font-medium">
                   S'ha d'introduir un CPV amb nivell de 4 dígits (XXXX0000)
                 </p>
               )}
