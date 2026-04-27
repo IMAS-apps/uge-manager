@@ -517,8 +517,13 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Codi CPV</label>
                     {mode === 'edit' && user.role === 'Administrador' ? (
                       <>
-                        <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                        <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" placeholder="12340000" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                         <CpvDescription code={formData.codi_cpv} />
+                        {formData.codi_cpv.length === 8 && formData.codi_cpv.endsWith('0000') && (
+                          <p className="text-amber-600 text-xs mt-1 font-medium">
+                            S'ha d'introduir un CPV amb nivell de 4 dígits (XXXX0000)
+                          </p>
+                        )}
                       </>
                     ) : (
                       <>
@@ -543,7 +548,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Programa</label>
                     {mode === 'edit' && user.role === 'Administrador' ? (
-                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} form="edit-form" placeholder="21300" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_programa || '—'}</div>
                     )}
@@ -552,7 +557,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Econòmica</label>
                     {mode === 'edit' && user.role === 'Administrador' ? (
-                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} form="edit-form" placeholder="22199" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_economica || '—'}</div>
                     )}

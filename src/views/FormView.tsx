@@ -469,8 +469,13 @@ export function FormView({ user, onSuccess }: FormViewProps) {
                   <ExternalLink size={14} />
                 </a>
               </div>
-              <input required type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} placeholder="12345678" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <input required type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} placeholder="12340000" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               <CpvDescription code={formData.codi_cpv} />
+              {formData.codi_cpv.length === 8 && formData.codi_cpv.endsWith('0000') && (
+                <p className="text-amber-600 text-xs mt-1 font-medium">
+                  S'ha d'introduir un CPV amb nivell de 4 dígits (XXXX0000)
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Partida Orgànica *</label>
@@ -481,11 +486,11 @@ export function FormView({ user, onSuccess }: FormViewProps) {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Partida Programa *</label>
-              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} placeholder="12345" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} placeholder="21300" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Partida Econòmica *</label>
-              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} placeholder="12345" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} placeholder="22199" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div>
               <label htmlFor="num_rc" className="block text-sm font-medium text-slate-700 mb-1">Nº operació RC</label>
