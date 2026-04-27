@@ -47,7 +47,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     try {
       const { data, error: sbError } = await supabase
         .from('records')
-        .select('*')
+        .select('*, factures(import_total)')
         .order('hora', { ascending: false });
 
       if (sbError) throw sbError;
@@ -108,8 +108,8 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
         totalStr.includes(searchLower) ||
         (r.segex?.toLowerCase() || '').includes(searchLower) ||
         (r.codi_cpv?.toLowerCase() || '').includes(searchLower) ||
-        (r.partida_programa?.toLowerCase() || '').includes(searchLower) ||
-        (r.partida_economica?.toLowerCase() || '').includes(searchLower);
+        (r.partida_economica?.toLowerCase() || '').includes(searchLower) ||
+        (r.num_rc?.toLowerCase() || '').includes(searchLower);
       if (!matchesSearch) return false;
     }
 
@@ -127,13 +127,13 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     if (filterDataInici || filterDataFi) {
       const recordDate = new Date(r.hora);
       recordDate.setHours(0, 0, 0, 0);
-      
+
       if (filterDataInici) {
         const startDate = new Date(filterDataInici);
         startDate.setHours(0, 0, 0, 0);
         if (recordDate < startDate) return false;
       }
-      
+
       if (filterDataFi) {
         const endDate = new Date(filterDataFi);
         endDate.setHours(23, 59, 59, 999);
@@ -154,6 +154,16 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     if (sortField === 'total') {
       valA = (a.base_imposable || 0) + (a.quota_iva || 0);
       valB = (b.base_imposable || 0) + (b.quota_iva || 0);
+    }
+
+    if (sortField === 'credit_disponible') {
+      const totalA = (a.base_imposable || 0) + (a.quota_iva || 0);
+      const consumedA = (a.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0);
+      valA = totalA - consumedA;
+
+      const totalB = (b.base_imposable || 0) + (b.quota_iva || 0);
+      const consumedB = (b.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0);
+      valB = totalB - consumedB;
     }
 
     if (valA === valB) return 0;
@@ -257,11 +267,11 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
           'BASE IMPOSABLE': record.base_imposable || 0,
           'QUOTA IVA': record.quota_iva || 0,
           'TOTAL (BASE + IVA)': (record.base_imposable || 0) + (record.quota_iva || 0),
+          'CRÈDIT DISPONIBLE': ((record.base_imposable || 0) + (record.quota_iva || 0)) - (record.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0),
           'ADJUDICATARI': record.adjudicatari || '',
           'NIF ADJUDICATARI': record.nif || '',
           'SISTEMA TRAMITACIÓ': record.sistema_tramitacio || 'Sense assignar',
           'SEGEX': record.segex || '',
-          'REG. FACTURA': record.reg_factura || '',
           'RELACIÓ Q': record.relacio_q || '',
           'RELACIÓ O': record.relacio_o || '',
           'ESTAT': estat,
@@ -275,7 +285,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
       });
 
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       const colWidths = [
         { wch: 6 },  // ID
         { wch: 12 }, // DATA
@@ -294,15 +304,16 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
         { wch: 10 }, // ORGÀNICA
         { wch: 15 }, // PROGRAMA
         { wch: 15 }, // ECONÒMICA
+        { wch: 15 }, // Nº OPERACIÓ RC
         { wch: 25 }, // CAP VI
         { wch: 15 }, // BASE
         { wch: 15 }, // IVA
         { wch: 15 }, // TOTAL
+        { wch: 15 }, // CRÈDIT DISPONIBLE
         { wch: 30 }, // ADJUDICATARI
         { wch: 15 }, // NIF
         { wch: 20 }, // SISTEMA
         { wch: 15 }, // SEGEX
-        { wch: 15 }, // REG. FACTURA
         { wch: 15 }, // RELACIÓ Q
         { wch: 15 }, // RELACIÓ O
         { wch: 20 }, // ESTAT
@@ -317,7 +328,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Sol·licituds");
-      
+
       const fileName = `Sollicituds_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
       setToast({ msg: 'Arxiu Excel generat correctament.', type: 'success' });
@@ -376,14 +387,6 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50 relative">
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`absolute top-4 right-4 z-50 p-4 rounded-md shadow-lg flex items-center gap-3 ${toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-          {toast.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-          <p className="text-sm font-medium">{toast.msg}</p>
-        </div>
-      )}
-
       {/* Delete Confirmation Dialog */}
       {deleteConfirmRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -656,7 +659,16 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                         onClick={() => handleSort('total')}
                       >
                         <div className="flex items-center justify-end gap-1">
-                          Total (amb IVA) <SortIndicator field="total" />
+                          Crèdit Retingut <SortIndicator field="total" />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-right text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
+                        onClick={() => handleSort('credit_disponible')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Crèdit disponible <SortIndicator field="credit_disponible" />
                         </div>
                       </th>
                       <th
@@ -666,15 +678,6 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                       >
                         <div className="flex items-center justify-center gap-1">
                           Sistema <SortIndicator field="sistema_tramitacio" />
-                        </div>
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
-                        onClick={() => handleSort('reg_factura')}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          Reg. Factura <SortIndicator field="reg_factura" />
                         </div>
                       </th>
                       <th
@@ -719,11 +722,11 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-primary text-right font-medium">{formatCurrency(record.base_imposable + record.quota_iva)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-bold text-blue-700">
+                            {formatCurrency((record.base_imposable + record.quota_iva) - (record.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0))}
+                          </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                             {getSistemaBadge(record)}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-text-secondary font-medium">
-                            {record.reg_factura || '-'}
                           </td>
                           <td className="px-4 py-3 text-sm text-center text-text-secondary font-medium w-[250px] max-w-[250px]">
                             <div className="font-bold mb-0.5">{record.codi_cpv || '-'}</div>
@@ -760,7 +763,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                               </button>
 
                               {record.partida_economica && record.partida_economica.startsWith('6') && (
-                                <div 
+                                <div
                                   className={`flex items-center justify-center min-w-[28px] px-1 h-[28px] rounded font-bold text-xs cursor-help ${record.projecte_despesa_cap_vi ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
                                   title={record.projecte_despesa_cap_vi ? `Projecte cap. VI: ${record.projecte_despesa_cap_vi}` : 'Falta projecte de despesa cap. VI'}
                                 >
@@ -806,6 +809,14 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
             setSelectedRecord(null);
           }}
         />
+      )}
+
+      {/* Toast Notification — z-60 to be above modal */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[60] p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+          {toast.type === 'success' ? <CheckCircle2 className="text-green-600" size={24} /> : <AlertCircle className="text-red-600" size={24} />}
+          <p className="text-sm font-semibold pr-2">{toast.msg}</p>
+        </div>
       )}
     </div>
   );

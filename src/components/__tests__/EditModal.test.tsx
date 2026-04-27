@@ -73,6 +73,10 @@ describe('EditModal', () => {
       />
     );
 
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregant factures/i)).not.toBeInTheDocument();
+    });
+
     expect(screen.getByText('220260015212')).toBeInTheDocument();
   });
 
@@ -149,6 +153,10 @@ describe('EditModal', () => {
       />
     );
 
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregant factures/i)).not.toBeInTheDocument();
+    });
+
     expect(screen.getByText('Detalls OFI')).toBeInTheDocument();
     expect(screen.getByText('Motivació de no contractació')).toBeInTheDocument();
     expect(screen.getByText('Justificació del preu')).toBeInTheDocument();
@@ -168,6 +176,10 @@ describe('EditModal', () => {
         onDeleteRequest={vi.fn()} 
       />
     );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregant factures/i)).not.toBeInTheDocument();
+    });
 
     expect(screen.queryByText('Detalls OFI')).not.toBeInTheDocument();
   });

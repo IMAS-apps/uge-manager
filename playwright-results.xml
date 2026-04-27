@@ -1,34 +1,34 @@
-<testsuites id="" name="" tests="14" failures="0" skipped="0" errors="0" time="8.070181">
-<testsuite name="auth.spec.ts" timestamp="2026-04-24T22:05:13.035Z" hostname="chromium" tests="6" failures="0" skipped="0" time="6.372" errors="0">
-<testcase name="Authentication flow › should display the IMAS login form on first load" classname="auth.spec.ts" time="0.932">
+<testsuites id="" name="" tests="14" failures="0" skipped="0" errors="0" time="10.262247">
+<testsuite name="auth.spec.ts" timestamp="2026-04-27T08:56:24.247Z" hostname="chromium" tests="6" failures="0" skipped="0" time="6.267" errors="0">
+<testcase name="Authentication flow › should display the IMAS login form on first load" classname="auth.spec.ts" time="0.684">
 </testcase>
-<testcase name="Authentication flow › should switch to the registration form when the signup link is clicked" classname="auth.spec.ts" time="0.558">
+<testcase name="Authentication flow › should switch to the registration form when the signup link is clicked" classname="auth.spec.ts" time="0.543">
 </testcase>
-<testcase name="Authentication flow › should switch back to the login form from registration mode" classname="auth.spec.ts" time="0.569">
+<testcase name="Authentication flow › should switch back to the login form from registration mode" classname="auth.spec.ts" time="0.647">
 </testcase>
-<testcase name="Authentication flow › should show an error message when login credentials are invalid" classname="auth.spec.ts" time="3.432">
+<testcase name="Authentication flow › should show an error message when login credentials are invalid" classname="auth.spec.ts" time="3.453">
 </testcase>
-<testcase name="Authentication flow › should enforce minimum password length in register form" classname="auth.spec.ts" time="0.478">
+<testcase name="Authentication flow › should enforce minimum password length in register form" classname="auth.spec.ts" time="0.521">
 </testcase>
-<testcase name="Authentication flow › should display the subtitle &quot;Institut Mallorquí d&apos;Afers Socials&quot;" classname="auth.spec.ts" time="0.403">
+<testcase name="Authentication flow › should display the subtitle &quot;Institut Mallorquí d&apos;Afers Socials&quot;" classname="auth.spec.ts" time="0.419">
 </testcase>
 </testsuite>
-<testsuite name="navigation.spec.ts" timestamp="2026-04-24T22:05:13.035Z" hostname="chromium" tests="8" failures="0" skipped="0" time="3.993" errors="0">
-<testcase name="Navigation — unauthenticated state › should redirect unauthenticated users to the login page" classname="navigation.spec.ts" time="0.917">
+<testsuite name="navigation.spec.ts" timestamp="2026-04-27T08:56:24.247Z" hostname="chromium" tests="8" failures="0" skipped="0" time="3.921" errors="0">
+<testcase name="Navigation — unauthenticated state › should redirect unauthenticated users to the login page" classname="navigation.spec.ts" time="0.692">
 </testcase>
-<testcase name="Navigation — unauthenticated state › should not show the navigation bar when unauthenticated" classname="navigation.spec.ts" time="0.523">
+<testcase name="Navigation — unauthenticated state › should not show the navigation bar when unauthenticated" classname="navigation.spec.ts" time="0.494">
 </testcase>
-<testcase name="Navigation — unauthenticated state › should not show the logout button when unauthenticated" classname="navigation.spec.ts" time="0.467">
+<testcase name="Navigation — unauthenticated state › should not show the logout button when unauthenticated" classname="navigation.spec.ts" time="0.534">
 </testcase>
-<testcase name="Navigation — form accessibility constraints › email field should have type=&quot;email&quot; for browser validation" classname="navigation.spec.ts" time="0.453">
+<testcase name="Navigation — form accessibility constraints › email field should have type=&quot;email&quot; for browser validation" classname="navigation.spec.ts" time="0.494">
 </testcase>
-<testcase name="Navigation — form accessibility constraints › password field should have type=&quot;password&quot; (not plaintext)" classname="navigation.spec.ts" time="0.422">
+<testcase name="Navigation — form accessibility constraints › password field should have type=&quot;password&quot; (not plaintext)" classname="navigation.spec.ts" time="0.442">
 </testcase>
-<testcase name="Navigation — form accessibility constraints › password field in register mode should require minimum 8 characters" classname="navigation.spec.ts" time="0.432">
+<testcase name="Navigation — form accessibility constraints › password field in register mode should require minimum 8 characters" classname="navigation.spec.ts" time="0.47">
 </testcase>
 <testcase name="Navigation — form accessibility constraints › submit buttons should be of type=&quot;submit&quot;" classname="navigation.spec.ts" time="0.404">
 </testcase>
-<testcase name="Navigation — page title and meta › should have a page title" classname="navigation.spec.ts" time="0.375">
+<testcase name="Navigation — page title and meta › should have a page title" classname="navigation.spec.ts" time="0.391">
 </testcase>
 </testsuite>
 </testsuites>

@@ -9,7 +9,7 @@ interface EditModalProps {
   mode: 'view' | 'edit';
   user: User;
   onClose: () => void;
-  onSave: (data: Partial<Record>) => void;
+  onSave: (data: Partial<Record>) => void | Promise<void>;
   onDeleteRequest?: () => void;
 }
 
@@ -169,13 +169,17 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
       }
       const payload = {
         ...formData,
-        termini_execucio: formData.termini_execucio ? Number(formData.termini_execucio) : null,
-        base_imposable: formData.base_imposable ? Number(formData.base_imposable) : 0,
-        quota_iva: formData.quota_iva ? Number(formData.quota_iva) : 0,
+        termini_execucio: formData.termini_execucio ? parseInt(String(formData.termini_execucio)) : null,
+        base_imposable: formData.base_imposable ? parseFloat(String(formData.base_imposable)) : 0,
+        quota_iva: formData.quota_iva ? parseFloat(String(formData.quota_iva)) : 0,
         num_rc: formData.num_rc || null,
+        data_ofi_inicial: formData.data_ofi_inicial || null,
         fitxers_pressupost: updatedFiles,
       };
-      onSave(payload as any);
+      await onSave(payload as any);
+      // We don't setIsSaving(false) here because on success the modal is closed by the parent.
+      // But if onSave caught an error and returned, we should allow retrying.
+      setIsSaving(false);
     } catch (err: any) {
       setUploadError(err.message || "Error en pujar els fitxers.");
       setIsSaving(false);
