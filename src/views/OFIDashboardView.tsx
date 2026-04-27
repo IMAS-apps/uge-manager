@@ -3,6 +3,7 @@ import { OFI, User } from '../types';
 import { Plus, Eye, FileDown, Search, AlertCircle, FilePlus2, ChevronUp, ChevronDown, Filter, X, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { OFIInvoiceModal } from '../components/OFIInvoiceModal';
+import { generateMemoriaOFI } from '../utils/generateInforme';
 import * as XLSX from 'xlsx';
 
 interface OFIDashboardViewProps {
@@ -22,6 +23,7 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [selectedOfi, setSelectedOfi] = useState<OFI | null>(null);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
 
   // Sorting
   const [sortField, setSortField] = useState<keyof OFI>('created_at');
@@ -131,7 +133,19 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
     return sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
   };
 
-  const getExpedientUrl = (expedient: string) => {
+  const handleGenerateDocument = async (ofi: OFI) => {
+    setGeneratingId(ofi.id);
+    try {
+      await generateMemoriaOFI(ofi);
+    } catch (err: any) {
+      setError(err.message || 'Error en generar el document');
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
+  const getExpedientUrl = (expedient: string | null) => {
+    if (!expedient) return '#';
     const numericId = expedient.replace(/\D/g, '');
     return `https://imas.secimallorca.net/segex/expediente.aspx?id=${numericId}`;
   };
@@ -338,10 +352,20 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
                       <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-primary transition-colors"
-                            title="Descarregar document (properament)"
+                            onClick={() => handleGenerateDocument(ofi)}
+                            disabled={generatingId === ofi.id}
+                            className={`flex items-center justify-center w-[28px] h-[28px] rounded transition-colors ${
+                              generatingId === ofi.id 
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                                : 'hover:bg-slate-100 text-primary'
+                            }`}
+                            title="Descarregar Memòria justificativa"
                           >
-                            <FileDown size={18} />
+                            {generatingId === ofi.id ? (
+                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <FileDown size={18} />
+                            )}
                           </button>
                           <button
                             onClick={() => setSelectedOfi(ofi)}
