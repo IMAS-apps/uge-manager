@@ -393,6 +393,11 @@ export function FormView({ user, onSuccess }: FormViewProps) {
                 )}
               </div>
               <textarea required name="objecte_contracte" value={formData.objecte_contracte} onChange={handleChange} rows={4} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+              {formData.objecte_contracte.trim().length > 0 && !["Subministrament", "Servei", "Obra", "Concert"].includes(formData.objecte_contracte.trim().split(/\s+/)[0]) && (
+                <p className="text-red-600 text-xs mt-1 font-medium">
+                  L'objecte del contracte ha de començar amb la paraula "Subministrament de", "Servei de" u "Obra de"
+                </p>
+              )}
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
