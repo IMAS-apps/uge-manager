@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../types';
-import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown, Plus } from 'lucide-react';
+import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown, Plus, Megaphone } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
 import { CpvDescription } from '../components/CpvDescription';
 import { supabase } from '../lib/supabase';
@@ -753,6 +753,33 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                                   <FileDown size={18} />
                                 </button>
                               )}
+
+                              {record.sistema_tramitacio === 'OFI' && (() => {
+                                const isOfiComplete = !!record.adjudicatari && !!record.nif && !!record.segex;
+                                return (
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const { generateComunicacioOFI } = await import('../utils/generateInforme');
+                                        await generateComunicacioOFI(record);
+                                      } catch (err: any) {
+                                        alert(err.message);
+                                      }
+                                    }}
+                                    disabled={!isOfiComplete}
+                                    className={`flex items-center justify-center w-[28px] h-[28px] rounded transition-colors ${
+                                      isOfiComplete 
+                                        ? 'text-green-600 hover:bg-green-50' 
+                                        : 'text-red-600 cursor-not-allowed opacity-50'
+                                    }`}
+                                    title={isOfiComplete 
+                                      ? "Descarregar comunicació OFI" 
+                                      : "Falten camps Adjudicatari, NIF o SEGEX per descarregar la comunicació"}
+                                  >
+                                    <Megaphone size={18} />
+                                  </button>
+                                );
+                              })()}
 
                               <button
                                 onClick={() => { setSelectedRecord(record); setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); }}

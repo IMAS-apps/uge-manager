@@ -25,8 +25,9 @@
  */
 
 import { createReport } from 'docx-templates';
+import { Record } from '../types';
 
-export async function generateInforme(record: any): Promise<void> {
+export async function generateInforme(record: Record): Promise<void> {
     try {
         // 1. Determine template path based on sistema_tramitacio
         let templatePath = '';
@@ -103,5 +104,49 @@ export async function generateInforme(record: any): Promise<void> {
 
     } catch (err: any) {
         throw new Error("Error en generar l'informe: " + err.message);
+    }
+}
+
+/**
+ * Generates the "Comunicació OFI proveïdors" document.
+ * Template: public/templates/Comunicacio_OFI_proveidors.docx
+ * Fields: {{record.campo}}
+ */
+export async function generateComunicacioOFI(record: Record): Promise<void> {
+    try {
+        const templatePath = '/templates/Comunicacio_OFI_proveidors.docx';
+
+        const response = await fetch(templatePath);
+        if (!response.ok) {
+            throw new Error(`No s'ha pogut carregar la plantilla (${templatePath}): ${response.statusText}`);
+        }
+        const template = await response.arrayBuffer();
+
+        const data = {
+            record: record,
+            total: `${((record.base_imposable || 0) + (record.quota_iva || 0)).toFixed(2)} €`,
+        };
+
+        const report = await createReport({
+            template: new Uint8Array(template),
+            data: data,
+            cmdDelimiter: ['{{', '}}'],
+        });
+
+        const blob = new Blob([report as any], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = `Comunicacio_OFI_${record.id}.docx`;
+
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+    } catch (err: any) {
+        throw new Error("Error en generar la comunicació OFI: " + err.message);
     }
 }
