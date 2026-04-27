@@ -698,7 +698,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                           P. Econòmica <SortIndicator field="partida_economica" />
                         </div>
                       </th>
-                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Accions</th>
+                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap w-[280px] min-w-[280px]">Accions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-border-light">
@@ -736,80 +736,101 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                             {record.partida_economica || '-'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              {['AD', 'ADO', 'OFI', 'REC'].includes(record.sistema_tramitacio) && (
-                                <button
-                                  onClick={async () => {
-                                    try {
-                                      const { generateInforme } = await import('../utils/generateInforme');
-                                      await generateInforme(record);
-                                    } catch (err: any) {
-                                      alert(err.message);
-                                    }
-                                  }}
-                                  className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
-                                  title="Descarregar informe"
-                                >
-                                  <FileDown size={18} />
-                                </button>
-                              )}
+                            <div className="flex items-center justify-center gap-1.5 min-w-[260px]">
+                              {/* Slot 1: VI (Inversions) */}
+                              <div className="w-8 flex justify-center">
+                                {record.partida_economica && record.partida_economica.startsWith('6') && (
+                                  <div
+                                    className={`flex items-center justify-center min-w-[28px] px-1 h-[28px] rounded font-bold text-xs cursor-help ${record.projecte_despesa_cap_vi ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                                    title={record.projecte_despesa_cap_vi ? `Projecte cap. VI: ${record.projecte_despesa_cap_vi}` : 'Falta projecte de despesa cap. VI'}
+                                  >
+                                    VI
+                                  </div>
+                                )}
+                              </div>
 
-                              {record.sistema_tramitacio === 'OFI' && (() => {
-                                const isOfiComplete = !!record.adjudicatari && !!record.nif && !!record.segex;
-                                return (
+                              {/* Slot 2: Megàfon (Comunicació OFI) */}
+                              <div className="w-8 flex justify-center">
+                                {record.sistema_tramitacio === 'OFI' && (() => {
+                                  const isOfiComplete = !!record.adjudicatari && !!record.nif && !!record.segex;
+                                  return (
+                                    <button
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        try {
+                                          const { generateComunicacioOFI } = await import('../utils/generateInforme');
+                                          await generateComunicacioOFI(record);
+                                        } catch (err: any) {
+                                          alert(err.message);
+                                        }
+                                      }}
+                                      disabled={!isOfiComplete}
+                                      className={`flex items-center justify-center w-[28px] h-[28px] rounded transition-colors ${
+                                        isOfiComplete 
+                                          ? 'text-green-600 hover:bg-green-50' 
+                                          : 'text-red-600 cursor-not-allowed opacity-50'
+                                      }`}
+                                      title={isOfiComplete 
+                                        ? "Descarregar comunicació OFI" 
+                                        : "Falten camps Adjudicatari, NIF o SEGEX per descarregar la comunicació"}
+                                    >
+                                      <Megaphone size={18} />
+                                    </button>
+                                  );
+                                })()}
+                              </div>
+
+                              {/* Slot 3: Fitxer (Descarregar informe) */}
+                              <div className="w-8 flex justify-center">
+                                {['AD', 'ADO', 'OFI', 'REC'].includes(record.sistema_tramitacio) && (
                                   <button
-                                    onClick={async () => {
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
                                       try {
-                                        const { generateComunicacioOFI } = await import('../utils/generateInforme');
-                                        await generateComunicacioOFI(record);
+                                        const { generateInforme } = await import('../utils/generateInforme');
+                                        await generateInforme(record);
                                       } catch (err: any) {
                                         alert(err.message);
                                       }
                                     }}
-                                    disabled={!isOfiComplete}
-                                    className={`flex items-center justify-center w-[28px] h-[28px] rounded transition-colors ${
-                                      isOfiComplete 
-                                        ? 'text-green-600 hover:bg-green-50' 
-                                        : 'text-red-600 cursor-not-allowed opacity-50'
-                                    }`}
-                                    title={isOfiComplete 
-                                      ? "Descarregar comunicació OFI" 
-                                      : "Falten camps Adjudicatari, NIF o SEGEX per descarregar la comunicació"}
+                                    className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
+                                    title="Descarregar informe"
                                   >
-                                    <Megaphone size={18} />
+                                    <FileDown size={18} />
                                   </button>
-                                );
-                              })()}
+                                )}
+                              </div>
 
-                              <button
-                                onClick={() => { setSelectedRecord(record); setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); }}
-                                className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
-                                title="Veure detalls"
-                              >
-                                <Eye size={18} />
-                              </button>
-
-                              {record.partida_economica && record.partida_economica.startsWith('6') && (
-                                <div
-                                  className={`flex items-center justify-center min-w-[28px] px-1 h-[28px] rounded font-bold text-xs cursor-help ${record.projecte_despesa_cap_vi ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-                                  title={record.projecte_despesa_cap_vi ? `Projecte cap. VI: ${record.projecte_despesa_cap_vi}` : 'Falta projecte de despesa cap. VI'}
+                              {/* Slot 4: Ull (Veure detalls) */}
+                              <div className="w-8 flex justify-center">
+                                <button
+                                  onClick={(e) => { 
+                                    e.stopPropagation();
+                                    setSelectedRecord(record); 
+                                    setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); 
+                                  }}
+                                  className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
+                                  title="Veure detalls"
                                 >
-                                  VI
-                                </div>
-                              )}
+                                  <Eye size={18} />
+                                </button>
+                              </div>
 
-                              {record.segex && (
-                                <a
-                                  href={`https://imas.secimallorca.net/segex/expediente.aspx?id=${record.segex.replace(/\D/g, '')}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EDE9FE] text-[#5B21B6] hover:bg-[#DDD6FE] transition-colors"
-                                  title="Obrir expedient SEGEX"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {record.segex}
-                                </a>
-                              )}
+                              {/* Slot 5: Número d'expedient (SEGEX) */}
+                              <div className="flex-1 flex justify-start pl-2 min-w-[100px]">
+                                {record.segex && (
+                                  <a
+                                    href={`https://imas.secimallorca.net/segex/expediente.aspx?id=${record.segex.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EDE9FE] text-[#5B21B6] hover:bg-[#DDD6FE] transition-colors whitespace-nowrap"
+                                    title="Obrir expedient SEGEX"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {record.segex}
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           </td>
                         </tr>
