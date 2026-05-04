@@ -73,7 +73,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
     setSaving(true);
     setError('');
     try {
-      const { error: sbError } = await supabase
+      const { error: sbError } = await (supabase as any)
         .from('ofi')
         .update({
           codi_ofi: editData.codi_ofi,
@@ -105,7 +105,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
     setDeleting(true);
     setError('');
     try {
-      const { error: sbError } = await supabase
+      const { error: sbError } = await (supabase as any)
         .from('ofi')
         .delete()
         .eq('id', ofi.id);

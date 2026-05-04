@@ -159,8 +159,10 @@ describe('EditModal', () => {
 
     expect(screen.getByText('Detalls OFI')).toBeInTheDocument();
     expect(screen.getByText('Motivació de no contractació')).toBeInTheDocument();
+    expect(screen.getByText('Explicació de no contractació')).toBeInTheDocument();
     expect(screen.getByText('Justificació del preu')).toBeInTheDocument();
-    expect(screen.getByText('Data OFI inicial')).toBeInTheDocument();
+    expect(screen.getByText('Explicació del preu')).toBeInTheDocument();
+    expect(screen.getByText('Tramitat per OFI des de')).toBeInTheDocument();
   });
 
   it('should not show Detalls OFI section when sistema_tramitacio is not OFI', async () => {

@@ -58,6 +58,9 @@ Gestiona el flux de peticions de les residències.
 - `centre_servei`: Centre o servei sol·licitant (Residències, Centres de dia, etc.).
 - `fitxers_pressupost` (jsonb): Array d'objectes `{name, path, size}`. Administrables post-enviament pels Administradors.
 - `segex`, `adjudicatari`, `nif`, `reg_factura`, `relacio_q`, `relacio_o`: Referències de tramitació posterior.
+- `motivacio_no_contractacio`, `explicacio_no_contractacio`: Detalls de per què no s'ha contractat (si sistema és OFI).
+- `justificacio_preu`, `explicacio_preu`: Justificació detallada dels imports (si sistema és OFI).
+- `data_ofi_inicial`: Data tramitació per OFI (etiquetat a la UI com "Tramitat per OFI des de").
 - `num_rc` (text): Nº operació RC (ex: 220260015212).
 
 ### C. Taula `factures` (Factures de Sol·licituds)

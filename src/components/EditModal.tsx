@@ -58,7 +58,9 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     finalitzat: record.finalitzat,
     publicat: record.publicat,
     motivacio_no_contractacio: record.motivacio_no_contractacio || '',
+    explicacio_no_contractacio: record.explicacio_no_contractacio || '',
     justificacio_preu: record.justificacio_preu || '',
+    explicacio_preu: record.explicacio_preu || '',
     data_ofi_inicial: record.data_ofi_inicial || '',
     adjudicatari: record.adjudicatari || '',
     nif: record.nif || '',
@@ -880,6 +882,18 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       </div>
 
                       <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Explicació de no contractació</label>
+                        <textarea
+                          name="explicacio_no_contractacio"
+                          value={formData.explicacio_no_contractacio}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                          placeholder="Detalli la motivació..."
+                        />
+                      </div>
+
+                      <div>
                         <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Justificació del preu</label>
                         <select
                           name="justificacio_preu"
@@ -900,7 +914,19 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Data OFI inicial</label>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Explicació del preu</label>
+                        <textarea
+                          name="explicacio_preu"
+                          value={formData.explicacio_preu}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                          placeholder="Detalli la justificació del preu..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Tramitat per OFI des de</label>
                         <input
                           type="date"
                           name="data_ofi_inicial"

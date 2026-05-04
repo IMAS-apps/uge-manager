@@ -38,7 +38,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
     setLoading(true);
 
     try {
-      const { data, error: dbError } = await supabase
+      const { data, error: dbError } = await (supabase as any)
         .from('ofi')
         .insert({
           codi_ofi: formData.codi_ofi,

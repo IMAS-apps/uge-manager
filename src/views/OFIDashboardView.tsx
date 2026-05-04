@@ -23,7 +23,7 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [selectedOfi, setSelectedOfi] = useState<OFI | null>(null);
-  const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [generatingId, setGeneratingId] = useState<number | null>(null);
 
   // Sorting
   const [sortField, setSortField] = useState<keyof OFI>('created_at');
@@ -32,7 +32,7 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
   const fetchOfis = async () => {
     setLoading(true);
     try {
-      const { data, error: sbError } = await supabase
+      const { data, error: sbError } = await (supabase as any)
         .from('ofi_with_aggregates')
         .select('*')
         .order('created_at', { ascending: false });

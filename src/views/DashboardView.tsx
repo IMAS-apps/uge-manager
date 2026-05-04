@@ -276,8 +276,10 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
           'RELACIÓ O': record.relacio_o || '',
           'ESTAT': estat,
           'MOTIVACIÓ NO CONTRACTACIÓ': record.motivacio_no_contractacio || '',
+          'EXPLICACIÓ NO CONTRACTACIÓ': record.explicacio_no_contractacio || '',
           'JUSTIFICACIÓ PREU': record.justificacio_preu || '',
-          'DATA OFI INICIAL': record.data_ofi_inicial || '',
+          'EXPLICACIÓ DEL PREU': record.explicacio_preu || '',
+          'TRAMITAT PER OFI DES DE': record.data_ofi_inicial || '',
           'DETALLS ADDICIONALS': record.detalls_addicionals || '',
           'CREAT PER (UUID)': record.created_by || '',
           'ÚLTIMA ACTUALITZACIÓ': record.updated_at ? new Date(record.updated_at).toLocaleString('ca-ES') : ''

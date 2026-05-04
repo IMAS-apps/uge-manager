@@ -30,7 +30,9 @@ export interface Record {
   fitxers_pressupost: { name: string, path: string, size: number }[];
   detalls_addicionals: string;
   motivacio_no_contractacio?: string;
+  explicacio_no_contractacio?: string;
   justificacio_preu?: string;
+  explicacio_preu?: string;
   data_ofi_inicial?: string | null;
   adjudicatari?: string;
   nif?: string;
