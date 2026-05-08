@@ -182,7 +182,7 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
         // 2. Fetch factures linked to this OFI, with their parent record data
         const { data: facturesData, error: facturesError } = await (supabase as any)
             .from('factures')
-            .select('*, records(nom, objecte_contracte, adjudicatari, nif, motivacio_no_contractacio, justificacio_preu, partida_organica, partida_programa, partida_economica, tipus_contracte, data_ofi_inicial)')
+            .select('*, records(nom, objecte_contracte, adjudicatari, nif, motivacio_no_contractacio, justificacio_preu, partida_organica, partida_programa, partida_economica, tipus_contracte, data_ofi_inicial, explicacio_no_contractacio, explicacio_preu, segex)')
             .eq('expedient', ofi.expedient_ofi)
             .order('data', { ascending: true });
 
@@ -232,6 +232,9 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
                 partida_economica: f.records?.partida_economica || '',
                 tipus_contracte: f.records?.tipus_contracte || '',
                 data_ofi_inicial: fmtDate(f.records?.data_ofi_inicial),
+                explicacio_no_contractacio: f.records?.explicacio_no_contractacio || '',
+                explicacio_preu: f.records?.explicacio_preu || '',
+                segex: f.records?.segex || '',
             },
         }));
 
