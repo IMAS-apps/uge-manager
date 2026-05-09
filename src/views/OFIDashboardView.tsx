@@ -61,6 +61,7 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
       'Període': formatPeriod(o.data_min, o.data_max),
       'Codi OFI': o.codi_ofi,
       'Centre o servei': o.centre_servei,
+      'Àrea': o.area || 'Sense assignar',
       'Nº de factures': o.num_factures,
       'Import total': o.total_import,
       'Expedient OFI': o.expedient_ofi,
@@ -318,6 +319,14 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
                         Centre o servei <SortIndicator field="centre_servei" />
                       </div>
                     </th>
+                    <th 
+                      className="px-4 py-3 text-left text-[10px] font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                      onClick={() => handleSort('area')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Àrea <SortIndicator field="area" />
+                      </div>
+                    </th>
                     <th className="px-4 py-3 text-center text-[10px] font-bold text-white uppercase tracking-wider">
                       Factures
                     </th>
@@ -340,6 +349,9 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
                       </td>
                       <td className="px-4 py-4 text-sm text-text-secondary">
                         {ofi.centre_servei}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-text-secondary">
+                        {ofi.area || '-'}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-center text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${ofi.num_factures && ofi.num_factures > 0 ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>

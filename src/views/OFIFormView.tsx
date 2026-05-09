@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User } from '../types';
+import { User, AREES_OFI, TEXTOS_JUSTIFICACIO_OFI } from '../types';
 import { Save, AlertCircle, CheckCircle2, FilePlus2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -17,6 +17,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
     codi_ofi: '',
     expedient_ofi: '',
     centre_servei: '',
+    area: '',
     justificacio_general: ''
   });
 
@@ -44,7 +45,8 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
           codi_ofi: formData.codi_ofi,
           expedient_ofi: formData.expedient_ofi,
           centre_servei: formData.centre_servei,
-          justificacio_general: formData.justificacio_general,
+          area: formData.area,
+          justificacio_general: TEXTOS_JUSTIFICACIO_OFI[formData.area] || '',
           created_by: user.id
         })
         .select()
@@ -57,6 +59,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
         codi_ofi: '',
         expedient_ofi: '',
         centre_servei: '',
+        area: '',
         justificacio_general: ''
       });
 
@@ -142,16 +145,19 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Justificació general *</label>
-              <textarea
+              <label className="block text-sm font-medium text-text-primary mb-1">Àrea *</label>
+              <select
                 required
-                name="justificacio_general"
-                value={formData.justificacio_general}
+                name="area"
+                value={formData.area}
                 onChange={handleChange}
-                rows={6}
-                placeholder="Escriu la justificació aquí..."
-                className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-y"
-              />
+                className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+              >
+                <option value="">Selecciona una àrea...</option>
+                {AREES_OFI.map(area => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
             </div>
           </div>
         </section>

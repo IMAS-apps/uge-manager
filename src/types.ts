@@ -69,6 +69,7 @@ export interface OFI {
   expedient_ofi: string;
   centre_servei: string;
   justificacio_general: string;
+  area?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -77,6 +78,26 @@ export interface OFI {
   data_min?: string;
   data_max?: string;
 }
+
+export const AREES_OFI = [
+  "Gerència",
+  "Atenció Sociosanitària",
+  "Serveis Socials, Infància y Familia",
+  "Centres y Programes d'Atenció Integral a la Infància y Adolescència",
+  "Inclusió Social",
+  "Persones amb discapacitat",
+  "Atenció Comunitària y Promoció de l'Autonomia Personal"
+];
+
+export const TEXTOS_JUSTIFICACIO_OFI: Record<string, string> = {
+  "Gerència": "Gerència - pendent de descripció",
+  "Atenció Sociosanitària": "La Direcció Insular d’Atenció Sociosanitària centra la seva tasca en la gestió de les residències per a gent gran i dels centres de dia que depenen de l’IMAS i en la consolidació del model assistencial basat en una atenció centrada en la persona. En aquest sentit, els objectius de l’àrea són ’ampliació de places, que es materialitza amb la posada en marxa de nous centres especialitzats i amb la modernització i l’adaptació a les necessitats concretes i particulars dels usuaris dels centres ja existents.",
+  "Serveis Socials, Infància y Familia": "Serveis Socials, Infància y Familia- pendent de descripció",
+  "Centres y Programes d'Atenció Integral a la Infància y Adolescència": "Centres y Programes d'Atenció Integral a la Infància y Adolescència- pendent de descripció",
+  "Inclusió Social": "La direcció insular d’Inclusió Social atén les persones en risc o situació d’exclusió social a Mallorca. Té com a principal objectiu gestionar i subministrar amb qualitat i eficàcia els serveis, recursos i prestacions socials destinats a les persones que es troben en situació o risc d'exclusió social a Mallorca. Es tracta de cobrir les necessitats socials bàsiques d'aquest conjunt de la població i millorar-ne la qualitat de vida.",
+  "Persones amb discapacitat": "Persones amb discapacitat- pendent de descripció",
+  "Atenció Comunitària y Promoció de l'Autonomia Personal": "Atenció Comunitària y Promoció de l'Autonomia Personal- pendent de descripció"
+};
 
 export interface ContractLot {
   id?: number;

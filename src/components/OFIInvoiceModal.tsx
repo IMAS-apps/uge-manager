@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { OFI, Factura, User } from '../types';
+import { OFI, Factura, User, AREES_OFI, TEXTOS_JUSTIFICACIO_OFI } from '../types';
 import { X, Eye, AlertCircle, FileText, Calendar, Hash, Tag, Euro, Pencil, Trash2, Save, RotateCcw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -24,6 +24,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
     codi_ofi: ofi.codi_ofi,
     centre_servei: ofi.centre_servei,
     expedient_ofi: ofi.expedient_ofi,
+    area: ofi.area || '',
     justificacio_general: ofi.justificacio_general
   });
 
@@ -79,7 +80,8 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
           codi_ofi: editData.codi_ofi,
           centre_servei: editData.centre_servei,
           expedient_ofi: editData.expedient_ofi,
-          justificacio_general: editData.justificacio_general,
+          area: editData.area,
+          justificacio_general: TEXTOS_JUSTIFICACIO_OFI[editData.area] || editData.justificacio_general,
           updated_at: new Date().toISOString()
         })
         .eq('id', ofi.id);
@@ -212,14 +214,18 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Justificació general</label>
-                    <textarea
-                      name="justificacio_general"
-                      value={editData.justificacio_general}
+                    <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Àrea</label>
+                    <select
+                      name="area"
+                      value={editData.area}
                       onChange={handleChange}
-                      rows={3}
-                      className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary outline-none resize-none"
-                    />
+                      className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="">Selecciona una àrea...</option>
+                      {AREES_OFI.map(area => (
+                        <option key={area} value={area}>{area}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="flex justify-end gap-3 pt-2">
                     <button
@@ -229,6 +235,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
                           codi_ofi: ofi.codi_ofi,
                           centre_servei: ofi.centre_servei,
                           expedient_ofi: ofi.expedient_ofi,
+                          area: ofi.area || '',
                           justificacio_general: ofi.justificacio_general
                         });
                       }}
@@ -260,6 +267,10 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
                     <div>
                       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Centre o servei</p>
                       <p className="text-sm font-medium text-text-primary">{ofi.centre_servei}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Àrea</p>
+                      <p className="text-sm font-medium text-text-primary">{ofi.area || 'Sense assignar'}</p>
                     </div>
                     <div className="col-span-2">
                       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Justificació</p>
