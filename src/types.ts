@@ -90,7 +90,7 @@ export const AREES_OFI = [
   "Atenció Comunitària y Promoció de l'Autonomia Personal"
 ];
 
-export const TEXTOS_JUSTIFICACIO_OFI: Record<string, string> = {
+export const TEXTOS_JUSTIFICACIO_OFI: { [key: string]: string } = {
   "Gerència": "Gerència - pendent de descripció",
   "Atenció Sociosanitària": "La Direcció Insular d’Atenció Sociosanitària centra la seva tasca en la gestió de les residències per a gent gran i dels centres de dia que depenen de l’IMAS i en la consolidació del model assistencial basat en una atenció centrada en la persona. En aquest sentit, els objectius de l’àrea són ’ampliació de places, que es materialitza amb la posada en marxa de nous centres especialitzats i amb la modernització i l’adaptació a les necessitats concretes i particulars dels usuaris dels centres ja existents.",
   "Serveis Socials, Infància y Familia": "Serveis Socials, Infància y Familia- pendent de descripció",

@@ -60,7 +60,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
     justificacio_general: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -93,7 +93,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
 
       if (dbError) throw dbError;
 
-      setSuccess(`OFI #${data.id} creat correctament.`);
+      setSuccess(`OFI creat correctament.`);
       setFormData({
         codi_ofi: '',
         expedient_ofi: '',
