@@ -53,9 +53,26 @@ export async function generateInforme(record: Record): Promise<void> {
         }
         const template = await response.arrayBuffer();
 
+        // Format date helper
+        const fmtDate = (dateStr: string | null | undefined): string => {
+            if (!dateStr) return '';
+            try {
+                return new Date(dateStr).toLocaleDateString('ca-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                });
+            } catch {
+                return dateStr;
+            }
+        };
+
         // 2. Map record fields to template variables (both flat and nested for flexibility)
         const data = {
-            record: record, // Allows «record.field»
+            record: {
+                ...record,
+                data_ofi_inicial: fmtDate(record.data_ofi_inicial)
+            },
 
             // Clean aliases (no spaces or parentheses allowed in template tags)
             total: `${(record.base_imposable + record.quota_iva).toFixed(2)} €`,
