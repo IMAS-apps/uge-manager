@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { User, AREES_OFI, TEXTOS_JUSTIFICACIO_OFI } from '../types';
-import { Save, AlertCircle, CheckCircle2, FilePlus2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, AREES_OFI, TEXTOS_JUSTIFICACIO_OFI, OFI } from '../types';
+import { Save, AlertCircle, CheckCircle2, FilePlus2, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface OFIFormViewProps {
@@ -12,6 +12,45 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const [existingOfis, setExistingOfis] = useState<OFI[]>([]);
+  const [loadingOfis, setLoadingOfis] = useState(false);
+
+  useEffect(() => {
+    const fetchOfis = async () => {
+      setLoadingOfis(true);
+      try {
+        const { data, error: sbError } = await (supabase as any)
+          .from('ofi')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (sbError) throw sbError;
+        setExistingOfis(data || []);
+      } catch (err: any) {
+        console.error(err);
+      } finally {
+        setLoadingOfis(false);
+      }
+    };
+    fetchOfis();
+  }, []);
+
+  const handleCloneSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    if (!selectedId) return;
+
+    const ofiToClone = existingOfis.find(o => o.id.toString() === selectedId);
+    if (ofiToClone) {
+      setFormData({
+        codi_ofi: ofiToClone.codi_ofi,
+        expedient_ofi: ofiToClone.expedient_ofi,
+        centre_servei: ofiToClone.centre_servei,
+        area: ofiToClone.area || '',
+        justificacio_general: ofiToClone.justificacio_general || ''
+      });
+    }
+  };
 
   const [formData, setFormData] = useState({
     codi_ofi: '',
@@ -31,7 +70,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
     setError('');
     setSuccess('');
 
-    if (user.role !== 'Administrador' && user.role !== 'Gestió') {
+    if (user.role !== 'Administrador') {
       setError('No tens permisos per crear OFIs.');
       return;
     }
@@ -81,7 +120,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
           <FilePlus2 className="text-primary" />
           Nou OFI
         </h1>
-        <p className="text-text-secondary mt-1">Introduïu les dades de la nova Ordre de Facturació Interna.</p>
+        <p className="text-text-secondary mt-1">Introduïu les dades de l'expedient d'Omissió de la Funció Interventora (OFI).</p>
       </div>
 
       {error && (
@@ -95,6 +134,26 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
         <div className="mb-6 p-4 bg-green-50 border-l-4 border-success rounded-r-md flex items-start gap-3">
           <CheckCircle2 className="text-success mt-0.5" size={20} />
           <p className="text-success text-sm font-medium">{success}</p>
+        </div>
+      )}
+
+      {existingOfis.length > 0 && (
+        <div className="mb-6 bg-white p-4 rounded-xl border border-border-light shadow-sm flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex items-center gap-2 text-primary whitespace-nowrap">
+            <Copy size={18} />
+            <label className="text-sm font-bold uppercase tracking-wider">Clonar d'un OFI existent:</label>
+          </div>
+          <select
+            onChange={handleCloneSelect}
+            className="w-full sm:w-auto flex-1 px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all text-sm"
+            disabled={loadingOfis}
+            defaultValue=""
+          >
+            <option value="" disabled>Selecciona un OFI per copiar-ne les dades...</option>
+            {existingOfis.map(ofi => (
+              <option key={ofi.id} value={ofi.id}>{ofi.codi_ofi} - {ofi.expedient_ofi} ({ofi.centre_servei})</option>
+            ))}
+          </select>
         </div>
       )}
 

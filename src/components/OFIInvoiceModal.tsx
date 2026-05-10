@@ -28,7 +28,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
     justificacio_general: ofi.justificacio_general
   });
 
-  const canEdit = user.role === 'Administrador' || user.role === 'Gestió';
+  const canEdit = user.role === 'Administrador';
 
   useEffect(() => {
     const fetchFactures = async () => {

@@ -253,7 +253,7 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
         <div className="p-4 md:p-6 border-b border-border-light bg-white flex justify-between items-center gap-4">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-text-primary">Control d'OFIs</h1>
-            {(user.role === 'Administrador' || user.role === 'Gestió') && (
+            {(user.role === 'Administrador') && (
               <button
                 onClick={() => onNavigate('ofi-form')}
                 className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-dark text-white text-sm font-bold rounded-lg transition-all shadow-sm transform active:scale-95"
