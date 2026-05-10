@@ -214,40 +214,40 @@ export type Database = {
       factures: {
         Row: {
           created_at: string | null
-          data: string
-          descripcio: string
+          data: string | null
+          descripcio: string | null
           expedient: string | null
           id: number
-          import_total: number
-          numero_factura: string
-          numero_registre: string
-          periode: string
+          import_total: number | null
+          numero_factura: string | null
+          numero_registre: string | null
+          periode: string | null
           record_id: number | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
-          data: string
-          descripcio: string
+          data?: string | null
+          descripcio?: string | null
           expedient?: string | null
           id?: number
-          import_total: number
-          numero_factura: string
-          numero_registre: string
-          periode: string
+          import_total?: number | null
+          numero_factura?: string | null
+          numero_registre?: string | null
+          periode?: string | null
           record_id?: number | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
-          data?: string
-          descripcio?: string
+          data?: string | null
+          descripcio?: string | null
           expedient?: string | null
           id?: number
-          import_total?: number
-          numero_factura?: string
-          numero_registre?: string
-          periode?: string
+          import_total?: number | null
+          numero_factura?: string | null
+          numero_registre?: string | null
+          periode?: string | null
           record_id?: number | null
           updated_at?: string | null
         }
@@ -258,7 +258,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "records"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       notifications: {
@@ -311,6 +311,50 @@ export type Database = {
           },
         ]
       }
+      ofi: {
+        Row: {
+          area: string | null
+          centre_servei: string
+          codi_ofi: string
+          created_at: string | null
+          created_by: string | null
+          expedient_ofi: string
+          id: number
+          justificacio_general: string
+          updated_at: string | null
+        }
+        Insert: {
+          area?: string | null
+          centre_servei: string
+          codi_ofi: string
+          created_at?: string | null
+          created_by?: string | null
+          expedient_ofi: string
+          id?: number
+          justificacio_general: string
+          updated_at?: string | null
+        }
+        Update: {
+          area?: string | null
+          centre_servei?: string
+          codi_ofi?: string
+          created_at?: string | null
+          created_by?: string | null
+          expedient_ofi?: string
+          id?: number
+          justificacio_general?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofi_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -340,23 +384,25 @@ export type Database = {
       }
       records: {
         Row: {
+          adjudicat: boolean | null
           adjudicatari: string | null
           base_imposable: number
           caracteristiques_tecniques: string
           centre_servei: string | null
           codi_cpv: string
           created_by: string
+          data_ofi_inicial: string | null
           detalls_addicionals: string | null
           email: string
+          explicacio_no_contractacio: string | null
+          explicacio_preu: string | null
           finalitzat: boolean | null
           fitxers_pressupost: Json
           hora: string
           id: number
           justificacio: string
-          motivacio_no_contractacio: string | null
-          explicacio_no_contractacio: string | null
           justificacio_preu: string | null
-          explicacio_preu: string | null
+          motivacio_no_contractacio: string | null
           nif: string | null
           nom: string
           num_rc: string | null
@@ -380,23 +426,25 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          adjudicat?: boolean | null
           adjudicatari?: string | null
           base_imposable: number
           caracteristiques_tecniques: string
           centre_servei?: string | null
           codi_cpv: string
           created_by: string
+          data_ofi_inicial?: string | null
           detalls_addicionals?: string | null
           email: string
+          explicacio_no_contractacio?: string | null
+          explicacio_preu?: string | null
           finalitzat?: boolean | null
           fitxers_pressupost?: Json
           hora: string
           id?: number
           justificacio: string
-          motivacio_no_contractacio?: string | null
-          explicacio_no_contractacio?: string | null
           justificacio_preu?: string | null
-          explicacio_preu?: string | null
+          motivacio_no_contractacio?: string | null
           nif?: string | null
           nom: string
           num_rc?: string | null
@@ -420,23 +468,25 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          adjudicat?: boolean | null
           adjudicatari?: string | null
           base_imposable?: number
           caracteristiques_tecniques?: string
           centre_servei?: string | null
           codi_cpv?: string
           created_by?: string
+          data_ofi_inicial?: string | null
           detalls_addicionals?: string | null
           email?: string
+          explicacio_no_contractacio?: string | null
+          explicacio_preu?: string | null
           finalitzat?: boolean | null
           fitxers_pressupost?: Json
           hora?: string
           id?: number
           justificacio?: string
-          motivacio_no_contractacio?: string | null
-          explicacio_no_contractacio?: string | null
           justificacio_preu?: string | null
-          explicacio_preu?: string | null
+          motivacio_no_contractacio?: string | null
           nif?: string | null
           nom?: string
           num_rc?: string | null
@@ -463,7 +513,31 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ofi_with_aggregates: {
+        Row: {
+          centre_servei: string | null
+          codi_ofi: string | null
+          created_at: string | null
+          created_by: string | null
+          data_max: string | null
+          data_min: string | null
+          expedient_ofi: string | null
+          id: number | null
+          justificacio_general: string | null
+          num_factures: number | null
+          total_import: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ofi_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_contract_renewal_deadlines: { Args: never; Returns: undefined }

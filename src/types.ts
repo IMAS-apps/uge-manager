@@ -43,6 +43,7 @@ export interface Record {
   relacio_o: string;
   finalitzat: boolean;
   publicat: boolean;
+  adjudicat?: boolean;
   created_by: string;
   updated_at: string;
   num_rc?: string | null;

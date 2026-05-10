@@ -800,62 +800,44 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Reg. Factura</label>
-                      <input
-                        type="text"
-                        name="reg_factura"
-                        value={formData.reg_factura}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      />
-                    </div>
+                    {/* Camps Reg. Factura, Relació Q, Relació O ocultats a la UI, es mantenen a la base de dades */}
 
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació Q</label>
-                      <input
-                        type="text"
-                        name="relacio_q"
-                        value={formData.relacio_q}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      />
-                    </div>
+                    {(formData.sistema_tramitacio === 'AD' || formData.sistema_tramitacio === 'ADO') && (
+                      <div className="pt-4 border-t border-border-light space-y-3">
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.publicat ? 'bg-primary/5 border-primary/20' : 'bg-white border-border-light'}`}>
+                          <input
+                            type="checkbox"
+                            name="publicat"
+                            checked={formData.publicat}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-primary rounded border-border-light focus:ring-primary"
+                          />
+                          <span className="text-sm font-medium text-text-primary">Publicat</span>
+                        </label>
+                        
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.adjudicat ? 'bg-amber-500/5 border-amber-500/20' : 'bg-white border-border-light'}`}>
+                          <input
+                            type="checkbox"
+                            name="adjudicat"
+                            checked={formData.adjudicat || false}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-amber-500 rounded border-border-light focus:ring-amber-500"
+                          />
+                          <span className="text-sm font-medium text-text-primary">Adjudicat</span>
+                        </label>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació O</label>
-                      <input
-                        type="text"
-                        name="relacio_o"
-                        value={formData.relacio_o}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      />
-                    </div>
-
-                    <div className="pt-4 border-t border-border-light space-y-3">
-                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.finalitzat ? 'bg-success/5 border-success/20' : 'bg-white border-border-light'}`}>
-                        <input
-                          type="checkbox"
-                          name="finalitzat"
-                          checked={formData.finalitzat}
-                          onChange={handleChange}
-                          className="w-5 h-5 text-success rounded border-border-light focus:ring-success"
-                        />
-                        <span className="text-sm font-medium text-text-primary">Finalitzat</span>
-                      </label>
-
-                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.publicat ? 'bg-primary/5 border-primary/20' : 'bg-white border-border-light'}`}>
-                        <input
-                          type="checkbox"
-                          name="publicat"
-                          checked={formData.publicat}
-                          onChange={handleChange}
-                          className="w-5 h-5 text-primary rounded border-border-light focus:ring-primary"
-                        />
-                        <span className="text-sm font-medium text-text-primary">Publicat</span>
-                      </label>
-                    </div>
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.finalitzat ? 'bg-success/5 border-success/20' : 'bg-white border-border-light'}`}>
+                          <input
+                            type="checkbox"
+                            name="finalitzat"
+                            checked={formData.finalitzat}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-success rounded border-border-light focus:ring-success"
+                          />
+                          <span className="text-sm font-medium text-text-primary">Finalitzat</span>
+                        </label>
+                      </div>
+                    )}
                   </form>
                 </SectionCard>
               </div>
