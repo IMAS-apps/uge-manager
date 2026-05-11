@@ -61,8 +61,8 @@ describe('MOTIVACIO_OPTIONS', () => {
     expect(MOTIVACIO_OPTIONS[0]).toBe('');
   });
 
-  it('should have 6 options total (empty + 5 labelled)', () => {
-    expect(MOTIVACIO_OPTIONS).toHaveLength(6);
+  it('should have 7 options total (empty + 6 labelled)', () => {
+    expect(MOTIVACIO_OPTIONS).toHaveLength(7);
   });
 });
 

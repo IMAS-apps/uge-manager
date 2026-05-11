@@ -104,6 +104,8 @@ describe('App — RBAC navigation guards', () => {
   });
 
   it('should show the loading spinner initially', () => {
+    // Force a pending state to test initial render
+    mockSupabase.auth.getSession.mockReturnValue(new Promise(() => {}));
     render(<App />);
     // The spinner is rendered before session resolves
     expect(document.querySelector('.animate-spin')).toBeTruthy();

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Record, User, RESPONSABLES, ORGANS, SISTEMES_TRAMITACIO } from '../types';
-import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown, Plus } from 'lucide-react';
+import { Filter, X, Eye, CheckCircle2, AlertCircle, Search, FileText, ChevronUp, ChevronDown, FileDown, Plus, Megaphone } from 'lucide-react';
 import { EditModal } from '../components/EditModal';
 import { CpvDescription } from '../components/CpvDescription';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
-// import { generateInforme } from '../utils/generateInforme'; // Switched to dynamic import below
+import { formatDate } from '../utils/contractHelpers';
 
 interface DashboardViewProps {
   user: User;
@@ -47,7 +47,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     try {
       const { data, error: sbError } = await supabase
         .from('records')
-        .select('*')
+        .select('*, factures(import_total)')
         .order('hora', { ascending: false });
 
       if (sbError) throw sbError;
@@ -108,8 +108,8 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
         totalStr.includes(searchLower) ||
         (r.segex?.toLowerCase() || '').includes(searchLower) ||
         (r.codi_cpv?.toLowerCase() || '').includes(searchLower) ||
-        (r.partida_programa?.toLowerCase() || '').includes(searchLower) ||
-        (r.partida_economica?.toLowerCase() || '').includes(searchLower);
+        (r.partida_economica?.toLowerCase() || '').includes(searchLower) ||
+        (r.num_rc?.toLowerCase() || '').includes(searchLower);
       if (!matchesSearch) return false;
     }
 
@@ -127,13 +127,13 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     if (filterDataInici || filterDataFi) {
       const recordDate = new Date(r.hora);
       recordDate.setHours(0, 0, 0, 0);
-      
+
       if (filterDataInici) {
         const startDate = new Date(filterDataInici);
         startDate.setHours(0, 0, 0, 0);
         if (recordDate < startDate) return false;
       }
-      
+
       if (filterDataFi) {
         const endDate = new Date(filterDataFi);
         endDate.setHours(23, 59, 59, 999);
@@ -154,6 +154,16 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     if (sortField === 'total') {
       valA = (a.base_imposable || 0) + (a.quota_iva || 0);
       valB = (b.base_imposable || 0) + (b.quota_iva || 0);
+    }
+
+    if (sortField === 'credit_disponible') {
+      const totalA = (a.base_imposable || 0) + (a.quota_iva || 0);
+      const consumedA = (a.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0);
+      valA = totalA - consumedA;
+
+      const totalB = (b.base_imposable || 0) + (b.quota_iva || 0);
+      const consumedB = (b.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0);
+      valB = totalB - consumedB;
     }
 
     if (valA === valB) return 0;
@@ -252,19 +262,24 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
           'PARTIDA ORGÀNICA': record.partida_organica || '',
           'PARTIDA PROGRAMA': record.partida_programa || '',
           'PARTIDA ECONÒMICA': record.partida_economica || '',
+          'Nº OPERACIÓ RC': record.num_rc || '',
           'PROJECTE DESPESA CAP. VI': record.projecte_despesa_cap_vi || '',
           'BASE IMPOSABLE': record.base_imposable || 0,
           'QUOTA IVA': record.quota_iva || 0,
           'TOTAL (BASE + IVA)': (record.base_imposable || 0) + (record.quota_iva || 0),
+          'CRÈDIT DISPONIBLE': ((record.base_imposable || 0) + (record.quota_iva || 0)) - (record.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0),
           'ADJUDICATARI': record.adjudicatari || '',
           'NIF ADJUDICATARI': record.nif || '',
           'SISTEMA TRAMITACIÓ': record.sistema_tramitacio || 'Sense assignar',
           'SEGEX': record.segex || '',
-          'REG. FACTURA': record.reg_factura || '',
           'RELACIÓ Q': record.relacio_q || '',
           'RELACIÓ O': record.relacio_o || '',
           'ESTAT': estat,
           'MOTIVACIÓ NO CONTRACTACIÓ': record.motivacio_no_contractacio || '',
+          'EXPLICACIÓ NO CONTRACTACIÓ': record.explicacio_no_contractacio || '',
+          'JUSTIFICACIÓ PREU': record.justificacio_preu || '',
+          'EXPLICACIÓ DEL PREU': record.explicacio_preu || '',
+          'TRAMITAT PER OFI DES DE': record.data_ofi_inicial || '',
           'DETALLS ADDICIONALS': record.detalls_addicionals || '',
           'CREAT PER (UUID)': record.created_by || '',
           'ÚLTIMA ACTUALITZACIÓ': record.updated_at ? new Date(record.updated_at).toLocaleString('ca-ES') : ''
@@ -272,7 +287,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
       });
 
       const ws = XLSX.utils.json_to_sheet(exportData);
-      
+
       const colWidths = [
         { wch: 6 },  // ID
         { wch: 12 }, // DATA
@@ -291,19 +306,22 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
         { wch: 10 }, // ORGÀNICA
         { wch: 15 }, // PROGRAMA
         { wch: 15 }, // ECONÒMICA
+        { wch: 15 }, // Nº OPERACIÓ RC
         { wch: 25 }, // CAP VI
         { wch: 15 }, // BASE
         { wch: 15 }, // IVA
         { wch: 15 }, // TOTAL
+        { wch: 15 }, // CRÈDIT DISPONIBLE
         { wch: 30 }, // ADJUDICATARI
         { wch: 15 }, // NIF
         { wch: 20 }, // SISTEMA
         { wch: 15 }, // SEGEX
-        { wch: 15 }, // REG. FACTURA
         { wch: 15 }, // RELACIÓ Q
         { wch: 15 }, // RELACIÓ O
         { wch: 20 }, // ESTAT
         { wch: 60 }, // MOTIVACIÓ
+        { wch: 60 }, // JUSTIFICACIÓ PREU
+        { wch: 15 }, // DATA OFI INICIAL
         { wch: 60 }, // DETALLS
         { wch: 36 }, // CREAT PER
         { wch: 20 }  // ACTUALITZAT
@@ -312,7 +330,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Sol·licituds");
-      
+
       const fileName = `Sollicituds_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
       setToast({ msg: 'Arxiu Excel generat correctament.', type: 'success' });
@@ -353,32 +371,12 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ca-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
+
 
   const showResponsableColumn = filterResponsable === '' && filterOrgan === '';
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50 relative">
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`absolute top-4 right-4 z-50 p-4 rounded-md shadow-lg flex items-center gap-3 ${toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-          {toast.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-          <p className="text-sm font-medium">{toast.msg}</p>
-        </div>
-      )}
-
       {/* Delete Confirmation Dialog */}
       {deleteConfirmRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -651,7 +649,16 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                         onClick={() => handleSort('total')}
                       >
                         <div className="flex items-center justify-end gap-1">
-                          Total (amb IVA) <SortIndicator field="total" />
+                          Crèdit Retingut <SortIndicator field="total" />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3 text-right text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
+                        onClick={() => handleSort('credit_disponible')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Crèdit disponible <SortIndicator field="credit_disponible" />
                         </div>
                       </th>
                       <th
@@ -661,15 +668,6 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                       >
                         <div className="flex items-center justify-center gap-1">
                           Sistema <SortIndicator field="sistema_tramitacio" />
-                        </div>
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors whitespace-nowrap"
-                        onClick={() => handleSort('reg_factura')}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          Reg. Factura <SortIndicator field="reg_factura" />
                         </div>
                       </th>
                       <th
@@ -690,7 +688,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                           P. Econòmica <SortIndicator field="partida_economica" />
                         </div>
                       </th>
-                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">Accions</th>
+                      <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap w-[280px] min-w-[280px]">Accions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-border-light">
@@ -714,11 +712,11 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-text-primary text-right font-medium">{formatCurrency(record.base_imposable + record.quota_iva)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-bold text-blue-700">
+                            {formatCurrency((record.base_imposable + record.quota_iva) - (record.factures || []).reduce((acc, f) => acc + (Number(f.import_total) || 0), 0))}
+                          </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                             {getSistemaBadge(record)}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-text-secondary font-medium">
-                            {record.reg_factura || '-'}
                           </td>
                           <td className="px-4 py-3 text-sm text-center text-text-secondary font-medium w-[250px] max-w-[250px]">
                             <div className="font-bold mb-0.5">{record.codi_cpv || '-'}</div>
@@ -728,53 +726,101 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                             {record.partida_economica || '-'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              {['AD', 'ADO', 'OFI', 'REC'].includes(record.sistema_tramitacio) && (
+                            <div className="flex items-center justify-center gap-1.5 min-w-[260px]">
+                              {/* Slot 1: VI (Inversions) */}
+                              <div className="w-8 flex justify-center">
+                                {record.partida_economica && record.partida_economica.startsWith('6') && (
+                                  <div
+                                    className={`flex items-center justify-center min-w-[28px] px-1 h-[28px] rounded font-bold text-xs cursor-help ${record.projecte_despesa_cap_vi ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                                    title={record.projecte_despesa_cap_vi ? `Projecte cap. VI: ${record.projecte_despesa_cap_vi}` : 'Falta projecte de despesa cap. VI'}
+                                  >
+                                    VI
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Slot 2: Megàfon (Comunicació OFI) */}
+                              <div className="w-8 flex justify-center">
+                                {record.sistema_tramitacio === 'OFI' && (() => {
+                                  const isOfiComplete = !!record.adjudicatari && !!record.nif && !!record.segex;
+                                  return (
+                                    <button
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        try {
+                                          const { generateComunicacioOFI } = await import('../utils/generateInforme');
+                                          await generateComunicacioOFI(record);
+                                        } catch (err: any) {
+                                          alert(err.message);
+                                        }
+                                      }}
+                                      disabled={!isOfiComplete}
+                                      className={`flex items-center justify-center w-[28px] h-[28px] rounded transition-colors ${
+                                        isOfiComplete 
+                                          ? 'text-green-600 hover:bg-green-50' 
+                                          : 'text-red-600 cursor-not-allowed opacity-50'
+                                      }`}
+                                      title={isOfiComplete 
+                                        ? "Descarregar comunicació OFI" 
+                                        : "Falten camps Adjudicatari, NIF o SEGEX per descarregar la comunicació"}
+                                    >
+                                      <Megaphone size={18} />
+                                    </button>
+                                  );
+                                })()}
+                              </div>
+
+                              {/* Slot 3: Fitxer (Descarregar informe) */}
+                              <div className="w-8 flex justify-center">
+                                {['AD', 'ADO', 'OFI', 'REC'].includes(record.sistema_tramitacio) && (
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        const { generateInforme } = await import('../utils/generateInforme');
+                                        await generateInforme(record);
+                                      } catch (err: any) {
+                                        alert(err.message);
+                                      }
+                                    }}
+                                    className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
+                                    title="Descarregar informe"
+                                  >
+                                    <FileDown size={18} />
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Slot 4: Ull (Veure detalls) */}
+                              <div className="w-8 flex justify-center">
                                 <button
-                                  onClick={async () => {
-                                    try {
-                                      const { generateInforme } = await import('../utils/generateInforme');
-                                      await generateInforme(record);
-                                    } catch (err: any) {
-                                      alert(err.message);
-                                    }
+                                  onClick={(e) => { 
+                                    e.stopPropagation();
+                                    setSelectedRecord(record); 
+                                    setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); 
                                   }}
                                   className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
-                                  title="Descarregar informe"
+                                  title="Veure detalls"
                                 >
-                                  <FileDown size={18} />
+                                  <Eye size={18} />
                                 </button>
-                              )}
+                              </div>
 
-                              <button
-                                onClick={() => { setSelectedRecord(record); setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); }}
-                                className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
-                                title="Veure detalls"
-                              >
-                                <Eye size={18} />
-                              </button>
-
-                              {record.partida_economica && record.partida_economica.startsWith('6') && (
-                                <div 
-                                  className={`flex items-center justify-center min-w-[28px] px-1 h-[28px] rounded font-bold text-xs cursor-help ${record.projecte_despesa_cap_vi ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-                                  title={record.projecte_despesa_cap_vi ? `Projecte cap. VI: ${record.projecte_despesa_cap_vi}` : 'Falta projecte de despesa cap. VI'}
-                                >
-                                  VI
-                                </div>
-                              )}
-
-                              {record.segex && (
-                                <a
-                                  href={`https://imas.secimallorca.net/segex/expediente.aspx?id=${record.segex.replace(/\D/g, '')}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EDE9FE] text-[#5B21B6] hover:bg-[#DDD6FE] transition-colors"
-                                  title="Obrir expedient SEGEX"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {record.segex}
-                                </a>
-                              )}
+                              {/* Slot 5: Número d'expedient (SEGEX) */}
+                              <div className="flex-1 flex justify-start pl-2 min-w-[100px]">
+                                {record.segex && (
+                                  <a
+                                    href={`https://imas.secimallorca.net/segex/expediente.aspx?id=${record.segex.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EDE9FE] text-[#5B21B6] hover:bg-[#DDD6FE] transition-colors whitespace-nowrap"
+                                    title="Obrir expedient SEGEX"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {record.segex}
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -801,6 +847,14 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
             setSelectedRecord(null);
           }}
         />
+      )}
+
+      {/* Toast Notification — z-60 to be above modal */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[60] p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${toast.type === 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+          {toast.type === 'success' ? <CheckCircle2 className="text-green-600" size={24} /> : <AlertCircle className="text-red-600" size={24} />}
+          <p className="text-sm font-semibold pr-2">{toast.msg}</p>
+        </div>
       )}
     </div>
   );

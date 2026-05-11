@@ -27,11 +27,12 @@ L'accés a la informació està protegit mitjançant **Row Level Security (RLS)*
 ### Rols Principals:
 1.  **Lectura**: Pot veure el dashboard de sol·licituds i contractes. No pot crear ni editar. No veu el mòdul de "Nou contracte".
 2.  **Peticions**: Pot crear noves Sol·licituds de despesa. Rep notificacions quan les seves peticions són actualitzades per un gestor.
-3.  **Gestió**: Pot editar totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.). Rep notificacions de noves peticions d'altres usuaris.
+3.  **Gestió**: Pot editar totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.) i **crear/editar OFIs**. Rep notificacions de noves peticions d'altres usuaris.
 4.  **Administrador**: Control total del sistema.
     - Únic rol amb accés al mòdul **"Nou contracte"**.
     - Únic rol amb permisos d'edició/eliminació de **Contractes**.
     - Gestió d'usuaris (canvi de rols).
+    - **Creació, edició i clonació d'OFIs**.
     - Gestió de fitxers pressupostaris (pujada i eliminació) des del modal de detalls de sol·licituds.
 
 ---
@@ -53,12 +54,32 @@ Gestiona el flux de peticions de les residències.
 - `base_imposable` (numeric), `quota_iva` (numeric): Dades financeres.
 - `codi_cpv`, `partida_organica`, `partida_programa`, `partida_economica`: Classificació administrativa.
 - `sistema_tramitacio`: `AD`, `ADO`, `OFI`, `REC`, `CF`, `R. PATRIMONIAL`.
-- `estat`: `publicat` (boolean), `finalitzat` (boolean).
+- `estat`: `publicat` (boolean), `adjudicat` (boolean), `finalitzat` (boolean).
 - `centre_servei`: Centre o servei sol·licitant (Residències, Centres de dia, etc.).
 - `fitxers_pressupost` (jsonb): Array d'objectes `{name, path, size}`. Administrables post-enviament pels Administradors.
 - `segex`, `adjudicatari`, `nif`, `reg_factura`, `relacio_q`, `relacio_o`: Referències de tramitació posterior.
+- `motivacio_no_contractacio`, `explicacio_no_contractacio`: Detalls de per què no s'ha contractat (si sistema és OFI).
+- `justificacio_preu`, `explicacio_preu`: Justificació detallada dels imports (si sistema és OFI).
+- `data_ofi_inicial`: Data tramitació per OFI (etiquetat a la UI com "Tramitat per OFI des de").
+- `num_rc` (text): Nº operació RC (ex: 220260015212).
 
-### C. Taula `contracts` (Mòdul Contractes)
+### C. Taula `factures` (Factures de Sol·licituds)
+Relació **1:N** amb `records`.
+- `id` (bigserial, PK): Auto-increment.
+- `record_id` (bigint, FK): Enllaç a `records.id`.
+- `expedient` (text): Número d'expedient vinculat a la factura.
+- `data` (date): Data de la factura.
+- `numero_registre` (text): Número de registre de la factura.
+- `descripcio` (text): Concepte o descripció.
+- `periode` (text): Període de facturació.
+- `numero_factura` (text): Identificador de la factura.
+- `import_total` (numeric): Total facturat (amb IVA).
+- **Camps Autocalculats (UI)**:
+  - `Crèdit reconegut`: Sumatori d'import total de les factures vinculades.
+  - `Crèdit disponible`: Resta entre el total de la sol·licitud (Base + IVA) i el crèdit reconegut.
+- **RLS**: Tots els usuaris poden llegir. Només `Administrador` i `Gestió` poden afegir, modificar o eliminar.
+
+### D. Taula `contracts` (Mòdul Contractes)
 Dades mestre dels contractes vigents.
 - `id` (bigint, PK): Auto-increment.
 - `nom_contracte` (text): Títol oficial del contracte.
@@ -87,6 +108,18 @@ Relació **1:N** amb `contracts`.
 - `peticio_id`: Enllaç al registre de `records`.
 - `is_read`: Estat per usuari (gestionat via JSONB `read_by` per a notificacions globals).
 
+### F. Taula `ofi` (Ordres de Facturació Interna)
+Control i seguiment d'expedients de facturació interna.
+- `id` (bigserial, PK): Auto-increment.
+- `codi_ofi` (text): Codi de l'ordre (ex: 001/26).
+- `expedient_ofi` (text): Número d'expedient vinculat (ex: 1234567A).
+- `centre_servei` (text): Centre o servei (text lliure).
+- `area` (text): Àrea funcional (Gerència, Inclusió, etc.). Determina el text automàtic de la justificació.
+- `justificacio_general` (text): Descripció detallada de la justificació.
+- `created_by` (uuid, FK): Enllaç a `profiles.id`.
+- **Funcionalitat clau**: El botó "veure" del dashboard filtra automàticament la taula `factures` on `factura.expedient === ofi.expedient_ofi`.
+- **Hipervincle SEGEX**: El camp `expedient_ofi` es mostra a la columna d'Accions com un badge clickable que extreu l'ID numèric per obrir l'expedient a SEGEX (`https://imas.secimallorca.net/segex/expediente.aspx?id={digits}`).
+
 ---
 
 ## 📂 4. Emmagatzematge (Storage Buckets)
@@ -109,6 +142,7 @@ L'aplicació compta amb dues vistes principals unificades pel nou menú de naveg
 ### A. Control de Sol·licituds
 - Plana principal on es llisten i es filtren totes les peticions de noves despeses.
 - Depenent del rol, es poden visualitzar, editar o eliminar els registres.
+- **Gestió Interna**: Els camps "Publicat", "Adjudicat" i "Finalitzat" només es mostren per a sistemes de tramitació `AD` i `ADO`.
 - Els registres de les referències SEGEX compten amb un botó de vinculació directa a l'adreça web pertinent.
 - Opcions d'exportació a Excel integrades.
 
@@ -116,6 +150,13 @@ L'aplicació compta amb dues vistes principals unificades pel nou menú de naveg
 - Mòdul específic per al seguiment de tots els contractes i els seus respectius lots emmagatzemats al sistema de manera ordenada (per defecte per **Data d'inici**, del més nou al més antic).
 - **Filtres avançats:** Filtre escollit per defecte per veure els "Contractes vigents" (amb dates fi posteriors a l'actual o no determinades), llistes desplegables netes per al "Tipus de contracte" i filtre flexible de conjunts per a un o més "Centres".
 - Igual que en sol·licituds, les referències SEGEX disposen d'enllaços a l'expedient un cop introduït dins la xarxa SECI.
+
+### C. Control d'OFIs
+- Mòdul intermedi per al seguiment d'Ordres de Facturació Interna.
+- Relaciona de manera dinàmica els expedients d'OFI amb les factures introduïdes al sistema mitjançant el número d'expedient.
+- **Clonació**: Permet crear una nova OFI pre-emplenant les dades d'una existent.
+- **Generació de Memòria**: Botó per descarregar un document Word (`.docx`) amb la "Memòria Justificativa", incloent la taula de factures i annexos de manera automatitzada.
+- Permet una traçabilitat directa entre l'ordre interna i l'execució comptable (factures).
 
 ---
 
@@ -141,7 +182,17 @@ Assegureu-vos d'utilitzar els valors exactes definits a `src/types.ts` per evita
 
 ---
 
-## 🛠️ 7. Desenvolupament
+## 🔍 7. Regles de Validació i Integritat
+
+El sistema implementa validacions en temps real per garantir la qualitat de les dades:
+
+- **Objecte del Contracte**: El camp ha de començar obligatòriament amb una de les paraules clau: `Subministrament`, `Servei`, `Obra` o `Concert`. En cas contrari, es mostra un avís en vermell.
+- **Codi CPV**: Si el codi té 8 dígits, es recomana (avís en vermell) que acabi en `0000` per mantenir un nivell de categorització adequat segons els estàndards del departament.
+- **Lots de Contracte**: Tot contracte nou ha de tenir, com a mínim, un lot associat. Si el contracte no té lots diferenciats, el sistema n'auto-genera un amb el nom del contracte.
+
+---
+
+## 🛠️ 8. Desenvolupament
 
 ```bash
 # Instal·lació

@@ -8,6 +8,8 @@ import { ContractFormView } from './views/ContractFormView';
 import { ContractDashboardView } from './views/ContractDashboardView';
 import { User } from './types';
 import { LogOut, FileText, LayoutDashboard, Users, AlertCircle, Bell, FilePlus2, ClipboardList } from 'lucide-react';
+import { OFIFormView } from './views/OFIFormView';
+import { OFIDashboardView } from './views/OFIDashboardView';
 import { supabase } from './lib/supabase';
 
 
@@ -25,7 +27,7 @@ export function ImasLogo({ className = '' }: { className?: string }) {
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [currentView, setCurrentView] = useState<'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard'>('dashboard');
+  const [currentView, setCurrentView] = useState<'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard' | 'ofi-form' | 'ofi-dashboard'>('dashboard');
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -140,6 +142,9 @@ export default function App() {
       } else if (currentView === 'contract-form' && user.role !== 'Administrador') {
         setToast('No tens permisos per accedir a aquesta secció.');
         setCurrentView('contract-dashboard');
+      } else if (currentView === 'ofi-form' && user.role !== 'Administrador' && user.role !== 'Gestió') {
+        setToast('No tens permisos per accedir a aquesta secció.');
+        setCurrentView('ofi-dashboard');
       }
     }
   }, [currentView, user]);
@@ -211,7 +216,7 @@ export default function App() {
     setUnreadCount(0);
   };
 
-  const handleNavigate = (view: 'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard') => {
+  const handleNavigate = (view: 'form' | 'dashboard' | 'users' | 'notifications' | 'contract-form' | 'contract-dashboard' | 'ofi-form' | 'ofi-dashboard') => {
     if (view === 'form' && user?.role === 'Lectura') {
       setToast('No tens permisos per accedir a aquesta secció.');
       setCurrentView('dashboard');
@@ -225,6 +230,11 @@ export default function App() {
     if (view === 'contract-form' && user?.role !== 'Administrador') {
       setToast('No tens permisos per accedir a aquesta secció.');
       setCurrentView('contract-dashboard');
+      return;
+    }
+    if (view === 'ofi-form' && user?.role !== 'Administrador' && user?.role !== 'Gestió') {
+      setToast('No tens permisos per accedir a aquesta secció.');
+      setCurrentView('ofi-dashboard');
       return;
     }
 
@@ -286,6 +296,14 @@ export default function App() {
                 >
                   <LayoutDashboard size={18} />
                   Sol·licituds
+                </button>
+
+                <button
+                  onClick={() => handleNavigate('ofi-dashboard')}
+                  className={`px-3 py-2 rounded-md text-sm font-semibold flex items-center gap-2 transition-colors ${currentView === 'ofi-dashboard' ? 'bg-white/20 text-white shadow-inner' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
+                >
+                  <FilePlus2 size={18} />
+                  OFIs
                 </button>
                 
                 <button
@@ -353,6 +371,14 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => handleNavigate('ofi-dashboard')}
+            className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'ofi-dashboard' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
+          >
+            <FilePlus2 size={18} />
+            OFIs
+          </button>
+
+          <button
             onClick={() => handleNavigate('contract-dashboard')}
             className={`shrink-0 px-3 py-2 text-xs font-semibold flex flex-col justify-center items-center gap-1 rounded-md transition-colors ${currentView === 'contract-dashboard' ? 'bg-white/20 text-white' : 'text-[#A5C8E4] hover:bg-white/10 hover:text-white'}`}
           >
@@ -389,6 +415,7 @@ export default function App() {
 
       <main className="flex-1 flex flex-col">
         {currentView === 'form' && <FormView user={user} onSuccess={() => handleNavigate('dashboard')} />}
+        {currentView === 'ofi-form' && <OFIFormView user={user} onSuccess={() => handleNavigate('ofi-dashboard')} />}
         {currentView === 'dashboard' && (
           <DashboardView
             user={user}
@@ -406,6 +433,12 @@ export default function App() {
             onNavigate={handleNavigate}
             pendingOpenContractId={pendingOpenContractId}
             onPendingOpenHandled={() => setPendingOpenContractId(null)}
+          />
+        )}
+        {currentView === 'ofi-dashboard' && (
+          <OFIDashboardView
+            user={user}
+            onNavigate={handleNavigate}
           />
         )}
 

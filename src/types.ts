@@ -30,6 +30,10 @@ export interface Record {
   fitxers_pressupost: { name: string, path: string, size: number }[];
   detalls_addicionals: string;
   motivacio_no_contractacio?: string;
+  explicacio_no_contractacio?: string;
+  justificacio_preu?: string;
+  explicacio_preu?: string;
+  data_ofi_inicial?: string | null;
   adjudicatari?: string;
   nif?: string;
   sistema_tramitacio: string;
@@ -39,9 +43,63 @@ export interface Record {
   relacio_o: string;
   finalitzat: boolean;
   publicat: boolean;
+  adjudicat?: boolean;
   created_by: string;
   updated_at: string;
+  num_rc?: string | null;
+  factures?: Factura[];
 }
+
+export interface Factura {
+  id?: number;
+  record_id?: number;
+  expedient?: string;
+  data: string;
+  numero_registre: string;
+  descripcio: string;
+  periode: string;
+  numero_factura: string;
+  import_total: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface OFI {
+  id: number;
+  codi_ofi: string;
+  expedient_ofi: string;
+  centre_servei: string;
+  descripcio?: string;
+  justificacio_general: string;
+  area?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  total_import?: number;
+  num_factures?: number;
+  data_min?: string;
+  data_max?: string;
+}
+
+export const AREES_OFI = [
+  "Gerència",
+  "Atenció Sociosanitària",
+  "Serveis Socials, Infància y Familia",
+  "Centres y Programes d'Atenció Integral a la Infància y Adolescència",
+  "Inclusió Social",
+  "Persones amb discapacitat",
+  "Atenció Comunitària y Promoció de l'Autonomia Personal"
+];
+
+export const TEXTOS_JUSTIFICACIO_OFI: { [key: string]: string } = {
+  "Gerència": "Gerència - pendent de descripció",
+  "Atenció Sociosanitària": "La Direcció Insular d’Atenció Sociosanitària centra la seva tasca en la gestió de les residències per a gent gran i dels centres de dia que depenen de l’IMAS i en la consolidació del model assistencial basat en una atenció centrada en la persona. En aquest sentit, els objectius de l’àrea són ’ampliació de places, que es materialitza amb la posada en marxa de nous centres especialitzats i amb la modernització i l’adaptació a les necessitats concretes i particulars dels usuaris dels centres ja existents.",
+  "Serveis Socials, Infància y Familia": "Serveis Socials, Infància y Familia- pendent de descripció",
+  "Centres y Programes d'Atenció Integral a la Infància y Adolescència": "Centres y Programes d'Atenció Integral a la Infància y Adolescència- pendent de descripció",
+  "Inclusió Social": "La direcció insular d’Inclusió Social atén les persones en risc o situació d’exclusió social a Mallorca. Té com a principal objectiu gestionar i subministrar amb qualitat i eficàcia els serveis, recursos i prestacions socials destinats a les persones que es troben en situació o risc d'exclusió social a Mallorca. Es tracta de cobrir les necessitats socials bàsiques d'aquest conjunt de la població i millorar-ne la qualitat de vida.",
+  "Persones amb discapacitat": "Persones amb discapacitat- pendent de descripció",
+  "Atenció Comunitària y Promoció de l'Autonomia Personal": "Atenció Comunitària y Promoció de l'Autonomia Personal- pendent de descripció"
+};
 
 export interface ContractLot {
   id?: number;
@@ -144,11 +202,19 @@ export const PARTIDES_ORGANIQUES = ["00", "10", "20", "30", "40", "50", "60"];
 
 export const MOTIVACIO_OPTIONS = [
   "",
-  "a) Despesa que suposa fraccionament per ser repetitiva i gairebé periòdica, i supera els llindars que requereix la Llei de Contractes del Sector Públic per licitar-les.",
-  "b) Despesa deguda a finalització de contractes administratius i les corresponents prorrogues en el seu cas, i no haver començat una nova licitació o bé tot i haver sortit a licitació encara no s'ha adjudicat el nou contracte administratiu.",
-  "c) Despesa deguda a finalització de contractes administratius i les corresponents prorrogues en el seu cas, i tot i haver sortit a licitació, l'adjudicació ha resultat deserta.",
-  "d) Despesa que ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte.",
-  "e) Despesa que no ha superat els llindars de contractació menor a efectes de fraccionament de l'objecte."
+  "a) Finalització del contracte o de les pròrrogues sense haver iniciat una nova licitació. \nNo s’havia tramitat a temps el nou expedient i, per evitar perjudicis, el proveïdor va continuar prestant el servei.",
+  "b) Finalització d’un concert social sense nova convocatòria. \nLa prestació era imprescindible i no existia concert vigent.",
+  "c) Licitació publicada però resultant deserta. \nLa manca d’ofertes va obligar a mantenir la prestació per garantir el servei.",
+  "d) Fraccionament per la naturalesa repetitiva de les despeses. \nDespeses recurrents que, per volum anual, superen els llindars de contracte menor.",
+  "e) Manca de mitjans personals per planificar adequadament la contractació. \nLes càrregues de feina i la manca de personal varen impedir la tramitació a temps.",
+  "f) Superació del crèdit del contracte vigent. \nTot i existir contracte, s’havia esgotat la seva dotació i calia garantir el servei."
+];
+
+export const JUSTIFICACIO_PREU_OPTIONS = [
+  "",
+  "a) Sol·licitats i comparats pressuposts de proveïdors diferents, els preus dels serveis contractats i/o subministraments efectuats s’ajusten als preus de mercat. Es poden consultar al segex nº",
+  "b) El/la tècnic/a responsable de la despesa ha realitzat consultes al mercat i ha emès l’informe econòmic que justifica que els preus aplicats s’ajusten al mercat i que es pot consultar al segex nº",
+  "c) Els preus facturats es mantenen en les mateixes condicions que es venien aplicant anteriorment. L'expedient anterior de referència és el nº "
 ];
 
 // ── Contract module constants ────────────────────────────────────────────────

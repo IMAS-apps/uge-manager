@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI } from '../types';
-import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2, UploadCloud } from 'lucide-react';
+import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, JUSTIFICACIO_PREU_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI, Factura } from '../types';
+import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2, UploadCloud, Plus, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CpvDescription } from './CpvDescription';
 
@@ -9,7 +9,7 @@ interface EditModalProps {
   mode: 'view' | 'edit';
   user: User;
   onClose: () => void;
-  onSave: (data: Partial<Record>) => void;
+  onSave: (data: Partial<Record>) => void | Promise<void>;
   onDeleteRequest?: () => void;
 }
 
@@ -46,6 +46,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     partida_organica: record.partida_organica || '',
     partida_programa: record.partida_programa || '',
     partida_economica: record.partida_economica || '',
+    num_rc: record.num_rc || '',
     projecte_despesa_cap_vi: record.projecte_despesa_cap_vi || '',
     base_imposable: record.base_imposable || 0,
     quota_iva: record.quota_iva || 0,
@@ -57,8 +58,13 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     finalitzat: record.finalitzat,
     publicat: record.publicat,
     motivacio_no_contractacio: record.motivacio_no_contractacio || '',
+    explicacio_no_contractacio: record.explicacio_no_contractacio || '',
+    justificacio_preu: record.justificacio_preu || '',
+    explicacio_preu: record.explicacio_preu || '',
+    data_ofi_inicial: record.data_ofi_inicial || '',
     adjudicatari: record.adjudicatari || '',
     nif: record.nif || '',
+    adjudicat: record.adjudicat ?? false,
     detalls_addicionals: record.detalls_addicionals || ''
   });
 
@@ -70,7 +76,46 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
   const [uploadError, setUploadError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  const [factures, setFactures] = useState<Factura[]>([]);
+  const [isFacturesLoading, setIsFacturesLoading] = useState(false);
+  const [showAddFactura, setShowAddFactura] = useState(false);
+  
+  const [editingFacturaId, setEditingFacturaId] = useState<number | null>(null);
+  const [editFactura, setEditFactura] = useState<Partial<Factura> & { import_total_str?: string }>({});
+
+  const [newFactura, setNewFactura] = useState<Partial<Factura> & { import_total_str?: string }>({
+    data: '',
+    expedient: '',
+    numero_registre: '',
+    descripcio: '',
+    periode: '',
+    numero_factura: '',
+    import_total_str: ''
+  });
+
   const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (record.id) {
+      const loadFactures = async () => {
+        setIsFacturesLoading(true);
+        try {
+          const { data, error } = await supabase
+            .from('factures')
+            .select('*')
+            .eq('record_id', record.id)
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          setFactures(data || []);
+        } catch (err) {
+          console.error('Error loading factures', err);
+        } finally {
+          setIsFacturesLoading(false);
+        }
+      };
+      loadFactures();
+    }
+  }, [record.id]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -127,12 +172,17 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
       }
       const payload = {
         ...formData,
-        termini_execucio: formData.termini_execucio ? Number(formData.termini_execucio) : null,
-        base_imposable: formData.base_imposable ? Number(formData.base_imposable) : 0,
-        quota_iva: formData.quota_iva ? Number(formData.quota_iva) : 0,
+        termini_execucio: formData.termini_execucio ? parseInt(String(formData.termini_execucio)) : null,
+        base_imposable: formData.base_imposable ? parseFloat(String(formData.base_imposable)) : 0,
+        quota_iva: formData.quota_iva ? parseFloat(String(formData.quota_iva)) : 0,
+        num_rc: formData.num_rc || null,
+        data_ofi_inicial: formData.data_ofi_inicial || null,
         fitxers_pressupost: updatedFiles,
       };
-      onSave(payload as any);
+      await onSave(payload as any);
+      // We don't setIsSaving(false) here because on success the modal is closed by the parent.
+      // But if onSave caught an error and returned, we should allow retrying.
+      setIsSaving(false);
     } catch (err: any) {
       setUploadError(err.message || "Error en pujar els fitxers.");
       setIsSaving(false);
@@ -164,6 +214,87 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     setPendingFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleAddFactura = async () => {
+    try {
+      const payload = {
+        record_id: record.id,
+        data: newFactura.data,
+        expedient: newFactura.expedient,
+        numero_registre: newFactura.numero_registre,
+        descripcio: newFactura.descripcio,
+        periode: newFactura.periode,
+        numero_factura: newFactura.numero_factura,
+        import_total: newFactura.import_total_str ? Number(newFactura.import_total_str.replace(',', '.').replace('/', '.')) : 0
+      };
+      
+      const { data, error } = await supabase
+        .from('factures')
+        .insert([payload])
+        .select();
+        
+      if (error) throw error;
+      if (data) {
+        setFactures([data[0], ...factures]);
+        setNewFactura({
+          data: '',
+          expedient: '',
+          numero_registre: '',
+          descripcio: '',
+          periode: '',
+          numero_factura: '',
+          import_total_str: ''
+        });
+        setShowAddFactura(false);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error en afegir la factura');
+    }
+  };
+
+  const handleUpdateFactura = async () => {
+    if (!editingFacturaId) return;
+    try {
+      const payload = {
+        data: editFactura.data,
+        expedient: editFactura.expedient,
+        numero_registre: editFactura.numero_registre,
+        descripcio: editFactura.descripcio,
+        periode: editFactura.periode,
+        numero_factura: editFactura.numero_factura,
+        import_total: editFactura.import_total_str ? Number(editFactura.import_total_str.replace(',', '.').replace('/', '.')) : 0
+      };
+      
+      const { data, error } = await supabase
+        .from('factures')
+        .update(payload)
+        .eq('id', editingFacturaId)
+        .select();
+        
+      if (error) throw error;
+      if (data) {
+        setFactures(factures.map(f => f.id === editingFacturaId ? data[0] : f));
+        setEditingFacturaId(null);
+        setEditFactura({});
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error en actualitzar la factura');
+    }
+  };
+
+  const handleDeleteFactura = async (id: number) => {
+    if (!confirm('Segur que vols eliminar aquesta factura?')) return;
+    try {
+      const { error } = await supabase
+        .from('factures')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      setFactures(factures.filter(f => f.id !== id));
+    } catch (err: any) {
+      alert(err.message || 'Error en eliminar la factura');
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(amount);
   };
@@ -183,11 +314,13 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
   };
 
   const totalIva = Number(formData.base_imposable) + Number(formData.quota_iva);
+  const creditReconegut = factures.reduce((acc, f) => acc + Number(f.import_total), 0);
+  const creditDisponible = totalIva - creditReconegut;
 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto" role="dialog" aria-modal="true">
-      <div ref={modalRef} className="bg-bg-light rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div ref={modalRef} className="bg-bg-light rounded-xl shadow-2xl w-full max-w-[95vw] max-h-[95vh] flex flex-col overflow-hidden">
 
         {/* Header */}
         <div className="px-6 py-4 border-b border-border-light bg-white flex justify-between items-center sticky top-0 z-10">
@@ -208,9 +341,9 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <div className="lg:col-span-2">
+            <div className={formData.sistema_tramitacio === 'OFI' ? "lg:col-span-5" : "lg:col-span-7"}>
               <SectionCard title="Identificació">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <Field label="Id" value={`#${record.id}`} />
@@ -387,8 +520,13 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Codi CPV</label>
                     {mode === 'edit' && user.role === 'Administrador' ? (
                       <>
-                        <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                        <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" placeholder="12340000" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                         <CpvDescription code={formData.codi_cpv} />
+                        {formData.codi_cpv.length === 8 && !formData.codi_cpv.endsWith('0000') && (
+                          <p className="text-red-600 text-xs mt-1 font-medium">
+                            S'ha d'introduir un CPV amb nivell de 4 dígits (XXXX0000)
+                          </p>
+                        )}
                       </>
                     ) : (
                       <>
@@ -413,7 +551,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Programa</label>
                     {mode === 'edit' && user.role === 'Administrador' ? (
-                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} form="edit-form" placeholder="21300" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_programa || '—'}</div>
                     )}
@@ -422,9 +560,18 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Econòmica</label>
                     {mode === 'edit' && user.role === 'Administrador' ? (
-                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
+                      <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} form="edit-form" placeholder="22199" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_economica || '—'}</div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Nº operació RC</label>
+                    {mode === 'edit' ? (
+                      <input type="text" inputMode="numeric" pattern="[0-9]*" name="num_rc" value={formData.num_rc || ''} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" placeholder="ex: 220260015212" />
+                    ) : (
+                      <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.num_rc ? formData.num_rc.toString() : '—'}</div>
                     )}
                   </div>
                   
@@ -591,7 +738,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
             </div>
 
             {/* Gestió Interna */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-2">
               <div className="sticky top-0">
                 <SectionCard title="Gestió Interna">
                   <form id="edit-form" onSubmit={handleSubmit} className="space-y-4">
@@ -630,19 +777,22 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       <Field label="SEGEX" value={record.segex} />
                     )}
 
-                    {/* The following 6 fields are editable for ALL roles */}
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Motivació de no contractació</label>
-                      <select
-                        name="motivacio_no_contractacio"
-                        value={formData.motivacio_no_contractacio}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      >
-                        <option value="">Sense motivació</option>
-                        {MOTIVACIO_OPTIONS.slice(1).map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
-                    </div>
+                    {/* Botó Nou Dossier — visible only when sistema_tramitacio === 'OFI' */}
+                    {formData.sistema_tramitacio === 'OFI' && (
+                      <div className="mt-2">
+                        <a
+                          href="https://imas.secimallorca.net/segex/expediente.aspx?id=1497244&sc=200"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-dark transition-colors shadow-sm"
+                        >
+                          <Plus size={16} />
+                          Nou dossier
+                        </a>
+                      </div>
+                    )}
+
+                    {/* The following fields are editable for ALL roles */}
 
                     <div>
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Adjudicatari</label>
@@ -666,63 +816,309 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Reg. Factura</label>
-                      <input
-                        type="text"
-                        name="reg_factura"
-                        value={formData.reg_factura}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      />
-                    </div>
+                    {/* Camps Reg. Factura, Relació Q, Relació O ocultats a la UI, es mantenen a la base de dades */}
 
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació Q</label>
-                      <input
-                        type="text"
-                        name="relacio_q"
-                        value={formData.relacio_q}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      />
-                    </div>
+                    {(formData.sistema_tramitacio === 'AD' || formData.sistema_tramitacio === 'ADO') && (
+                      <div className="pt-4 border-t border-border-light space-y-3">
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.publicat ? 'bg-primary/5 border-primary/20' : 'bg-white border-border-light'}`}>
+                          <input
+                            type="checkbox"
+                            name="publicat"
+                            checked={formData.publicat}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-primary rounded border-border-light focus:ring-primary"
+                          />
+                          <span className="text-sm font-medium text-text-primary">Publicat</span>
+                        </label>
+                        
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.adjudicat ? 'bg-amber-500/5 border-amber-500/20' : 'bg-white border-border-light'}`}>
+                          <input
+                            type="checkbox"
+                            name="adjudicat"
+                            checked={formData.adjudicat || false}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-amber-500 rounded border-border-light focus:ring-amber-500"
+                          />
+                          <span className="text-sm font-medium text-text-primary">Adjudicat</span>
+                        </label>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Relació O</label>
-                      <input
-                        type="text"
-                        name="relacio_o"
-                        value={formData.relacio_o}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
-                      />
-                    </div>
-
-                    <div className="pt-4 border-t border-border-light space-y-3">
-                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.finalitzat ? 'bg-success/5 border-success/20' : 'bg-white border-border-light'}`}>
-                        <input
-                          type="checkbox"
-                          name="finalitzat"
-                          checked={formData.finalitzat}
-                          onChange={handleChange}
-                          className="w-5 h-5 text-success rounded border-border-light focus:ring-success"
-                        />
-                        <span className="text-sm font-medium text-text-primary">Finalitzat</span>
-                      </label>
-
-                      <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.publicat ? 'bg-primary/5 border-primary/20' : 'bg-white border-border-light'}`}>
-                        <input
-                          type="checkbox"
-                          name="publicat"
-                          checked={formData.publicat}
-                          onChange={handleChange}
-                          className="w-5 h-5 text-primary rounded border-border-light focus:ring-primary"
-                        />
-                        <span className="text-sm font-medium text-text-primary">Publicat</span>
-                      </label>
-                    </div>
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-slate-50 ${formData.finalitzat ? 'bg-success/5 border-success/20' : 'bg-white border-border-light'}`}>
+                          <input
+                            type="checkbox"
+                            name="finalitzat"
+                            checked={formData.finalitzat}
+                            onChange={handleChange}
+                            className="w-5 h-5 text-success rounded border-border-light focus:ring-success"
+                          />
+                          <span className="text-sm font-medium text-text-primary">Finalitzat</span>
+                        </label>
+                      </div>
+                    )}
                   </form>
+                </SectionCard>
+              </div>
+            </div>
+
+            {/* Detalls OFI — visible only when sistema_tramitacio === 'OFI' */}
+            {(formData.sistema_tramitacio === 'OFI' || record.sistema_tramitacio === 'OFI') && (
+              <div className="lg:col-span-2">
+                <div className="sticky top-0">
+                  <SectionCard title="Detalls OFI">
+                    <div className="space-y-4">
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Motivació de no contractació</label>
+                        <select
+                          name="motivacio_no_contractacio"
+                          value={formData.motivacio_no_contractacio}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                        >
+                          <option value="">Sense motivació</option>
+                          {MOTIVACIO_OPTIONS.slice(1).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Explicació de no contractació</label>
+                        <textarea
+                          name="explicacio_no_contractacio"
+                          value={formData.explicacio_no_contractacio}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                          placeholder="Detalli la motivació..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Justificació del preu</label>
+                        <select
+                          name="justificacio_preu"
+                          value={formData.justificacio_preu}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                        >
+                          <option value="">Sense justificació</option>
+                          {JUSTIFICACIO_PREU_OPTIONS.slice(1).map(opt => (
+                            <option key={opt.charAt(0)} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                        {formData.justificacio_preu && (
+                          <p className="mt-2 text-xs text-text-secondary whitespace-pre-wrap leading-relaxed bg-slate-50 border border-border-light rounded p-2">
+                            {formData.justificacio_preu}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Explicació del preu</label>
+                        <textarea
+                          name="explicacio_preu"
+                          value={formData.explicacio_preu}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                          placeholder="Detalli la justificació del preu..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Tramitat per OFI des de</label>
+                        <input
+                          type="date"
+                          name="data_ofi_inicial"
+                          value={formData.data_ofi_inicial || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                        />
+                      </div>
+
+                    </div>
+                  </SectionCard>
+                </div>
+              </div>
+            )}
+
+            {/* Factures */}
+            <div className="lg:col-span-3">
+              <div className="sticky top-0">
+                <SectionCard title="Factures">
+                  <div className="space-y-4">
+                    {isFacturesLoading ? (
+                      <div className="text-sm text-text-secondary">Carregant factures...</div>
+                    ) : (
+                      <>
+                        {factures.length > 0 ? (
+                          <div className="space-y-3">
+                            {factures.map((factura) => (
+                              <div key={factura.id} className="p-3 bg-slate-50 border border-slate-200 rounded-md relative group">
+                                {editingFacturaId === factura.id ? (
+                                  <div className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="block text-xs text-text-secondary mb-1">Data</label>
+                                        <input type="date" value={editFactura.data} onChange={e => setEditFactura({...editFactura, data: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-text-secondary mb-1">Expedient</label>
+                                        <input type="text" value={editFactura.expedient || ''} onChange={e => setEditFactura({...editFactura, expedient: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="block text-xs text-text-secondary mb-1">Núm Registre</label>
+                                        <input type="text" value={editFactura.numero_registre} onChange={e => setEditFactura({...editFactura, numero_registre: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" placeholder="ex: F/any/num" />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-text-secondary mb-1">Núm Factura</label>
+                                        <input type="text" value={editFactura.numero_factura} onChange={e => setEditFactura({...editFactura, numero_factura: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs text-text-secondary mb-1">Període</label>
+                                      <input type="text" value={editFactura.periode} onChange={e => setEditFactura({...editFactura, periode: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" placeholder="ex: Gener 2024" />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs text-text-secondary mb-1">Descripció</label>
+                                      <textarea value={editFactura.descripcio} onChange={e => setEditFactura({...editFactura, descripcio: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" rows={2} />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs text-text-secondary mb-1">Import total</label>
+                                      <input type="text" value={editFactura.import_total_str || ''} onChange={e => setEditFactura({...editFactura, import_total_str: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                    </div>
+                                    <div className="flex gap-2 pt-2">
+                                      <button type="button" onClick={handleUpdateFactura} className="flex-1 py-1.5 bg-accent text-white text-xs font-bold rounded hover:bg-accent-dark transition-colors">Guardar</button>
+                                      <button type="button" onClick={() => { setEditingFacturaId(null); setEditFactura({}); }} className="flex-1 py-1.5 bg-white text-text-secondary border border-border-light text-xs font-bold rounded hover:bg-slate-50 transition-colors">Cancel·lar</button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="text-xs text-text-secondary mb-1">{new Date(factura.data).toLocaleDateString('ca-ES')}</div>
+                                    <div className="text-sm font-medium">{factura.descripcio || 'Sense descripció'}</div>
+                                    <div className="text-xs text-text-secondary mt-1 grid grid-cols-2 gap-1">
+                                      {factura.expedient && <span className="col-span-2">Exp: {factura.expedient}</span>}
+                                      <span>Reg: {factura.numero_registre || '-'}</span>
+                                      <span>Fac: {factura.numero_factura || '-'}</span>
+                                      <span className="col-span-2">Període: {factura.periode || '-'}</span>
+                                    </div>
+                                    <div className="text-sm font-bold text-primary mt-2">{formatCurrency(Number(factura.import_total))}</div>
+                                    
+                                    {(user.role === 'Administrador' || user.role === 'Gestió') && (
+                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                          onClick={() => {
+                                            setEditingFacturaId(factura.id!);
+                                            setEditFactura({ ...factura, import_total_str: String(factura.import_total || '') });
+                                          }}
+                                          className="p-1 text-slate-400 hover:text-accent rounded"
+                                          title="Editar factura"
+                                        >
+                                          <Pencil size={16} />
+                                        </button>
+                                        <button
+                                          onClick={() => factura.id && handleDeleteFactura(factura.id)}
+                                          className="p-1 text-slate-400 hover:text-danger rounded"
+                                          title="Eliminar factura"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-text-secondary italic">No hi ha factures vinculades.</div>
+                        )}
+
+                        {(user.role === 'Administrador' || user.role === 'Gestió') && (
+                          <div className="pt-2 border-t border-border-light">
+                            {!showAddFactura ? (
+                              <button
+                                type="button"
+                                onClick={() => setShowAddFactura(true)}
+                                className="w-full py-2 flex items-center justify-center gap-2 text-sm font-medium text-accent border border-accent rounded-md hover:bg-accent/5 transition-colors"
+                              >
+                                <Plus size={16} /> Afegir factura
+                              </button>
+                            ) : (
+                              <div className="p-3 bg-blue-50 border border-blue-100 rounded-md space-y-3">
+                                <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Nova Factura</h4>
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="block text-xs text-text-secondary mb-1">Data</label>
+                                    <input type="date" value={newFactura.data} onChange={e => setNewFactura({...newFactura, data: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-text-secondary mb-1">Expedient</label>
+                                    <input type="text" value={newFactura.expedient || ''} onChange={e => setNewFactura({...newFactura, expedient: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="block text-xs text-text-secondary mb-1">Núm Registre</label>
+                                    <input type="text" value={newFactura.numero_registre} onChange={e => setNewFactura({...newFactura, numero_registre: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" placeholder="ex: F/any/num" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs text-text-secondary mb-1">Núm Factura</label>
+                                    <input type="text" value={newFactura.numero_factura} onChange={e => setNewFactura({...newFactura, numero_factura: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <label className="block text-xs text-text-secondary mb-1">Període</label>
+                                  <input type="text" value={newFactura.periode} onChange={e => setNewFactura({...newFactura, periode: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" placeholder="ex: Gener 2024" />
+                                </div>
+                                
+                                <div>
+                                  <label className="block text-xs text-text-secondary mb-1">Descripció</label>
+                                  <textarea value={newFactura.descripcio} onChange={e => setNewFactura({...newFactura, descripcio: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" rows={2} />
+                                </div>
+                                
+                                <div>
+                                  <label className="block text-xs text-text-secondary mb-1">Import total</label>
+                                  <input type="text" value={newFactura.import_total_str || ''} onChange={e => setNewFactura({...newFactura, import_total_str: e.target.value})} className="w-full px-2 py-1.5 border border-border-light rounded text-sm" />
+                                </div>
+                                
+                                <div className="flex gap-2 pt-2">
+                                  <button
+                                    type="button"
+                                    onClick={handleAddFactura}
+                                    className="flex-1 py-1.5 bg-accent text-white text-xs font-bold rounded hover:bg-accent-dark transition-colors"
+                                  >
+                                    Guardar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowAddFactura(false)}
+                                    className="flex-1 py-1.5 bg-white text-text-secondary border border-border-light text-xs font-bold rounded hover:bg-slate-50 transition-colors"
+                                  >
+                                    Cancel·lar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-border-light space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-text-secondary font-medium">Crèdit reconegut:</span>
+                      <span className="font-bold text-text-primary">{formatCurrency(creditReconegut)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-text-secondary font-medium">Crèdit disponible:</span>
+                      <span className={`font-bold ${creditDisponible < 0 ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(creditDisponible)}</span>
+                    </div>
+                  </div>
                 </SectionCard>
               </div>
             </div>

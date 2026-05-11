@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { generateInforme } from '../generateInforme';
+import { generateInforme, generateComunicacioOFI } from '../generateInforme';
+import { Record } from '../../types';
 
 // Mock docx-templates to avoid real DOCX processing in tests
 vi.mock('docx-templates', () => ({
@@ -8,27 +9,40 @@ vi.mock('docx-templates', () => ({
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function makeRecord(overrides: Record<string, any> = {}) {
+function makeRecord(overrides: Partial<Record> = {}): Record {
   return {
     id: 42,
-    organ_contractacio: 'UFAG Residència Bonanova',
-    responsable_contracte: 'Direcció de la Residència Bonanova',
-    nom: 'Joan Garcia',
+    hora: new Date().toISOString(),
     email: 'joan@example.com',
-    objecte_contracte: 'Subministrament de material sanitari',
+    nom: 'Joan Garcia',
+    responsable_contracte: 'Direcció de la Residència Bonanova',
+    centre_servei: 'Residència Bonanova',
+    organ_contractacio: 'UFAG Residència Bonanova',
     justificacio: 'Necessitat urgent',
+    objecte_contracte: 'Subministrament de material sanitari',
     caracteristiques_tecniques: 'Material estèril homologat',
     tipus_contracte: 'Subministrament',
+    tipus_despesa: 'Menor',
+    termini_execucio: 30,
     codi_cpv: '33140000',
-    base_imposable: 1000,
-    quota_iva: 210,
     partida_organica: '10',
     partida_programa: '31',
     partida_economica: '62700',
-    termini_execucio: 30,
+    base_imposable: 1000,
+    quota_iva: 210,
+    fitxers_pressupost: [],
+    detalls_addicionals: '',
     sistema_tramitacio: 'AD',
+    segex: '',
+    reg_factura: '',
+    relacio_q: '',
+    relacio_o: '',
+    finalitzat: false,
+    publicat: false,
+    created_by: 'user-123',
+    updated_at: new Date().toISOString(),
     ...overrides,
-  };
+  } as Record;
 }
 
 // ─── Template selection ───────────────────────────────────────────────────────
@@ -166,7 +180,77 @@ describe('generateInforme — import_total calculation', () => {
           record: expect.objectContaining({ id: record.id }),
           Organ_de_contractacio: record.organ_contractacio,
           Codi_dobjecte_contractual_CPV: record.codi_cpv,
-          Termini_dexecucio_o_durada_previstaen: '30 dies',
+        }),
+      })
+    );
+  });
+
+  it('should format data_ofi_inicial as DD/MM/YYYY in the OFI template record', async () => {
+    const { createReport } = await import('docx-templates');
+    const record = makeRecord({ sistema_tramitacio: 'OFI', data_ofi_inicial: '2025-03-15' });
+    await generateInforme(record);
+    expect(createReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          record: expect.objectContaining({
+            data_ofi_inicial: '15/03/2025',
+          }),
+        }),
+      })
+    );
+  });
+
+  it('should leave data_ofi_inicial as empty string when the field is null', async () => {
+    const { createReport } = await import('docx-templates');
+    const record = makeRecord({ sistema_tramitacio: 'OFI', data_ofi_inicial: null });
+    await generateInforme(record);
+    expect(createReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          record: expect.objectContaining({
+            data_ofi_inicial: '',
+          }),
+        }),
+      })
+    );
+  });
+});
+
+describe('generateComunicacioOFI', () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+    } as Response);
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+    vi.spyOn(document.body, 'appendChild').mockImplementation((n: any) => {
+      n.click = vi.fn();
+      return n;
+    });
+    vi.spyOn(document.body, 'removeChild').mockReturnValue({} as any);
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('should fetch the Comunicacio_OFI template', async () => {
+    await generateComunicacioOFI(makeRecord({ sistema_tramitacio: 'OFI' }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Comunicacio_OFI_proveidors.docx')
+    );
+  });
+
+  it('should map record and total correctly', async () => {
+    const { createReport } = await import('docx-templates');
+    const record = makeRecord({ id: 123, base_imposable: 100, quota_iva: 21 });
+    await generateComunicacioOFI(record);
+    expect(createReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          record: expect.objectContaining({ id: 123 }),
+          total: '121.00 €',
         }),
       })
     );

@@ -29,6 +29,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
     partida_organica: '',
     partida_programa: '',
     partida_economica: '',
+    num_rc: '',
     base_imposable: '',
     quota_iva: '',
     detalls_addicionals: ''
@@ -92,6 +93,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
         partida_organica: data.partida_organica || '',
         partida_programa: data.partida_programa || '',
         partida_economica: data.partida_economica || '',
+        num_rc: data.num_rc ? data.num_rc.toString() : '',
         base_imposable: data.base_imposable ? data.base_imposable.toString() : '',
         quota_iva: data.quota_iva ? data.quota_iva.toString() : '',
         detalls_addicionals: data.detalls_addicionals || ''
@@ -211,6 +213,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
           partida_organica: formData.partida_organica,
           partida_programa: formData.partida_programa,
           partida_economica: formData.partida_economica,
+          num_rc: formData.num_rc || null,
           base_imposable: parseFloat(formData.base_imposable),
           quota_iva: parseFloat(formData.quota_iva),
           detalls_addicionals: formData.detalls_addicionals || null,
@@ -229,7 +232,7 @@ export function FormView({ user, onSuccess }: FormViewProps) {
       setFormData({
         responsable_contracte: '', centre_servei: '', organ_contractacio: '', justificacio: '', objecte_contracte: '',
         caracteristiques_tecniques: '', tipus_contracte: '', tipus_despesa: '', termini_execucio: '',
-        codi_cpv: '', partida_organica: '', partida_programa: '', partida_economica: '',
+        codi_cpv: '', partida_organica: '', partida_programa: '', partida_economica: '', num_rc: '',
         base_imposable: '', quota_iva: '', detalls_addicionals: ''
       });
       setFiles([]);
@@ -390,6 +393,11 @@ export function FormView({ user, onSuccess }: FormViewProps) {
                 )}
               </div>
               <textarea required name="objecte_contracte" value={formData.objecte_contracte} onChange={handleChange} rows={4} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+              {formData.objecte_contracte.trim().length > 0 && !["Subministrament", "Servei", "Obra", "Concert"].includes(formData.objecte_contracte.trim().split(/\s+/)[0]) && (
+                <p className="text-red-600 text-xs mt-1 font-medium">
+                  L'objecte del contracte ha de començar amb la paraula "Subministrament de", "Servei de" u "Obra de"
+                </p>
+              )}
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -466,8 +474,13 @@ export function FormView({ user, onSuccess }: FormViewProps) {
                   <ExternalLink size={14} />
                 </a>
               </div>
-              <input required type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} placeholder="12345678" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <input required type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} placeholder="12340000" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               <CpvDescription code={formData.codi_cpv} />
+              {formData.codi_cpv.length === 8 && !formData.codi_cpv.endsWith('0000') && (
+                <p className="text-red-600 text-xs mt-1 font-medium">
+                  S'ha d'introduir un CPV amb nivell de 4 dígits (XXXX0000)
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Partida Orgànica *</label>
@@ -478,11 +491,15 @@ export function FormView({ user, onSuccess }: FormViewProps) {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Partida Programa *</label>
-              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} placeholder="12345" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} placeholder="21300" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Partida Econòmica *</label>
-              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} placeholder="12345" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <input required type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} placeholder="22199" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div>
+              <label htmlFor="num_rc" className="block text-sm font-medium text-slate-700 mb-1">Nº operació RC</label>
+              <input id="num_rc" type="text" inputMode="numeric" pattern="[0-9]*" name="num_rc" value={formData.num_rc} onChange={handleChange} placeholder="ex: 220260015212" className="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
             </div>
           </div>
         </section>
