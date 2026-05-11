@@ -777,6 +777,21 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                       <Field label="SEGEX" value={record.segex} />
                     )}
 
+                    {/* Botó Nou Dossier — visible only when sistema_tramitacio === 'OFI' */}
+                    {formData.sistema_tramitacio === 'OFI' && (
+                      <div className="mt-2">
+                        <a
+                          href="https://imas.secimallorca.net/segex/expediente.aspx?id=1497244&sc=200"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-dark transition-colors shadow-sm"
+                        >
+                          <Plus size={16} />
+                          Nou dossier
+                        </a>
+                      </div>
+                    )}
+
                     {/* The following fields are editable for ALL roles */}
 
                     <div>

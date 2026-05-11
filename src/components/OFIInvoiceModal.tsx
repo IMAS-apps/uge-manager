@@ -25,6 +25,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
     centre_servei: ofi.centre_servei,
     expedient_ofi: ofi.expedient_ofi,
     area: ofi.area || '',
+    descripcio: ofi.descripcio || '',
     justificacio_general: ofi.justificacio_general
   });
 
@@ -81,6 +82,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
           centre_servei: editData.centre_servei,
           expedient_ofi: editData.expedient_ofi,
           area: editData.area,
+          descripcio: editData.descripcio,
           justificacio_general: TEXTOS_JUSTIFICACIO_OFI[editData.area] || editData.justificacio_general,
           updated_at: new Date().toISOString()
         })
@@ -214,6 +216,16 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
                     </div>
                   </div>
                   <div>
+                    <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Descripció</label>
+                    <textarea
+                      name="descripcio"
+                      value={editData.descripcio}
+                      onChange={handleChange}
+                      rows={2}
+                      className="w-full text-sm px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary outline-none resize-none"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-[10px] font-bold text-text-secondary uppercase mb-1">Àrea</label>
                     <select
                       name="area"
@@ -236,6 +248,7 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
                           centre_servei: ofi.centre_servei,
                           expedient_ofi: ofi.expedient_ofi,
                           area: ofi.area || '',
+                          descripcio: ofi.descripcio || '',
                           justificacio_general: ofi.justificacio_general
                         });
                       }}
@@ -271,6 +284,10 @@ export function OFIInvoiceModal({ ofi, user, onClose, onRefresh }: OFIInvoiceMod
                     <div>
                       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Àrea</p>
                       <p className="text-sm font-medium text-text-primary">{ofi.area || 'Sense assignar'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Descripció</p>
+                      <p className="text-sm font-medium text-text-primary">{ofi.descripcio || '-'}</p>
                     </div>
                     <div className="col-span-2">
                       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Justificació</p>

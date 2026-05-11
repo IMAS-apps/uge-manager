@@ -46,6 +46,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
         codi_ofi: ofiToClone.codi_ofi,
         expedient_ofi: ofiToClone.expedient_ofi,
         centre_servei: ofiToClone.centre_servei,
+        descripcio: ofiToClone.descripcio || '',
         area: ofiToClone.area || '',
         justificacio_general: ofiToClone.justificacio_general || ''
       });
@@ -56,6 +57,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
     codi_ofi: '',
     expedient_ofi: '',
     centre_servei: '',
+    descripcio: '',
     area: '',
     justificacio_general: ''
   });
@@ -84,6 +86,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
           codi_ofi: formData.codi_ofi,
           expedient_ofi: formData.expedient_ofi,
           centre_servei: formData.centre_servei,
+          descripcio: formData.descripcio,
           area: formData.area,
           justificacio_general: TEXTOS_JUSTIFICACIO_OFI[formData.area] || '',
           created_by: user.id
@@ -98,6 +101,7 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
         codi_ofi: '',
         expedient_ofi: '',
         centre_servei: '',
+        descripcio: '',
         area: '',
         justificacio_general: ''
       });
@@ -200,6 +204,18 @@ export function OFIFormView({ user, onSuccess }: OFIFormViewProps) {
                 onChange={handleChange}
                 placeholder="Introduïu el centre o servei..."
                 className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1">Descripció</label>
+              <textarea
+                name="descripcio"
+                value={formData.descripcio}
+                onChange={handleChange}
+                placeholder="Descripció opcional de l'OFI..."
+                rows={2}
+                className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-none"
               />
             </div>
 

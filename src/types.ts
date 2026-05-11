@@ -69,6 +69,7 @@ export interface OFI {
   codi_ofi: string;
   expedient_ofi: string;
   centre_servei: string;
+  descripcio?: string;
   justificacio_general: string;
   area?: string;
   created_by: string;

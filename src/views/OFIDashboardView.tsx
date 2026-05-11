@@ -61,6 +61,7 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
       'Període': formatPeriod(o.data_min, o.data_max),
       'Codi OFI': o.codi_ofi,
       'Centre o servei': o.centre_servei,
+      'Descripció': o.descripcio || '-',
       'Àrea': o.area || 'Sense assignar',
       'Nº de factures': o.num_factures,
       'Import total': o.total_import,
@@ -80,7 +81,8 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
       const matchesSearch = 
         o.codi_ofi.toLowerCase().includes(searchLower) ||
         o.expedient_ofi.toLowerCase().includes(searchLower) ||
-        o.centre_servei.toLowerCase().includes(searchLower);
+        o.centre_servei.toLowerCase().includes(searchLower) ||
+        (o.descripcio && o.descripcio.toLowerCase().includes(searchLower));
       if (!matchesSearch) return false;
     }
 
@@ -321,6 +323,14 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
                     </th>
                     <th 
                       className="px-4 py-3 text-left text-[10px] font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
+                      onClick={() => handleSort('descripcio')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Descripció <SortIndicator field="descripcio" />
+                      </div>
+                    </th>
+                    <th 
+                      className="px-4 py-3 text-left text-[10px] font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-primary-dark transition-colors"
                       onClick={() => handleSort('area')}
                     >
                       <div className="flex items-center gap-1">
@@ -349,6 +359,9 @@ export function OFIDashboardView({ user, onNavigate }: OFIDashboardViewProps) {
                       </td>
                       <td className="px-4 py-4 text-sm text-text-secondary">
                         {ofi.centre_servei}
+                      </td>
+                      <td className="px-4 py-4 text-sm text-text-secondary italic line-clamp-1 max-w-[200px]" title={ofi.descripcio}>
+                        {ofi.descripcio || '-'}
                       </td>
                       <td className="px-4 py-4 text-sm text-text-secondary">
                         {ofi.area || '-'}
