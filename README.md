@@ -32,7 +32,7 @@ L'accés a la informació està protegit mitjançant **Row Level Security (RLS)*
     - Únic rol amb accés al mòdul **"Nou contracte"**.
     - Únic rol amb permisos d'edició/eliminació de **Contractes**.
     - Gestió d'usuaris (canvi de rols).
-    - **Creació i edició d'OFIs**.
+    - **Creació, edició i clonació d'OFIs**.
     - Gestió de fitxers pressupostaris (pujada i eliminació) des del modal de detalls de sol·licituds.
 
 ---
@@ -54,7 +54,7 @@ Gestiona el flux de peticions de les residències.
 - `base_imposable` (numeric), `quota_iva` (numeric): Dades financeres.
 - `codi_cpv`, `partida_organica`, `partida_programa`, `partida_economica`: Classificació administrativa.
 - `sistema_tramitacio`: `AD`, `ADO`, `OFI`, `REC`, `CF`, `R. PATRIMONIAL`.
-- `estat`: `publicat` (boolean), `finalitzat` (boolean).
+- `estat`: `publicat` (boolean), `adjudicat` (boolean), `finalitzat` (boolean).
 - `centre_servei`: Centre o servei sol·licitant (Residències, Centres de dia, etc.).
 - `fitxers_pressupost` (jsonb): Array d'objectes `{name, path, size}`. Administrables post-enviament pels Administradors.
 - `segex`, `adjudicatari`, `nif`, `reg_factura`, `relacio_q`, `relacio_o`: Referències de tramitació posterior.
@@ -114,6 +114,7 @@ Control i seguiment d'expedients de facturació interna.
 - `codi_ofi` (text): Codi de l'ordre (ex: 001/26).
 - `expedient_ofi` (text): Número d'expedient vinculat (ex: 1234567A).
 - `centre_servei` (text): Centre o servei (text lliure).
+- `area` (text): Àrea funcional (Gerència, Inclusió, etc.). Determina el text automàtic de la justificació.
 - `justificacio_general` (text): Descripció detallada de la justificació.
 - `created_by` (uuid, FK): Enllaç a `profiles.id`.
 - **Funcionalitat clau**: El botó "veure" del dashboard filtra automàticament la taula `factures` on `factura.expedient === ofi.expedient_ofi`.
@@ -141,6 +142,7 @@ L'aplicació compta amb dues vistes principals unificades pel nou menú de naveg
 ### A. Control de Sol·licituds
 - Plana principal on es llisten i es filtren totes les peticions de noves despeses.
 - Depenent del rol, es poden visualitzar, editar o eliminar els registres.
+- **Gestió Interna**: Els camps "Publicat", "Adjudicat" i "Finalitzat" només es mostren per a sistemes de tramitació `AD` i `ADO`.
 - Els registres de les referències SEGEX compten amb un botó de vinculació directa a l'adreça web pertinent.
 - Opcions d'exportació a Excel integrades.
 
@@ -152,6 +154,8 @@ L'aplicació compta amb dues vistes principals unificades pel nou menú de naveg
 ### C. Control d'OFIs
 - Mòdul intermedi per al seguiment d'Ordres de Facturació Interna.
 - Relaciona de manera dinàmica els expedients d'OFI amb les factures introduïdes al sistema mitjançant el número d'expedient.
+- **Clonació**: Permet crear una nova OFI pre-emplenant les dades d'una existent.
+- **Generació de Memòria**: Botó per descarregar un document Word (`.docx`) amb la "Memòria Justificativa", incloent la taula de factures i annexos de manera automatitzada.
 - Permet una traçabilitat directa entre l'ordre interna i l'execució comptable (factures).
 
 ---
@@ -178,7 +182,17 @@ Assegureu-vos d'utilitzar els valors exactes definits a `src/types.ts` per evita
 
 ---
 
-## 🛠️ 7. Desenvolupament
+## 🔍 7. Regles de Validació i Integritat
+
+El sistema implementa validacions en temps real per garantir la qualitat de les dades:
+
+- **Objecte del Contracte**: El camp ha de començar obligatòriament amb una de les paraules clau: `Subministrament`, `Servei`, `Obra` o `Concert`. En cas contrari, es mostra un avís en vermell.
+- **Codi CPV**: Si el codi té 8 dígits, es recomana (avís en vermell) que acabi en `0000` per mantenir un nivell de categorització adequat segons els estàndards del departament.
+- **Lots de Contracte**: Tot contracte nou ha de tenir, com a mínim, un lot associat. Si el contracte no té lots diferenciats, el sistema n'auto-genera un amb el nom del contracte.
+
+---
+
+## 🛠️ 8. Desenvolupament
 
 ```bash
 # Instal·lació
