@@ -5,7 +5,7 @@ import { EditModal } from '../components/EditModal';
 import { CpvDescription } from '../components/CpvDescription';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
-// import { generateInforme } from '../utils/generateInforme'; // Switched to dynamic import below
+import { formatDate } from '../utils/contractHelpers';
 
 interface DashboardViewProps {
   user: User;
@@ -371,19 +371,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
     return new Intl.NumberFormat('ca-ES', { style: 'currency', currency: 'EUR' }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ca-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
+
 
   const showResponsableColumn = filterResponsable === '' && filterOrgan === '';
 

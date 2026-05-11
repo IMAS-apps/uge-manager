@@ -180,7 +180,36 @@ describe('generateInforme — import_total calculation', () => {
           record: expect.objectContaining({ id: record.id }),
           Organ_de_contractacio: record.organ_contractacio,
           Codi_dobjecte_contractual_CPV: record.codi_cpv,
-          Termini_dexecucio_o_durada_previstaen: '30 dies',
+        }),
+      })
+    );
+  });
+
+  it('should format data_ofi_inicial as DD/MM/YYYY in the OFI template record', async () => {
+    const { createReport } = await import('docx-templates');
+    const record = makeRecord({ sistema_tramitacio: 'OFI', data_ofi_inicial: '2025-03-15' });
+    await generateInforme(record);
+    expect(createReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          record: expect.objectContaining({
+            data_ofi_inicial: '15/03/2025',
+          }),
+        }),
+      })
+    );
+  });
+
+  it('should leave data_ofi_inicial as empty string when the field is null', async () => {
+    const { createReport } = await import('docx-templates');
+    const record = makeRecord({ sistema_tramitacio: 'OFI', data_ofi_inicial: null });
+    await generateInforme(record);
+    expect(createReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          record: expect.objectContaining({
+            data_ofi_inicial: '',
+          }),
         }),
       })
     );

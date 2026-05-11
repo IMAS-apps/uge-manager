@@ -64,6 +64,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     data_ofi_inicial: record.data_ofi_inicial || '',
     adjudicatari: record.adjudicatari || '',
     nif: record.nif || '',
+    adjudicat: record.adjudicat ?? false,
     detalls_addicionals: record.detalls_addicionals || ''
   });
 
