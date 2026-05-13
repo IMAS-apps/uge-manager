@@ -45,6 +45,20 @@ describe('formatDate', () => {
     // ca-ES format: 15/06/2025
     expect(result).toMatch(/15\/06\/2025/);
   });
+
+  it('should correctly format a full ISO timestamp', () => {
+    const result = formatDate('2026-04-10T07:03:22.417Z');
+    // The exact day might depend on the runner's timezone, but it shouldn't be "Invalid Date" or the original string
+    // 2026-04-10T07:03:22.417Z is 10/04/2026 in many timezones (UTC, CET)
+    expect(result).toMatch(/\d{2}\/\d{2}\/2026/);
+    expect(result).not.toBe('2026-04-10T07:03:22.417Z');
+    expect(result).not.toBe('Invalid Date');
+  });
+
+  it('should return the original string if it is not a valid date', () => {
+    const invalid = 'not-a-date';
+    expect(formatDate(invalid)).toBe(invalid);
+  });
 });
 
 // ─── getContractDates ────────────────────────────────────────────────────────

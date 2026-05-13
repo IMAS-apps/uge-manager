@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, JUSTIFICACIO_PREU_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI, Factura } from '../types';
 import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2, UploadCloud, Plus, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { formatDate } from '../utils/contractHelpers';
 import { CpvDescription } from './CpvDescription';
 
 interface EditModalProps {
@@ -347,7 +348,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               <SectionCard title="Identificació">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <Field label="Id" value={`#${record.id}`} />
-                  <Field label="Hora" value={record.hora} />
+                  <Field label="Hora" value={formatDate(record.hora)} />
                   <Field label="Correu electrònic" value={record.email} />
                   <Field label="Nom" value={record.nom} />
                   
@@ -1004,27 +1005,25 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                                     </div>
                                     <div className="text-sm font-bold text-primary mt-2">{formatCurrency(Number(factura.import_total))}</div>
                                     
-                                    {(user.role === 'Administrador' || user.role === 'Gestió') && (
-                                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                          onClick={() => {
-                                            setEditingFacturaId(factura.id!);
-                                            setEditFactura({ ...factura, import_total_str: String(factura.import_total || '') });
-                                          }}
-                                          className="p-1 text-slate-400 hover:text-accent rounded"
-                                          title="Editar factura"
-                                        >
-                                          <Pencil size={16} />
-                                        </button>
-                                        <button
-                                          onClick={() => factura.id && handleDeleteFactura(factura.id)}
-                                          className="p-1 text-slate-400 hover:text-danger rounded"
-                                          title="Eliminar factura"
-                                        >
-                                          <Trash2 size={16} />
-                                        </button>
-                                      </div>
-                                    )}
+                                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button
+                                        onClick={() => {
+                                          setEditingFacturaId(factura.id!);
+                                          setEditFactura({ ...factura, import_total_str: String(factura.import_total || '') });
+                                        }}
+                                        className="p-1 text-slate-400 hover:text-accent rounded"
+                                        title="Editar factura"
+                                      >
+                                        <Pencil size={16} />
+                                      </button>
+                                      <button
+                                        onClick={() => factura.id && handleDeleteFactura(factura.id)}
+                                        className="p-1 text-slate-400 hover:text-danger rounded"
+                                        title="Eliminar factura"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
                                   </>
                                 )}
                               </div>
@@ -1034,7 +1033,6 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                           <div className="text-sm text-text-secondary italic">No hi ha factures vinculades.</div>
                         )}
 
-                        {(user.role === 'Administrador' || user.role === 'Gestió') && (
                           <div className="pt-2 border-t border-border-light">
                             {!showAddFactura ? (
                               <button
@@ -1104,7 +1102,6 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                               </div>
                             )}
                           </div>
-                        )}
                       </>
                     )}
                   </div>
