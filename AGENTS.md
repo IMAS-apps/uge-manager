@@ -60,12 +60,12 @@ e2e/
 
 ## 3. Rols de l'aplicació (RBAC)
 
-| Rol | Sol·licituds | Contractes | Usuaris | Formulari nou |
-|-----|-------------|-----------|---------|--------------|
-| **Lectura** | Veure | Veure | ✗ | ✗ |
-| **Peticions** | Crear + veure propis | Veure | ✗ | ✓ Sol·licituds |
-| **Gestió** | Editar tots | Veure | ✗ | ✓ Sol·licituds |
-| **Administrador** | Control total | Control total | ✓ | ✓ Tot |
+| Rol | Sol·licituds | Contractes | Factures | Usuaris | Formulari nou |
+|-----|-------------|-----------|----------|---------|--------------|
+| **Lectura** | Veure | Veure | ✓ | ✗ | ✗ |
+| **Peticions** | Crear + veure propis | Veure | ✓ | ✗ | ✓ Sol·licituds |
+| **Gestió** | Editar tots | Veure | ✓ | ✗ | ✓ Sol·licituds |
+| **Administrador** | Control total | Control total | ✓ | ✓ | ✓ Tot |
 
 Guards implementats a `App.tsx` (línies ~132-145 i ~214-229). **Mai eliminar ni relaxar aquests guards.**
 

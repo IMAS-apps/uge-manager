@@ -25,8 +25,8 @@ L'aplicació és una **Single Page Application (SPA)** moderna amb una arquitect
 L'accés a la informació està protegit mitjançant **Row Level Security (RLS)** a nivell de base de dades. El sistema identifica l'usuari mitjançant el seu JWT i consulta el seu rol a la taula `profiles`.
 
 ### Rols Principals:
-1.  **Lectura**: Pot veure el dashboard de sol·licituds i contractes. No pot crear ni editar. No veu el mòdul de "Nou contracte".
-2.  **Peticions**: Pot crear noves Sol·licituds de despesa. Rep notificacions quan les seves peticions són actualitzades per un gestor.
+1.  **Lectura**: Pot veure el dashboard de sol·licituds i contractes. No pot crear ni editar la majoria de camps. No veu el mòdul de "Nou contracte". **Pot afegir, editar i eliminar factures** a les sol·licituds.
+2.  **Peticions**: Pot crear noves Sol·licituds de despesa. Rep notificacions quan les seves peticions són actualitzades per un gestor. **Pot gestionar les factures** de les sol·licituds.
 3.  **Gestió**: Pot editar totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.) i **crear/editar OFIs**. Rep notificacions de noves peticions d'altres usuaris.
 4.  **Administrador**: Control total del sistema.
     - Únic rol amb accés al mòdul **"Nou contracte"**.
@@ -77,7 +77,7 @@ Relació **1:N** amb `records`.
 - **Camps Autocalculats (UI)**:
   - `Crèdit reconegut`: Sumatori d'import total de les factures vinculades.
   - `Crèdit disponible`: Resta entre el total de la sol·licitud (Base + IVA) i el crèdit reconegut.
-- **RLS**: Tots els usuaris poden llegir. Només `Administrador` i `Gestió` poden afegir, modificar o eliminar.
+- **RLS**: Tots els usuaris autenticats poden llegir, afegir, modificar o eliminar factures.
 
 ### D. Taula `contracts` (Mòdul Contractes)
 Dades mestre dels contractes vigents.
