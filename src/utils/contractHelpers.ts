@@ -14,7 +14,19 @@ import { ContractLot } from '../types';
 export function formatDate(d?: string | null): string {
   if (!d) return '—';
   try {
-    const dt = new Date(d + 'T00:00:00');
+    // Si d és una cadena de data pura (YYYY-MM-DD), afegim T00:00:00 per forçar parsing local.
+    // Si ja té 'T' o espais (timestamp complet), la deixem tal qual.
+    const dateToParse = (d.length === 10 && !d.includes('T') && !d.includes(' ')) 
+      ? d + 'T00:00:00' 
+      : d;
+    
+    const dt = new Date(dateToParse);
+    
+    // Si la data no és vàlida, dt.getTime() serà NaN
+    if (isNaN(dt.getTime())) {
+      return d;
+    }
+
     return dt.toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
   } catch {
     return d;

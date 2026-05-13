@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, JUSTIFICACIO_PREU_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI, Factura } from '../types';
 import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2, UploadCloud, Plus, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { formatDate } from '../utils/contractHelpers';
 import { CpvDescription } from './CpvDescription';
 
 interface EditModalProps {
@@ -347,7 +348,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               <SectionCard title="Identificació">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <Field label="Id" value={`#${record.id}`} />
-                  <Field label="Hora" value={record.hora} />
+                  <Field label="Hora" value={formatDate(record.hora)} />
                   <Field label="Correu electrònic" value={record.email} />
                   <Field label="Nom" value={record.nom} />
                   
