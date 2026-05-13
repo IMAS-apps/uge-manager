@@ -69,7 +69,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
       const record = records.find(r => r.id === pendingOpenPeticioId);
       if (record) {
         setSelectedRecord(record);
-        setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view');
+        setModalMode(user.role !== 'Lectura' ? 'edit' : 'view');
         if (onPendingOpenHandled) {
           onPendingOpenHandled();
         }
@@ -797,7 +797,7 @@ export function DashboardView({ user, onNavigate, pendingOpenPeticioId, onPendin
                                   onClick={(e) => { 
                                     e.stopPropagation();
                                     setSelectedRecord(record); 
-                                    setModalMode(user.role === 'Gestió' || user.role === 'Administrador' ? 'edit' : 'view'); 
+                                    setModalMode(user.role !== 'Lectura' ? 'edit' : 'view'); 
                                   }}
                                   className="flex items-center justify-center w-[28px] h-[28px] rounded hover:bg-slate-100 text-[#0072BC] transition-colors"
                                   title="Veure detalls"
