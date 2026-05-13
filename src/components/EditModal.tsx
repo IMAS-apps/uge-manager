@@ -354,7 +354,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div className="col-span-1 md:col-span-2">
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Responsable del contracte</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <select name="responsable_contracte" value={formData.responsable_contracte} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
                         <option value="">Seleccioni una opció</option>
                         {RESPONSABLES.map(r => <option key={r} value={r}>{r}</option>)}
@@ -366,7 +366,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
 
                   <div className="col-span-1 md:col-span-2">
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Centre/Servei</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <select name="centre_servei" value={formData.centre_servei} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
                         <option value="">Seleccioni una opció</option>
                         {CENTRES_SERVEI.map(c => <option key={c} value={c}>{c}</option>)}
@@ -378,7 +378,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div className="col-span-1 md:col-span-2">
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Òrgan de contractació</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <select name="organ_contractacio" value={formData.organ_contractacio} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
                         <option value="">Seleccioni una opció</option>
                         {ORGANS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -395,7 +395,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Justificació de la necessitat</label>
-                      {mode === 'edit' && user.role === 'Administrador' && formData.justificacio.trim() && (
+                      {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') && formData.justificacio.trim() && (
                         <button
                           type="button"
                           onClick={() => handleAIAssist('justificacio')}
@@ -412,7 +412,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         </button>
                       )}
                     </div>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <textarea name="justificacio" value={formData.justificacio} onChange={handleChange} form="edit-form" rows={3} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.justificacio || '—'}</div>
@@ -422,7 +422,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Objecte del contracte</label>
-                      {mode === 'edit' && user.role === 'Administrador' && formData.objecte_contracte.trim() && (
+                      {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') && formData.objecte_contracte.trim() && (
                         <button
                           type="button"
                           onClick={() => handleAIAssist('objecte_contracte')}
@@ -439,7 +439,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         </button>
                       )}
                     </div>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <textarea name="objecte_contracte" value={formData.objecte_contracte} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.objecte_contracte || '—'}</div>
@@ -449,7 +449,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Característiques tècniques (Opcional)</label>
-                      {mode === 'edit' && user.role === 'Administrador' && formData.caracteristiques_tecniques.trim() && (
+                      {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') && formData.caracteristiques_tecniques.trim() && (
                         <button
                           type="button"
                           onClick={() => handleAIAssist('caracteristiques_tecniques')}
@@ -466,7 +466,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         </button>
                       )}
                     </div>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <textarea name="caracteristiques_tecniques" value={formData.caracteristiques_tecniques} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.caracteristiques_tecniques || '—'}</div>
@@ -479,7 +479,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Tipus de contracte</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <select name="tipus_contracte" value={formData.tipus_contracte} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
                         <option value="">Selecciona un tipus</option>
                         <option value="Subministrament">Subministrament</option>
@@ -493,7 +493,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Tipus de despesa</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <select name="tipus_despesa" value={formData.tipus_despesa} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
                         <option value="">Seleccioni una opció</option>
                         <option value="Puntual">Puntual</option>
@@ -506,7 +506,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Termini d'execució (dies)</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                       <input type="number" min="1" name="termini_execucio" value={formData.termini_execucio} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.termini_execucio || '—'}</div>
@@ -519,7 +519,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Codi CPV</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && user.role !== 'Lectura' ? (
                       <>
                         <input type="text" pattern="\d{8}" title="Ha de tenir 8 dígits" name="codi_cpv" value={formData.codi_cpv} onChange={handleChange} form="edit-form" placeholder="12340000" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                         <CpvDescription code={formData.codi_cpv} />
@@ -539,7 +539,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Orgànica</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && user.role !== 'Lectura' ? (
                       <select name="partida_organica" value={formData.partida_organica} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm">
                         <option value="">Seleccioni</option>
                         {PARTIDES_ORGANIQUES.map(p => <option key={p} value={p}>{p}</option>)}
@@ -551,7 +551,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Programa</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && user.role !== 'Lectura' ? (
                       <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_programa" value={formData.partida_programa} onChange={handleChange} form="edit-form" placeholder="21300" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_programa || '—'}</div>
@@ -560,7 +560,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Partida Econòmica</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && user.role !== 'Lectura' ? (
                       <input type="text" pattern="\d{5}" title="Ha de tenir 5 dígits" name="partida_economica" value={formData.partida_economica} onChange={handleChange} form="edit-form" placeholder="22199" className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.partida_economica || '—'}</div>
@@ -579,7 +579,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   {formData.partida_economica && formData.partida_economica.startsWith('6') && (
                     <div className="col-span-1 md:col-span-2 mt-2 p-4 bg-red-50 rounded-lg border border-red-100">
                       <label className="block text-xs font-semibold text-red-800 uppercase tracking-wider mb-1">Projecte de despesa cap. VI</label>
-                      {mode === 'edit' && user.role === 'Administrador' ? (
+                      {mode === 'edit' && user.role !== 'Lectura' ? (
                         <input type="text" name="projecte_despesa_cap_vi" value={formData.projecte_despesa_cap_vi} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 border border-red-200 rounded-md focus:ring-2 focus:ring-red-400 text-sm" placeholder="Introduir projecte..." />
                       ) : (
                         <div className="text-red-900 text-sm font-medium whitespace-pre-wrap">{formData.projecte_despesa_cap_vi || '—'}</div>
@@ -593,7 +593,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 items-center">
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Base Imposable (sense IVA)</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && user.role !== 'Lectura' ? (
                       <div className="relative">
                         <input type="number" step="0.01" min="0" name="base_imposable" value={formData.base_imposable} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 pr-8 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                         <span className="absolute right-3 top-2 text-text-secondary">€</span>
@@ -605,7 +605,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Quota d'IVA</label>
-                    {mode === 'edit' && user.role === 'Administrador' ? (
+                    {mode === 'edit' && user.role !== 'Lectura' ? (
                       <div className="relative">
                         <input type="number" step="0.01" min="0" name="quota_iva" value={formData.quota_iva} onChange={handleChange} form="edit-form" className="w-full px-3 py-2 pr-8 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm" />
                         <span className="absolute right-3 top-2 text-text-secondary">€</span>
@@ -623,7 +623,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               </SectionCard>
 
               <SectionCard title="Documentació">
-                {mode === 'edit' && user.role === 'Administrador' ? (
+                {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
                   <div className="space-y-3">
                     {uploadError && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-xs font-medium">
@@ -719,7 +719,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
               </SectionCard>
 
               <SectionCard title="Notes">
-                {user.role === 'Administrador' ? (
+                {user.role === 'Administrador' || user.role === 'Gestió' ? (
                   <div>
                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Detalls addicionals</label>
                     <textarea
