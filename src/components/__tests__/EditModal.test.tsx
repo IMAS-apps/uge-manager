@@ -185,4 +185,25 @@ describe('EditModal', () => {
 
     expect(screen.queryByText('Detalls OFI')).not.toBeInTheDocument();
   });
+
+  it('should render Justificació selecció tercer field below NIF', async () => {
+    render(
+      <EditModal 
+        record={mockRecord as any} 
+        user={{ ...mockUser, role: 'Lectura' } as any} 
+        mode="view" 
+        onClose={vi.fn()} 
+        onSave={vi.fn()} 
+        onDeleteRequest={vi.fn()} 
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregant factures/i)).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Justificació selecció tercer')).toBeInTheDocument();
+    const select = screen.getByRole('combobox', { name: /Justificació selecció tercer/i });
+    expect(select).toBeInTheDocument();
+  });
 });

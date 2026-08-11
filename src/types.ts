@@ -36,6 +36,7 @@ export interface Record {
   data_ofi_inicial?: string | null;
   adjudicatari?: string;
   nif?: string;
+  motivacio_seleccio?: string;
   sistema_tramitacio: string;
   segex: string;
   reg_factura: string;
@@ -215,6 +216,18 @@ export const JUSTIFICACIO_PREU_OPTIONS = [
   "a) Sol·licitats i comparats pressuposts de proveïdors diferents, els preus dels serveis contractats i/o subministraments efectuats s’ajusten als preus de mercat.",
   "b) El/la tècnic/a responsable de la despesa ha realitzat consultes al mercat i ha emès l’informe econòmic que s’adjunta, que justifica que els preus aplicats s’ajusten al mercat.",
   "c) Els preus facturats es mantenen en les mateixes condicions que es venien aplicant durant la duració del contracte (o concert) anterior."
+];
+
+export const MOTIVACIO_SELECCIO_OPTIONS = [
+  "",
+  "tercer que disposa de la capacitat tècnica i mitjans materials immediats per a l'execució de la prestació en una situació de necessitat urgent no previsible que impossibilitava la tramitació prèvia",
+  "tercer que compta amb coneixements tècnics o especialitzats de caràcter exclusiu en la matèria",
+  "tercer que venia prestant el servei correctament i ha permès garantir la continuïtat d'un servei públic de caràcter essencial o ininterromput",
+  "tercer que ha ofert la proposta econòmica més avantatjosa d'acord amb la relació qualitat-preu",
+  "tercer que disposa del coneixement del context i l'històric de la instal·lació o servei per haver-hi actuat prèviament",
+  "tercer que compta amb la condició de proveïdor únic o distribuïdor exclusiu del bé o servei en el mercat",
+  "tercer que ha estat seleccionat per raons de compatibilitat tècnica i homogeneïtzació amb els equips o sistemes preexistents",
+  "tercer que ofereix les millors garanties d'eficiència, eficàcia i solvència per a la realització de la prestació"
 ];
 
 // ── Contract module constants ────────────────────────────────────────────────

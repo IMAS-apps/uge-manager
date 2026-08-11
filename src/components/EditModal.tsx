@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, JUSTIFICACIO_PREU_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI, Factura } from '../types';
+import { Record, User, SISTEMES_TRAMITACIO, MOTIVACIO_OPTIONS, JUSTIFICACIO_PREU_OPTIONS, MOTIVACIO_SELECCIO_OPTIONS, RESPONSABLES, ORGANS, PARTIDES_ORGANIQUES, CENTRES_SERVEI, Factura } from '../types';
 import { X, FileText, Download, Save, Info, Trash2, CheckCircle2, Wand2, UploadCloud, Plus, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { formatDate } from '../utils/contractHelpers';
@@ -65,6 +65,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
     data_ofi_inicial: record.data_ofi_inicial || '',
     adjudicatari: record.adjudicatari || '',
     nif: record.nif || '',
+    motivacio_seleccio: record.motivacio_seleccio || '',
     adjudicat: record.adjudicat ?? false,
     detalls_addicionals: record.detalls_addicionals || ''
   });
@@ -815,6 +816,22 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
                       />
+                    </div>
+
+                    <div>
+                      <label htmlFor="motivacio_seleccio" className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1">Justificació selecció tercer</label>
+                      <select
+                        id="motivacio_seleccio"
+                        name="motivacio_seleccio"
+                        value={formData.motivacio_seleccio}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"
+                      >
+                        <option value="">Seleccioni una opció</option>
+                        {MOTIVACIO_SELECCIO_OPTIONS.slice(1).map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* Camps Reg. Factura, Relació Q, Relació O ocultats a la UI, es mantenen a la base de dades */}

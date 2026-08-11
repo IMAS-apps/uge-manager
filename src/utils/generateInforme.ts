@@ -199,7 +199,7 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
         // 2. Fetch factures linked to this OFI, with their parent record data
         const { data: facturesData, error: facturesError } = await (supabase as any)
             .from('factures')
-            .select('*, records(nom, objecte_contracte, adjudicatari, nif, motivacio_no_contractacio, justificacio_preu, partida_organica, partida_programa, partida_economica, tipus_contracte, data_ofi_inicial, explicacio_no_contractacio, explicacio_preu, segex, justificacio)')
+            .select('*, records(nom, objecte_contracte, adjudicatari, nif, motivacio_seleccio, motivacio_no_contractacio, justificacio_preu, partida_organica, partida_programa, partida_economica, tipus_contracte, data_ofi_inicial, explicacio_no_contractacio, explicacio_preu, segex, justificacio)')
             .eq('expedient', ofi.expedient_ofi)
             .order('data', { ascending: true });
 
@@ -240,9 +240,11 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
                 import_total: fmtCurrency(f.import_total),
                 adjudicatari: f.adjudicatari || rec?.adjudicatari || '',
                 nif: f.nif || rec?.nif || '',
+                motivacio_seleccio: f.motivacio_seleccio || rec?.motivacio_seleccio || '',
                 record: {
                     adjudicatari: rec?.adjudicatari || '',
                     nif: rec?.nif || '',
+                    motivacio_seleccio: rec?.motivacio_seleccio || '',
                     motivacio_no_contractacio: rec?.motivacio_no_contractacio || '',
                     justificacio_preu: rec?.justificacio_preu || '',
                     justificacio: rec?.justificacio || '',
