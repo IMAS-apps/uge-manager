@@ -345,6 +345,11 @@ describe('generateMemoriaOFI', () => {
     expect(createReport).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          factures_a: expect.arrayContaining([
+            expect.objectContaining({
+              descripcio: 'Factura 1',
+            }),
+          ]),
           factures: expect.arrayContaining([
             expect.objectContaining({
               descripcio: 'Factura 1',

@@ -263,6 +263,10 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
             };
         });
 
+        // Filter factures by motivacio_no_contractacio_short for conditional template sections
+        const filterByShort = (prefix: string) =>
+            factures.filter((f: any) => f.record?.motivacio_no_contractacio_short === prefix);
+
         // 6. Build data object
         const data = {
             ofi: {
@@ -274,6 +278,12 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
                 total_import: fmtCurrency(ofi.total_import),
             },
             factures,
+            factures_a: filterByShort('a)'),
+            factures_b: filterByShort('b)'),
+            factures_c: filterByShort('c)'),
+            factures_d: filterByShort('d)'),
+            factures_e: filterByShort('e)'),
+            factures_f: filterByShort('f)'),
         };
 
         // 7. Generate document
