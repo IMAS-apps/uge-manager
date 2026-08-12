@@ -199,7 +199,7 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
         // 2. Fetch factures linked to this OFI, with their parent record data
         const { data: facturesData, error: facturesError } = await (supabase as any)
             .from('factures')
-            .select('*, records(nom, objecte_contracte, adjudicatari, nif, motivacio_no_contractacio, justificacio_preu, partida_organica, partida_programa, partida_economica, tipus_contracte, data_ofi_inicial, explicacio_no_contractacio, explicacio_preu, segex)')
+            .select('*, records(nom, objecte_contracte, adjudicatari, nif, motivacio_seleccio, motivacio_no_contractacio, justificacio_preu, partida_organica, partida_programa, partida_economica, tipus_contracte, data_ofi_inicial, explicacio_no_contractacio, explicacio_preu, segex, justificacio)')
             .eq('expedient', ofi.expedient_ofi)
             .order('data', { ascending: true });
 
@@ -229,31 +229,45 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
         };
 
         // 5. Build factures array for template
-        const factures = (facturesData || []).map((f: any) => ({
-            descripcio: f.descripcio || '',
-            periode: f.periode || '',
-            numero_registre: f.numero_registre || '',
-            numero_factura: f.numero_factura || '',
-            data: fmtDate(f.data),
-            import_total: fmtCurrency(f.import_total),
-            record: {
-                adjudicatari: f.records?.adjudicatari || '',
-                nif: f.records?.nif || '',
-                motivacio_no_contractacio: f.records?.motivacio_no_contractacio || '',
-                justificacio_preu: f.records?.justificacio_preu || '',
-                // Table-only fields: truncated to first 2 chars (e.g. "a)")
-                motivacio_no_contractacio_short: (f.records?.motivacio_no_contractacio || '').substring(0, 2),
-                justificacio_preu_short: (f.records?.justificacio_preu || '').substring(0, 2),
-                partida_organica: f.records?.partida_organica || '',
-                partida_programa: f.records?.partida_programa || '',
-                partida_economica: f.records?.partida_economica || '',
-                tipus_contracte: f.records?.tipus_contracte || '',
-                data_ofi_inicial: fmtDate(f.records?.data_ofi_inicial),
-                explicacio_no_contractacio: f.records?.explicacio_no_contractacio || '',
-                explicacio_preu: f.records?.explicacio_preu || '',
-                segex: f.records?.segex || '',
-            },
-        }));
+        const factures = (facturesData || []).map((f: any) => {
+            const rec = Array.isArray(f.records) ? f.records[0] : f.records;
+            return {
+                descripcio: f.descripcio || '',
+                periode: f.periode || '',
+                numero_registre: f.numero_registre || '',
+                numero_factura: f.numero_factura || '',
+                data: fmtDate(f.data),
+                import_total: fmtCurrency(f.import_total),
+                adjudicatari: f.adjudicatari || rec?.adjudicatari || '',
+                nif: f.nif || rec?.nif || '',
+                motivacio_seleccio: f.motivacio_seleccio || rec?.motivacio_seleccio || '',
+                record: {
+                    adjudicatari: rec?.adjudicatari || '',
+                    nif: rec?.nif || '',
+                    motivacio_seleccio: rec?.motivacio_seleccio || '',
+                    motivacio_no_contractacio: rec?.motivacio_no_contractacio || '',
+                    justificacio_preu: rec?.justificacio_preu || '',
+                    justificacio: rec?.justificacio || '',
+                    // Table-only fields: truncated to first 2 chars (e.g. "a)")
+                    motivacio_no_contractacio_short: (rec?.motivacio_no_contractacio || '').substring(0, 2),
+                    justificacio_preu_short: (rec?.justificacio_preu || '').substring(0, 2),
+                    partida_organica: rec?.partida_organica || '',
+                    partida_programa: rec?.partida_programa || '',
+                    partida_economica: rec?.partida_economica || '',
+                    tipus_contracte: rec?.tipus_contracte || '',
+                    data_ofi_inicial: fmtDate(rec?.data_ofi_inicial),
+                    explicacio_no_contractacio: rec?.explicacio_no_contractacio || '',
+                    explicacio_preu: rec?.explicacio_preu || '',
+                    segex: rec?.segex || '',
+                },
+            };
+        });
+
+        // Filter factures by motivacio_no_contractacio_short and justificacio_preu_short for conditional template sections
+        const filterByMotivacioShort = (prefix: string) =>
+            factures.filter((f: any) => f.record?.motivacio_no_contractacio_short === prefix);
+        const filterByPreuShort = (prefix: string) =>
+            factures.filter((f: any) => f.record?.justificacio_preu_short === prefix);
 
         // 6. Build data object
         const data = {
@@ -266,6 +280,15 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
                 total_import: fmtCurrency(ofi.total_import),
             },
             factures,
+            factures_a: filterByMotivacioShort('a)'),
+            factures_b: filterByMotivacioShort('b)'),
+            factures_c: filterByMotivacioShort('c)'),
+            factures_d: filterByMotivacioShort('d)'),
+            factures_e: filterByMotivacioShort('e)'),
+            factures_f: filterByMotivacioShort('f)'),
+            factures_preu_a: filterByPreuShort('a)'),
+            factures_preu_b: filterByPreuShort('b)'),
+            factures_preu_c: filterByPreuShort('c)'),
         };
 
         // 7. Generate document

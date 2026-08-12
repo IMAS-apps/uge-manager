@@ -403,6 +403,7 @@ export type Database = {
           justificacio: string
           justificacio_preu: string | null
           motivacio_no_contractacio: string | null
+          motivacio_seleccio: string | null
           nif: string | null
           nom: string
           num_rc: string | null
@@ -445,6 +446,7 @@ export type Database = {
           justificacio: string
           justificacio_preu?: string | null
           motivacio_no_contractacio?: string | null
+          motivacio_seleccio?: string | null
           nif?: string | null
           nom: string
           num_rc?: string | null
@@ -487,6 +489,7 @@ export type Database = {
           justificacio?: string
           justificacio_preu?: string | null
           motivacio_no_contractacio?: string | null
+          motivacio_seleccio?: string | null
           nif?: string | null
           nom?: string
           num_rc?: string | null

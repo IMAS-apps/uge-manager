@@ -36,6 +36,7 @@ export interface Record {
   data_ofi_inicial?: string | null;
   adjudicatari?: string;
   nif?: string;
+  motivacio_seleccio?: string;
   sistema_tramitacio: string;
   segex: string;
   reg_factura: string;
@@ -202,19 +203,31 @@ export const PARTIDES_ORGANIQUES = ["00", "10", "20", "30", "40", "50", "60"];
 
 export const MOTIVACIO_OPTIONS = [
   "",
-  "a) Finalització del contracte o de les pròrrogues sense haver iniciat una nova licitació. \nNo s’havia tramitat a temps el nou expedient i, per evitar perjudicis, el proveïdor va continuar prestant el servei.",
-  "b) Finalització d’un concert social sense nova convocatòria. \nLa prestació era imprescindible i no existia concert vigent.",
-  "c) Licitació publicada però resultant deserta. \nLa manca d’ofertes va obligar a mantenir la prestació per garantir el servei.",
-  "d) Fraccionament per la naturalesa repetitiva de les despeses. \nDespeses recurrents que, per volum anual, superen els llindars de contracte menor.",
-  "e) Manca de mitjans personals per planificar adequadament la contractació. \nLes càrregues de feina i la manca de personal varen impedir la tramitació a temps.",
-  "f) Superació del crèdit del contracte vigent. \nTot i existir contracte, s’havia esgotat la seva dotació i calia garantir el servei."
+  "a) Per finalització de contractes administratius i les corresponents prorrogues en el seu cas, i no haver iniciat nova licitació o bé tot i haver sortit a licitació encara no s’ha adjudicat el nou contracte administratiu. \nTot i haver-hi contracte l’objecte de la factura no es troba englobat dins el mateix.",
+  "b) Per finalització de concerts de serveis socials i no haver tret a convocatòria un nou concert o bé tot i estar en licitació no s’ha adjudicat el nou concert.",
+  "c) Tot i haver sortit a licitació un nou contracte administratiu, la adjudicació ha resultat deserta.",
+  "d) Algunes despeses suposen un fraccionament per ser repetitives i gairebé periòdiques, i superen el llindars que requereix la Llei de Contractes del Sector Públic per licitar-les.",
+  "e) Manca de personal al centre que dificulta la planificació de la contractació i realitzar propostes des d’altres enfocaments i perspectives als problemes que la contractació d’avui demanda.",
+  "f) Per superació del crèdit contractat."
 ];
 
 export const JUSTIFICACIO_PREU_OPTIONS = [
   "",
-  "a) Sol·licitats i comparats pressuposts de proveïdors diferents, els preus dels serveis contractats i/o subministraments efectuats s’ajusten als preus de mercat. Es poden consultar al segex nº",
-  "b) El/la tècnic/a responsable de la despesa ha realitzat consultes al mercat i ha emès l’informe econòmic que justifica que els preus aplicats s’ajusten al mercat i que es pot consultar al segex nº",
-  "c) Els preus facturats es mantenen en les mateixes condicions que es venien aplicant anteriorment. L'expedient anterior de referència és el nº "
+  "a) Sol·licitats i comparats pressuposts de proveïdors diferents, els preus dels serveis contractats i/o subministraments efectuats s’ajusten als preus de mercat.",
+  "b) El/la tècnic/a responsable de la despesa ha realitzat consultes al mercat i ha emès l’informe econòmic que s’adjunta, que justifica que els preus aplicats s’ajusten al mercat.",
+  "c) Els preus facturats es mantenen en les mateixes condicions que es venien aplicant durant la duració del contracte (o concert) anterior."
+];
+
+export const MOTIVACIO_SELECCIO_OPTIONS = [
+  "",
+  "tercer que disposa de la capacitat tècnica i mitjans materials immediats per a l'execució de la prestació en una situació de necessitat urgent no previsible que impossibilitava la tramitació prèvia",
+  "tercer que compta amb coneixements tècnics o especialitzats de caràcter exclusiu en la matèria",
+  "tercer que venia prestant el servei correctament i ha permès garantir la continuïtat d'un servei públic de caràcter essencial o ininterromput",
+  "tercer que ha ofert la proposta econòmica més avantatjosa d'acord amb la relació qualitat-preu",
+  "tercer que disposa del coneixement del context i l'històric de la instal·lació o servei per haver-hi actuat prèviament",
+  "tercer que compta amb la condició de proveïdor únic o distribuïdor exclusiu del bé o servei en el mercat",
+  "tercer que ha estat seleccionat per raons de compatibilitat tècnica i homogeneïtzació amb els equips o sistemes preexistents",
+  "tercer que ofereix les millors garanties d'eficiència, eficàcia i solvència per a la realització de la prestació"
 ];
 
 // ── Contract module constants ────────────────────────────────────────────────

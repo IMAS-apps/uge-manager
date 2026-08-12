@@ -1,6 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { generateInforme, generateComunicacioOFI } from '../generateInforme';
-import { Record } from '../../types';
+import { generateInforme, generateComunicacioOFI, generateMemoriaOFI } from '../generateInforme';
+import { Record, OFI } from '../../types';
+import { supabase } from '../../lib/supabase';
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockResolvedValue({ data: [], error: null }),
+  },
+}));
 
 // Mock docx-templates to avoid real DOCX processing in tests
 vi.mock('docx-templates', () => ({
@@ -256,3 +266,112 @@ describe('generateComunicacioOFI', () => {
     );
   });
 });
+
+describe('generateMemoriaOFI', () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(8),
+    } as Response);
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+    vi.spyOn(document.body, 'appendChild').mockImplementation((n: any) => {
+      n.click = vi.fn();
+      return n;
+    });
+    vi.spyOn(document.body, 'removeChild').mockReturnValue({} as any);
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('should fetch Memòria_justificativa_OFI template and include record.justificacio in factures data', async () => {
+    const { createReport } = await import('docx-templates');
+    const mockOfi: OFI = {
+      id: 1,
+      codi_ofi: 'OFI-2025-001',
+      centre_servei: 'Residència Bonanova',
+      area: 'UFAG',
+      descripcio: 'Test OFI',
+      expedient_ofi: 'EXP-123',
+      justificacio_general: 'Justificacio general test',
+      total_import: 500,
+      num_factures: 1,
+      created_by: 'user-1',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as OFI;
+
+    ((supabase as any).order as any).mockResolvedValueOnce({
+      data: [
+        {
+          id: 101,
+          descripcio: 'Factura 1',
+          periode: 'Gener 2025',
+          numero_registre: 'REG-1',
+          numero_factura: 'F-1',
+          data: '2025-01-10',
+          import_total: 500,
+          records: {
+            nom: 'Joan Garcia',
+            objecte_contracte: 'Subministrament sanitari',
+            adjudicatari: 'Empresa X',
+            nif: 'B12345678',
+            motivacio_seleccio: "tercer que compta amb coneixements tècnics o especialitzats de caràcter exclusiu en la matèria",
+            justificacio: 'Necessitat urgent de subministrament',
+            motivacio_no_contractacio: 'a) Import inferior a limit',
+            justificacio_preu: 'b) Preu de mercat',
+            partida_organica: '10',
+            partida_programa: '31',
+            partida_economica: '62700',
+            tipus_contracte: 'Subministrament',
+            data_ofi_inicial: '2025-01-01',
+            explicacio_no_contractacio: '',
+            explicacio_preu: '',
+            segex: 'SEGEX-1',
+          },
+        },
+      ],
+      error: null,
+    });
+
+    await generateMemoriaOFI(mockOfi);
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Memòria_justificativa_OFI.docx')
+    );
+
+    expect(createReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          factures_preu_b: expect.arrayContaining([
+            expect.objectContaining({
+              descripcio: 'Factura 1',
+            }),
+          ]),
+          factures_a: expect.arrayContaining([
+            expect.objectContaining({
+              descripcio: 'Factura 1',
+            }),
+          ]),
+          factures: expect.arrayContaining([
+            expect.objectContaining({
+              descripcio: 'Factura 1',
+              adjudicatari: 'Empresa X',
+              nif: 'B12345678',
+              motivacio_seleccio: "tercer que compta amb coneixements tècnics o especialitzats de caràcter exclusiu en la matèria",
+              record: expect.objectContaining({
+                justificacio: 'Necessitat urgent de subministrament',
+                adjudicatari: 'Empresa X',
+                nif: 'B12345678',
+                motivacio_seleccio: "tercer que compta amb coneixements tècnics o especialitzats de caràcter exclusiu en la matèria",
+              }),
+            }),
+          ]),
+        }),
+      })
+    );
+  });
+});
+

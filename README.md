@@ -25,9 +25,9 @@ L'aplicació és una **Single Page Application (SPA)** moderna amb una arquitect
 L'accés a la informació està protegit mitjançant **Row Level Security (RLS)** a nivell de base de dades. El sistema identifica l'usuari mitjançant el seu JWT i consulta el seu rol a la taula `profiles`.
 
 ### Rols Principals:
-1.  **Lectura**: Pot veure el dashboard de sol·licituds i contractes. No pot crear ni editar la majoria de camps. No veu el mòdul de "Nou contracte". **Pot afegir, editar i eliminar factures** a les sol·licituds.
-2.  **Peticions**: Pot crear noves Sol·licituds de despesa. Rep notificacions quan les seves peticions són actualitzades per un gestor. **Pot gestionar les factures** de les sol·licituds.
-3.  **Gestió**: Pot editar totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.) i **crear/editar OFIs**. Rep notificacions de noves peticions d'altres usuaris.
+1.  **Lectura**: Pot veure el dashboard de sol·licituds i contractes. No veu el mòdul de "Nou contracte". **Pot omplir, editar i desar els camps d'informació general i de tramitació** a les sol·licituds (*Justificació, Objecte, Característiques, Adjudicatari, NIF, Justificació selecció tercer, Detalls OFI i Factures*), mentre els camps de gestió administrativa (*Responsable, Centre, Òrgan, Tipus contracte, Documentació*) romanen protegits.
+2.  **Peticions**: Pot crear noves Sol·licituds de despesa. Rep notificacions quan les seves peticions són actualitzades per un gestor. **Pot gestionar les factures i camps generals** de les sol·licituds.
+3.  **Gestió**: Pot editar tots els camps de totes les sol·licituds (assignar SEGEX, sistema de tramitació, dates, etc.) i **crear/editar OFIs**. Rep notificacions de noves peticions d'altres usuaris.
 4.  **Administrador**: Control total del sistema.
     - Únic rol amb accés al mòdul **"Nou contracte"**.
     - Únic rol amb permisos d'edició/eliminació de **Contractes**.
@@ -155,7 +155,9 @@ L'aplicació compta amb dues vistes principals unificades pel nou menú de naveg
 - Mòdul intermedi per al seguiment d'Ordres de Facturació Interna.
 - Relaciona de manera dinàmica els expedients d'OFI amb les factures introduïdes al sistema mitjançant el número d'expedient.
 - **Clonació**: Permet crear una nova OFI pre-emplenant les dades d'una existent.
-- **Generació de Memòria**: Botó per descarregar un document Word (`.docx`) amb la "Memòria Justificativa", incloent la taula de factures i annexos de manera automatitzada.
+- **Generació de Memòria (`generateInforme.ts`)**: Botó per descarregar el document Word (`Memòria_justificativa_OFI.docx`) amb la "Memòria Justificativa":
+  - **Visualització condicional de seccions**: Les seccions **E** (*Justificació del preu de mercat*) i **F** (*Omissió de la funció interventora*) pre-filtren les factures segons els criteris seleccionats (`justificacio_preu_short` i `motivacio_no_contractacio_short`). Si no hi ha cap factura associada a una sub-secció concreta, la secció sencera (encapçalat i bucle) s'oculta automàticament al document generat.
+  - **Inclusió de dades de la sol·licitud**: Els bucles de factures inclouen les dades d'adjudicatari (`$factura.record.adjudicatari`), NIF (`$factura.record.nif`) i motivació de selecció (`$factura.record.motivacio_seleccio`).
 - Permet una traçabilitat directa entre l'ordre interna i l'execució comptable (factures).
 
 ---
