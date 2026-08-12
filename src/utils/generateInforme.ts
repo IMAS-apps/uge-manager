@@ -263,9 +263,11 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
             };
         });
 
-        // Filter factures by motivacio_no_contractacio_short for conditional template sections
-        const filterByShort = (prefix: string) =>
+        // Filter factures by motivacio_no_contractacio_short and justificacio_preu_short for conditional template sections
+        const filterByMotivacioShort = (prefix: string) =>
             factures.filter((f: any) => f.record?.motivacio_no_contractacio_short === prefix);
+        const filterByPreuShort = (prefix: string) =>
+            factures.filter((f: any) => f.record?.justificacio_preu_short === prefix);
 
         // 6. Build data object
         const data = {
@@ -278,12 +280,15 @@ export async function generateMemoriaOFI(ofi: OFI): Promise<void> {
                 total_import: fmtCurrency(ofi.total_import),
             },
             factures,
-            factures_a: filterByShort('a)'),
-            factures_b: filterByShort('b)'),
-            factures_c: filterByShort('c)'),
-            factures_d: filterByShort('d)'),
-            factures_e: filterByShort('e)'),
-            factures_f: filterByShort('f)'),
+            factures_a: filterByMotivacioShort('a)'),
+            factures_b: filterByMotivacioShort('b)'),
+            factures_c: filterByMotivacioShort('c)'),
+            factures_d: filterByMotivacioShort('d)'),
+            factures_e: filterByMotivacioShort('e)'),
+            factures_f: filterByMotivacioShort('f)'),
+            factures_preu_a: filterByPreuShort('a)'),
+            factures_preu_b: filterByPreuShort('b)'),
+            factures_preu_c: filterByPreuShort('c)'),
         };
 
         // 7. Generate document
