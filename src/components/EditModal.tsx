@@ -396,7 +396,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Justificació de la necessitat</label>
-                      {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') && formData.justificacio.trim() && (
+                      {mode === 'edit' && formData.justificacio.trim() && (
                         <button
                           type="button"
                           onClick={() => handleAIAssist('justificacio')}
@@ -413,7 +413,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         </button>
                       )}
                     </div>
-                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
+                    {mode === 'edit' ? (
                       <textarea name="justificacio" value={formData.justificacio} onChange={handleChange} form="edit-form" rows={3} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.justificacio || '—'}</div>
@@ -423,7 +423,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Objecte del contracte</label>
-                      {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') && formData.objecte_contracte.trim() && (
+                      {mode === 'edit' && formData.objecte_contracte.trim() && (
                         <button
                           type="button"
                           onClick={() => handleAIAssist('objecte_contracte')}
@@ -440,7 +440,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         </button>
                       )}
                     </div>
-                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
+                    {mode === 'edit' ? (
                       <textarea name="objecte_contracte" value={formData.objecte_contracte} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.objecte_contracte || '—'}</div>
@@ -450,7 +450,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">Característiques tècniques (Opcional)</label>
-                      {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') && formData.caracteristiques_tecniques.trim() && (
+                      {mode === 'edit' && formData.caracteristiques_tecniques.trim() && (
                         <button
                           type="button"
                           onClick={() => handleAIAssist('caracteristiques_tecniques')}
@@ -467,7 +467,7 @@ export function EditModal({ record, mode, user, onClose, onSave, onDeleteRequest
                         </button>
                       )}
                     </div>
-                    {mode === 'edit' && (user.role === 'Administrador' || user.role === 'Gestió') ? (
+                    {mode === 'edit' ? (
                       <textarea name="caracteristiques_tecniques" value={formData.caracteristiques_tecniques} onChange={handleChange} form="edit-form" rows={4} className="w-full px-3 py-2 border border-border-light rounded-md focus:ring-2 focus:ring-primary text-sm"></textarea>
                     ) : (
                       <div className="text-text-primary text-sm whitespace-pre-wrap">{formData.caracteristiques_tecniques || '—'}</div>
